@@ -13,19 +13,24 @@ namespace = "https://gitlab.dlr.de/datex2#"
 def main() -> Mapping:
 
     
+    prefix = Prefix("vkg", namespace)
+    rdfs = Prefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
+    chio = Prefix("chio", "https://dlr-ve-esy.github.io/charging_ontology/")
+    cco = Prefix("cco", "https://www.commoncoreontologies.org/")
+    bfo =  Prefix("bfo", "http://purl.obolibrary.org/obo/")
     m = Mapping()
+   
     for name, path in mappings:
         pl.Config.set_fmt_str_lengths(150)
-        if (p := Path(f"{path}/evses.csv")).exists():
-            raw: pl.DataFrame = pl.read_csv(p)
+        if (p := Path(f"{path}/facility.csv")).exists():
+            facility: pl.DataFrame  = pl.read_csv(p).select(
+                (namespace + pl.col("id").cast(str)).alias("facility")
+                (namespace + pl.col("operator_id").cast(str).alias("operator"))
+                (namespace + pl.col("address_id").cast(str).alias("address"))
+            )
             
-            prefix = Prefix("vkg", namespace)
-            rdfs = Prefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
-            chio = Prefix("chio", "https://dlr-ve-esy.github.io/charging_ontology/")
-            cco = Prefix("cco", "https://www.commoncoreontologies.org/")
-            bfo =  Prefix("bfo", "http://purl.obolibrary.org/obo/")
-
-            evse = raw.select(
+        if (p := Path(f"{path}/evses.csv")).exists():
+            evse: pl.DataFrame = pl.read_csv(p).select(
                 (namespace + pl.col("id").cast(str)).alias("evse"),
                 (namespace + pl.col("facility_id").cast(str)).alias("facility"),
                 pl.col("evseid").alias("label")
