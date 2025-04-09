@@ -13,3 +13,8 @@ wheels/
 *.csv
 *.xml
 *.json
+
+# other
+*.jar
+uv.lock
+.python-version

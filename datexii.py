@@ -2,7 +2,7 @@ from glob import glob
 from pathlib import Path
 from typing import List, Tuple
 import polars as pl
-from maplib import Mapping, Prefix, Template, Parameter, Variable, RDFType, Triple, a
+from maplib import Mapping
 
 
 paths: List[Path] = [Path(f) for f in glob("operational/*")]
@@ -12,12 +12,6 @@ namespace = "https://gitlab.dlr.de/datex2#"
 
 def main() -> Mapping:
 
-    
-    prefix = Prefix("vkg", namespace)
-    rdfs = Prefix("rdfs", "http://www.w3.org/2000/01/rdf-schema#")
-    chio = Prefix("chio", "https://dlr-ve-esy.github.io/charging_ontology/")
-    cco = Prefix("cco", "https://www.commoncoreontologies.org/")
-    bfo =  Prefix("bfo", "http://purl.obolibrary.org/obo/")
     with open("templates/evse.stottr", "r") as d:
         template = d.read()
     m = Mapping([template])
@@ -36,7 +30,7 @@ def main() -> Mapping:
                 (namespace + pl.col("facility_id").cast(str)).alias("facility"),
                 pl.col("evseid").cast(str).alias("label")
             )
-            
+
             m.expand("evse:EVSETemplate", evse)
     return m
 
