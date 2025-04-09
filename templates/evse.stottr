@@ -1,12 +1,22 @@
 @prefix rdf: 	<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . 
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> . 
 @prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
+@prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
-@prefix evse: 	<https://gitlab.dlr.de/datex2#> . 
+@prefix vkg: 	<https://gitlab.dlr.de/vkg#> . 
 
-evse:EVSETemplate[ ?evse, ?facility, ? ?label ] :: {
+vkg:EVSE[ ?evse, ?facility, ?ID, ? ?altID ] :: {
   ottr:Triple(?evse, rdf:type, chio:CHIO_00000016 ),
   ottr:Triple(?evse, bfo:BFO_0000176, ?facility ),
-  ottr:Triple(?evse, rdfs:label, ?label ),
+  vkg:Identifier(_:identifier, ?ID)
+  vkg:Identifier(_:identifierAlt, ?altID)
+  ottr:Triple(?evse, cco:ont00001879, _:identifier ),
+  ottr:Triple(?evse, cco:ont00001879, _:identifierAlt ),
+} .
+
+vkg:Identifier[ ottr:IRI ?id, ?label] :: {
+  ottr:Triple(?id, rdf:type, cco:ont00000077),
+  ottr:Triple(?id, rdf:value, ?label),
 } .
