@@ -1,0 +1,12 @@
+@prefix rdf: 	<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . 
+@prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
+@prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> . 
+@prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
+@prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
+@prefix evse: 	<https://gitlab.dlr.de/datex2#> . 
+
+evse:EVSETemplate[ ?evse, ?facility, ? ?label ] :: {
+  ottr:Triple(?evse, rdf:type, chio:CHIO_00000016 ),
+  ottr:Triple(?evse, bfo:BFO_0000176, ?facility ),
+  ottr:Triple(?evse, rdfs:label, ?label ),
+} .

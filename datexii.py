@@ -18,44 +18,26 @@ def main() -> Mapping:
     chio = Prefix("chio", "https://dlr-ve-esy.github.io/charging_ontology/")
     cco = Prefix("cco", "https://www.commoncoreontologies.org/")
     bfo =  Prefix("bfo", "http://purl.obolibrary.org/obo/")
-    m = Mapping()
+    with open("templates/evse.stottr", "r") as d:
+        template = d.read()
+    m = Mapping([template])
    
     for name, path in mappings:
         pl.Config.set_fmt_str_lengths(150)
         if (p := Path(f"{path}/facility.csv")).exists():
             facility: pl.DataFrame  = pl.read_csv(p).select(
-                (namespace + pl.col("id").cast(str)).alias("facility")
-                (namespace + pl.col("operator_id").cast(str).alias("operator"))
+                (namespace + pl.col("id").cast(str)).alias("facility"),
+                (namespace + pl.col("operator_id").cast(str)).alias("operator"),
                 (namespace + pl.col("address_id").cast(str).alias("address"))
-            )
-            
+            )    
         if (p := Path(f"{path}/evses.csv")).exists():
             evse: pl.DataFrame = pl.read_csv(p).select(
                 (namespace + pl.col("id").cast(str)).alias("evse"),
                 (namespace + pl.col("facility_id").cast(str)).alias("facility"),
-                pl.col("evseid").alias("label")
+                pl.col("evseid").cast(str).alias("label")
             )
-            evse_var = Variable("evse")
-            facility_var = Variable("facility")
-            label_var = Variable("label")
-    
-            evse_template = Template(
-                iri= prefix.suf("EVSETemplate"),
-                parameters= [
-                    Parameter(variable=evse_var, rdf_type=RDFType.IRI()),
-                    Parameter(variable=facility_var, rdf_type=RDFType.IRI()),
-                    Parameter(variable=label_var, optional=True)
-                ],
-                instances= [
-                    Triple(evse_var, a(), chio.suf("CHIO_00000016")),
-                    Triple(evse_var, bfo.suf("BFO_0000176"), facility_var),
-                    Triple(
-                        evse_var, 
-                        rdfs.suf("label"), 
-                        label_var)
-                ]
-            )
-            m.expand(evse_template, evse)
+            
+            m.expand("evse:EVSETemplate", evse)
     return m
 
 
