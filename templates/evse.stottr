@@ -1,10 +1,12 @@
 @prefix rdf: 	<http://www.w3.org/1999/02/22-rdf-syntax-ns#> . 
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
-@prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> . 
+@prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> .
+@prefix dbo: <https://dbpedia.org/ontology/> .
 @prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
 @prefix schema-org: <https://schema.org/> .
 @prefix vkg: 	<https://gitlab.dlr.de/vkg#> . 
 @prefix vkg-evse: 	<https://gitlab.dlr.de/vkg-evse#> . 
@@ -19,14 +21,22 @@ vkg-evse:EVSE[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
   vkg-common:DesignatedBy(?evse, _:identifierAlt ), 
 } .
 
-vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?address, ? ottr:IRI ?spatial, xsd:string ?ID] :: {
+vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geolocation, xsd:string ?ID] :: {
   vkg-common:Type(?facility, chio:CHIO_00000004),
   vkg-common:Identifier(_:identifier, ?ID),
   ottr:Triple(?facility, cco:ont00001879, _:identifier ),
-  vkg-common:Location( _:location, ?address, ?spatial),
-  ottr:Triple(?facility, bfo:BFO_0000171, _:location),
+  vkg-common:LocatedIn(?facility, ?geolocation),
 } .
 
-vkg-evse:Address[ ottr:IRI ?address, ? xsd:string ?street, ? xsd:string ?locator_designator, ? xsd:string ?supplement, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
-
+vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?street, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
+  vkg-common:LocatedIn(?geolocation, _:street),
+  vkg-common:Identifier(_:street, ?street),
+  vkg-common:LocatedIn(_:street, _:city),
+  vkg-common:Identifier(_:city, ?postal_name),
+  vkg-common:LocatedIn(_:city, _:state),
+  vkg-common:Identifier(_:state, ?state),
+  vkg-common:LocatedIn(_:state, _:country),
+  vkg-common:Identifier(_:country, ?country),
+  ottr:Triple(_:country, dbo:iso31661Code, ?country),
+  vkg-common:hasCentroid(?geolocation, ?centroid)
 } .

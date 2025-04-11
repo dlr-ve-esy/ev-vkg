@@ -6,6 +6,7 @@
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
 @prefix vkg-common: 	<https://gitlab.dlr.de/vkg-common#> . 
+@prefix geo: <http://www.opengis.net/ont/geosparql#> .
 
 vkg-common:Identifier[ ottr:IRI ?id, ?label] :: {
   ottr:Triple(?id, rdf:type, cco:ont00000077),
@@ -24,4 +25,13 @@ vkg-common:Location[ ottr:IRI ?id, ? ottr:IRI ?address, ? ottr:IRI ?spatial] :: 
     vkg-common:Type(?id, cco:ont00000487),
     vkg-common:DesignatedBy(?id, ?address),
     vkg-common:DesignatedBy(?id, ?spatial),
+} .
+
+vkg-common:LocatedIn[ ottr:IRI ?inner, ottr:IRI ?outer ] :: {
+    ottr:Triple(?inner, bfo:BFO_0000171, ?outer),
+} .
+
+vkg-common:hasCentroid[ottr:IRI ?geolocation, geo:WktLiteral ?centroid ] :: {
+    ottr:Triple(?geolocation, geo:hasCentroid, _:centroid)
+    ottr:Triple(_:centroid, geo:asWKT, ?centroid)
 } .
