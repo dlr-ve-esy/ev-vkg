@@ -21,7 +21,7 @@ vkg-evse:EVSE[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
   vkg-common:DesignatedBy(?evse, _:identifierAlt ), 
 } .
 
-vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geolocation, xsd:string ?ID] :: {
+vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geolocation, ? xsd:string ?ID] :: {
   vkg-common:Type(?facility, chio:CHIO_00000004),
   vkg-common:Identifier(_:identifier, ?ID),
   ottr:Triple(?facility, cco:ont00001879, _:identifier ),

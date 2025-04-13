@@ -46,11 +46,11 @@ def main() -> Mapping:
             )
             m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{namespace}{name}")
 
-        if (p := Path(f"{path}/facility.csv")).exists():
+        if (p := Path(f"{path}/facilities.csv")).exists():
             facility: pl.DataFrame = pl.read_csv(p).select(
                 (namespace + pl.col("id").cast(str)).alias("facility"),
                 (namespace + pl.col("operator_id").cast(str)).alias("operator"),
-                (namespace + pl.col("geolocation_id").cast(str).alias("geolocation")),
+                (namespace + pl.col("geolocation_id").cast(str)).alias("geolocation"),
                 pl.col("id").cast(str).alias("ID"),
             )
             m.expand("vkg-evse:Facility", facility, graph=f"{namespace}{name}")
@@ -81,9 +81,10 @@ PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dbo:<https://dbpedia.org/ontology/>
 
 SELECT ?a ?b ?c WHERE {
+    ?a rdf:type chio:CHIO_00000004 .
     ?a bfo:BFO_0000171+ ?b .
     ?b dbo:iso31661Code ?c .
 }
 """,
             graph=f"{namespace}PT-20250131-MOBIE-DATEXII",
-        ).write_csv("test.csv"))
+        ))
