@@ -69,8 +69,7 @@ def main() -> Mapping:
 if __name__ == "__main__":
     m = main()
 
-    print(
-        m.query(
+    print(m.query(
             """
 PREFIX vkg:<https://gitlab.dlr.de/vkg#>
 PREFIX chio:<https://dlr-ve-esy.github.io/charging_ontology/>
@@ -79,13 +78,12 @@ PREFIX bfo:<http://purl.obolibrary.org/obo/>
 PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
 PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-SELECT ?e ?f ?l WHERE {
-    ?e a chio:CHIO_00000016 .
-    ?e bfo:BFO_0000176 ?f .
-    ?e cco:ont00001879 ?id .
-    ?id rdf:value ?l
+PREFIX dbo:<https://dbpedia.org/ontology/>
+
+SELECT ?a ?b ?c WHERE {
+    ?a bfo:BFO_0000171+ ?b .
+    ?b dbo:iso31661Code ?c .
 }
 """,
-            graph=f"{namespace}ES-20250120-MITERD-DATEXII",
-        )
-    )
+            graph=f"{namespace}PT-20250131-MOBIE-DATEXII",
+        ).write_csv("test.csv"))

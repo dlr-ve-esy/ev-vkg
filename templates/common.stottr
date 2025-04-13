@@ -21,10 +21,10 @@ vkg-common:DesignatedBy[ ottr:IRI ?designated, ottr:IRI ?designator] :: {
     ottr:Triple(?designated, cco:ont00001879, ?designator ),
 } .
 
-vkg-common:Location[ ottr:IRI ?id, ? ottr:IRI ?address, ? ottr:IRI ?spatial] :: {
-    vkg-common:Type(?id, cco:ont00000487),
-    vkg-common:DesignatedBy(?id, ?address),
-    vkg-common:DesignatedBy(?id, ?spatial),
+vkg-common:Location[ ottr:IRI ?location, ? xsd:string ?label] :: {
+    vkg-common:Type(?location, cco:ont00000487),
+    vkg-common:Identifier(_:identifier, ?label),
+    vkg-common:DesignatedBy(?location, _:identifier)
 } .
 
 vkg-common:LocatedIn[ ottr:IRI ?inner, ottr:IRI ?outer ] :: {

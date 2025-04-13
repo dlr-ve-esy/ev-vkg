@@ -29,14 +29,14 @@ vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geoloca
 } .
 
 vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?street, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
+  vkg-common:Location(_:street, ?street),
   vkg-common:LocatedIn(?geolocation, _:street),
-  vkg-common:Identifier(_:street, ?street),
+  vkg-common:Location(_:city, ?postal_name),
   vkg-common:LocatedIn(_:street, _:city),
-  vkg-common:Identifier(_:city, ?postal_name),
+  vkg-common:Location(_:state, ?state),
   vkg-common:LocatedIn(_:city, _:state),
-  vkg-common:Identifier(_:state, ?state),
+  vkg-common:Location(_:country, ?country),
   vkg-common:LocatedIn(_:state, _:country),
-  vkg-common:Identifier(_:country, ?country),
   ottr:Triple(_:country, dbo:iso31661Code, ?country),
   vkg-common:hasCentroid(?geolocation, ?centroid)
 } .
