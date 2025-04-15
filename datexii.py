@@ -9,6 +9,9 @@ mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
 
 namespace = "https://gitlab.dlr.de/vkg#"
 
+CHALLENGE_MODE = True
+# USE THE polars sample API to do the challenge mode
+
 
 def main() -> Mapping:
     with open("templates/evse.stottr", "r") as d:
@@ -18,6 +21,15 @@ def main() -> Mapping:
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
+        if (p := Path(f"{path}/facilities.csv")).exists():
+            facility: pl.DataFrame = pl.read_csv(p)
+            facility = facility.select(
+                (namespace + pl.col("id").cast(str)).alias("facility"),
+                (namespace + pl.col("operator_id").cast(str)).alias("operator"),
+                (namespace + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+                pl.col("id").cast(str).alias("ID"),
+            )
+            m.expand("vkg-evse:Facility", facility, graph=f"{namespace}{name}")
         country: str = name.split("-")[0]
         pl.Config.set_fmt_str_lengths(150)
         if (p := Path(f"{path}/geolocations.csv")).exists():
@@ -46,14 +58,6 @@ def main() -> Mapping:
             )
             m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{namespace}{name}")
 
-        if (p := Path(f"{path}/facilities.csv")).exists():
-            facility: pl.DataFrame = pl.read_csv(p).select(
-                (namespace + pl.col("id").cast(str)).alias("facility"),
-                (namespace + pl.col("operator_id").cast(str)).alias("operator"),
-                (namespace + pl.col("geolocation_id").cast(str)).alias("geolocation"),
-                pl.col("id").cast(str).alias("ID"),
-            )
-            m.expand("vkg-evse:Facility", facility, graph=f"{namespace}{name}")
         if (p := Path(f"{path}/operators.csv")).exists():
             operator: pl.DataFrame = pl.read_csv(p)
             operator = operator.select(
@@ -79,6 +83,14 @@ def main() -> Mapping:
             )
 
             m.expand("vkg-evse:EVSE", evse, graph=f"{namespace}{name}")
+
+        if (p := Path(f"{path}/connections.csv")).exists():
+            connections: pl.DataFrame = pl.read_csv(p)
+
+            if (p := Path(f"{path}/connectors.csv")).exists():
+                connections = connections.join(
+                    pl.read_csv(p), left_on="connector_id", right_on="id"
+                )
     return m
 
 
@@ -106,3 +118,8 @@ SELECT ?a ?b ?c WHERE {
             graph=f"{namespace}PT-20250116-MOBIE-DATEXII",
         )
     )
+    # m.write_triples(
+    #     file_path="PT-20250116-MOBIE-DATEXII.ttl",
+    #     format="turtle",
+    #     graph=f"{namespace}PT-20250116-MOBIE-DATEXII",
+    # )
