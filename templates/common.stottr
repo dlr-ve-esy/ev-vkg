@@ -35,3 +35,7 @@ vkg-common:hasCentroid[ottr:IRI ?geolocation, geo:WktLiteral ?centroid ] :: {
     ottr:Triple(?geolocation, geo:hasCentroid, _:centroid)
     ottr:Triple(_:centroid, geo:asWKT, ?centroid)
 } .
+
+vkg-common:BearerOf[ottr:IRI ?bearer, ottr:IRI ?attribute]  :: {
+    ottr:Triple(?bearer, bfo:BFO_0000196, ?attribute)
+} .

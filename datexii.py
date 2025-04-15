@@ -54,6 +54,22 @@ def main() -> Mapping:
                 pl.col("id").cast(str).alias("ID"),
             )
             m.expand("vkg-evse:Facility", facility, graph=f"{namespace}{name}")
+        if (p := Path(f"{path}/operators.csv")).exists():
+            operator: pl.DataFrame = pl.read_csv(p)
+            operator = operator.select(
+                (namespace + pl.col("id").cast(str)).alias("operator"),
+                pl.col("name").cast(str).alias("label"),
+                pl.col("id").cast(str).alias("ID"),
+                pl.col("type")
+                .map_elements(
+                    lambda x: "https://www.commoncoreontologies.org/ont00001006"
+                    if x == "operator"
+                    else pl.Null,
+                    return_dtype=pl.String,
+                )
+                .alias("role"),
+            )
+            m.expand("vkg-evse:Operator", operator, graph=f"{namespace}{name}")
         if (p := Path(f"{path}/evses.csv")).exists():
             evse: pl.DataFrame = pl.read_csv(p).select(
                 (namespace + pl.col("id").cast(str)).alias("evse"),
@@ -69,7 +85,8 @@ def main() -> Mapping:
 if __name__ == "__main__":
     m = main()
 
-    print(m.query(
+    print(
+        m.query(
             """
 PREFIX vkg:<https://gitlab.dlr.de/vkg#>
 PREFIX chio:<https://dlr-ve-esy.github.io/charging_ontology/>
@@ -86,5 +103,6 @@ SELECT ?a ?b ?c WHERE {
     ?b dbo:iso31661Code ?c .
 }
 """,
-            graph=f"{namespace}PT-20250131-MOBIE-DATEXII",
-        ))
+            graph=f"{namespace}PT-20250116-MOBIE-DATEXII",
+        )
+    )

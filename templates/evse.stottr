@@ -26,6 +26,7 @@ vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geoloca
   vkg-common:Identifier(_:identifier, ?ID),
   ottr:Triple(?facility, cco:ont00001879, _:identifier ),
   vkg-common:LocatedIn(?facility, ?geolocation),
+  ottr:Triple(?operator, chio:CHIO_00000090, ?facility),
 } .
 
 vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?street, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
@@ -39,4 +40,14 @@ vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:s
   vkg-common:LocatedIn(_:state, _:country),
   ottr:Triple(_:country, dbo:iso31661Code, ?country),
   vkg-common:hasCentroid(?geolocation, ?centroid)
+} .
+
+vkg-evse:Operator[ ottr:IRI ?operator, ? xsd:string ?label, ? xsd:string ?ID, ? ottr:IRI ?role ] :: {
+  vkg-common:Type(?operator, cco:ont00001180),
+  ottr:Triple(?operator, rdfs:label, ?label),
+  vkg-common:Identifier(_:label, ?label),
+  vkg-common:DesignatedBy(?operator, _:label ), 
+  vkg-common:Identifier(_:identifier, ?ID),
+  vkg-common:DesignatedBy(?operator, _:identifier ), 
+  vkg-common:BearerOf(?operator, ?role),
 } .
