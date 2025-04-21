@@ -1,0 +1,20 @@
+PREFIX vkg:<https://gitlab.dlr.de/vkg#>
+PREFIX chio:<https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX cco:<https://www.commoncoreontologies.org/>
+PREFIX bfo:<http://purl.obolibrary.org/obo/>
+PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dbo:<https://dbpedia.org/ontology/>
+
+SELECT ?country_code ?party_id ?id ?name ?address ?city ?postal_code ?state ?country ?time_zone WHERE {
+    ?location rdf:type chio:CHIO_00000004 ;
+        bfo:BFO_0000171  ?site .
+    ?site bfo:BFO_0000171  ?streetLoc .
+    OPTIONAL{?streetLoc cco:ont00001879 ?streetID.}.
+    OPTIONAL{?streetID rdf:value ?address .} .
+    ?postalLoc  bfo:BFO_0000171  ?streetLoc . 
+    OPTIONAL{?postalLoc cco:ont00001879 ?cityID .} .
+    OPTIONAL{?cityID rdf:value ?city .} .
+    ?b dbo:iso31661Code ?c .
+}
