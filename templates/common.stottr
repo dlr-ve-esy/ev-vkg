@@ -5,11 +5,22 @@
 @prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
+@prefix dbo: <https://dbpedia.org/ontology/> .
 @prefix vkg-common: 	<https://gitlab.dlr.de/vkg-common#> . 
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 
 vkg-common:Identifier[ ottr:IRI ?id, ?label] :: {
   ottr:Triple(?id, rdf:type, cco:ont00000077),
+  ottr:Triple(?id, rdf:value, ?label),
+} .
+
+vkg-common:Address[ ottr:IRI ?id, ?label] :: {
+  ottr:Triple(?id, rdf:type, chio:CHIO_00000096),
+  ottr:Triple(?id, rdf:value, ?label),
+} .
+
+vkg-common:Name[ ottr:IRI ?id, ?label] :: {
+  ottr:Triple(?id, rdf:type, cco:ont00000003),
   ottr:Triple(?id, rdf:value, ?label),
 } .
 
@@ -25,6 +36,31 @@ vkg-common:Location[ ottr:IRI ?location, ? xsd:string ?label] :: {
     vkg-common:Type(?location, cco:ont00000487),
     vkg-common:Identifier(_:identifier, ?label),
     vkg-common:DesignatedBy(?location, _:identifier)
+} .
+
+vkg-common:AddressLocation[ ottr:IRI ?location, ? xsd:string ?label] :: {
+    vkg-common:Type(?location, cco:ont00000487),
+    vkg-common:Address(_:address, ?label),
+    vkg-common:DesignatedBy(?location, _:identifier)
+} .
+
+vkg-common:LocalADM[ ottr:IRI ?location, ? xsd:string ?label] :: {
+    vkg-common:Type(?location, cco:ont00000460),
+    vkg-common:Name(_:name, ?label),
+    vkg-common:DesignatedBy(?location, _:name)
+} .
+
+vkg-common:FirstOrderADM[ ottr:IRI ?location, ? xsd:string ?label] :: {
+    vkg-common:Type(?location, cco:ont00000126),
+    vkg-common:Name(_:name, ?label),
+    vkg-common:DesignatedBy(?location, _:name)
+} .
+
+vkg-common:Country[ ottr:IRI ?location, ? xsd:string ?label, ? xsd:string ?iso31661a2] :: {
+    vkg-common:Type(?location, cco:ont00001152),
+    vkg-common:Name(_:name, ?label),
+    ottr:Triple(?location, dbo:iso31661Code, ?iso31661a2),
+    vkg-common:DesignatedBy(?location, _:name)
 } .
 
 vkg-common:LocatedIn[ ottr:IRI ?inner, ottr:IRI ?outer ] :: {

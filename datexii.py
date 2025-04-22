@@ -118,7 +118,9 @@ def main() -> Mapping:
                 pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
                 .cast(str)
                 .alias("centroid"),
-                geolocations.get_column("street", default=pl.lit(None)).alias("street"),
+                geolocations.get_column("street", default=pl.lit(None)).alias(
+                    "address"
+                ),
                 geolocations.get_column("postal_name", default=pl.lit(None)).alias(
                     "postal_name"
                 ),

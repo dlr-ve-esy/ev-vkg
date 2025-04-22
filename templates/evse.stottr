@@ -2,7 +2,6 @@
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> .
-@prefix dbo: <https://dbpedia.org/ontology/> .
 @prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
@@ -31,16 +30,15 @@ vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geoloca
   ottr:Triple(?operator, chio:CHIO_00000090, ?facility),
 } .
 
-vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?street, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
-  vkg-common:Location(_:street, ?street),
-  vkg-common:LocatedIn(?geolocation, _:street),
-  vkg-common:Location(_:city, ?postal_name),
-  vkg-common:LocatedIn(_:street, _:city),
-  vkg-common:Location(_:state, ?state),
-  vkg-common:LocatedIn(_:city, _:state),
-  vkg-common:Location(_:country, ?country),
+vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?address, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
+  vkg-common:AddressLocation(_:address, ?address),
+  vkg-common:LocatedIn(?geolocation, _:address),
+  vkg-common:LocalADM(_:local, ?postal_name),
+  vkg-common:LocatedIn(_:address, _:local),
+  vkg-common:FirstOrderADM(_:state, ?state),
+  vkg-common:LocatedIn(_:local, _:state),
+  vkg-common:Country(_:country, ?country, ?country),
   vkg-common:LocatedIn(_:state, _:country),
-  ottr:Triple(_:country, dbo:iso31661Code, ?country),
   vkg-common:hasCentroid(?geolocation, ?centroid)
 } .
 
