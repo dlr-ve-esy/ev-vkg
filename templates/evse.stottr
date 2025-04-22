@@ -2,7 +2,7 @@
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> .
-@prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
+@prefix chio: 	<https://dlr-ve-esy.github.io/charging-ontology/> . 
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
@@ -30,8 +30,9 @@ vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geoloca
   ottr:Triple(?operator, chio:CHIO_00000090, ?facility),
 } .
 
-vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?address, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country] :: {
+vkg-evse:GeoLocation[ ottr:IRI ?geolocation, ? geo:WktLiteral ?centroid, ? xsd:string ?address, ? xsd:string ?postal_name, ? xsd:string ?state, ? xsd:string ?country, ? xsd:string ?postal_code] :: {
   vkg-common:AddressLocation(_:address, ?address),
+  vkg-common:AssignPostCode(?geolocation, ?postal_code),
   vkg-common:LocatedIn(?geolocation, _:address),
   vkg-common:LocalADM(_:local, ?postal_name),
   vkg-common:LocatedIn(_:address, _:local),

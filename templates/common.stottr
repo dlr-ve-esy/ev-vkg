@@ -2,25 +2,30 @@
 @prefix rdfs: 	<http://www.w3.org/2000/01/rdf-schema#> . 
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
 @prefix xsd: 	<http://www.w3.org/2001/XMLSchema#> . 
-@prefix chio: 	<https://dlr-ve-esy.github.io/charging_ontology/> . 
+@prefix chio: 	<https://dlr-ve-esy.github.io/charging-ontology/> . 
 @prefix cco: <https://www.commoncoreontologies.org/> .
 @prefix bfo: 	<http://purl.obolibrary.org/obo/> . 
 @prefix dbo: <https://dbpedia.org/ontology/> .
 @prefix vkg-common: 	<https://gitlab.dlr.de/vkg-common#> . 
 @prefix geo: <http://www.opengis.net/ont/geosparql#> .
 
-vkg-common:Identifier[ ottr:IRI ?id, ?label] :: {
+vkg-common:Identifier[ ottr:IRI ?id, xsd:string ?label] :: {
   ottr:Triple(?id, rdf:type, cco:ont00000077),
   ottr:Triple(?id, rdf:value, ?label),
 } .
 
-vkg-common:Address[ ottr:IRI ?id, ?label] :: {
+vkg-common:Address[ ottr:IRI ?id, xsd:string ?label] :: {
   ottr:Triple(?id, rdf:type, chio:CHIO_00000096),
   ottr:Triple(?id, rdf:value, ?label),
 } .
 
-vkg-common:Name[ ottr:IRI ?id, ?label] :: {
+vkg-common:Name[ ottr:IRI ?id, xsd:string ?label] :: {
   ottr:Triple(?id, rdf:type, cco:ont00000003),
+  ottr:Triple(?id, rdf:value, ?label),
+} .
+
+vkg-common:PostCode[ ottr:IRI ?id, xsd:string ?label] :: {
+  ottr:Triple(?id, rdf:type, chio:CHIO_00000095),
   ottr:Triple(?id, rdf:value, ?label),
 } .
 
@@ -41,7 +46,7 @@ vkg-common:Location[ ottr:IRI ?location, ? xsd:string ?label] :: {
 vkg-common:AddressLocation[ ottr:IRI ?location, ? xsd:string ?label] :: {
     vkg-common:Type(?location, cco:ont00000487),
     vkg-common:Address(_:address, ?label),
-    vkg-common:DesignatedBy(?location, _:identifier)
+    vkg-common:DesignatedBy(?location, _:address)
 } .
 
 vkg-common:LocalADM[ ottr:IRI ?location, ? xsd:string ?label] :: {
@@ -61,6 +66,11 @@ vkg-common:Country[ ottr:IRI ?location, ? xsd:string ?label, ? xsd:string ?iso31
     vkg-common:Name(_:name, ?label),
     ottr:Triple(?location, dbo:iso31661Code, ?iso31661a2),
     vkg-common:DesignatedBy(?location, _:name)
+} .
+
+vkg-common:AssignPostCode[ ottr:IRI ?location, xsd:string ?postal_code] :: {
+    vkg-common:PostCode(_:postcode, ?postal_code),
+    vkg-common:DesignatedBy(?location, _:postcode)
 } .
 
 vkg-common:LocatedIn[ ottr:IRI ?inner, ottr:IRI ?outer ] :: {

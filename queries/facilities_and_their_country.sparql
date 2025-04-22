@@ -1,0 +1,11 @@
+# Get the countries of all facilities, compilation test query
+PREFIX chio:<https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX bfo:<http://purl.obolibrary.org/obo/>
+PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX dbo:<https://dbpedia.org/ontology/>
+
+SELECT ?a ?b ?c WHERE {
+    ?a rdf:type chio:CHIO_00000004 .
+    ?a bfo:BFO_0000171+ ?b .
+    ?b dbo:iso31661Code ?c .
+}

@@ -125,6 +125,9 @@ def main() -> Mapping:
                     "postal_name"
                 ),
                 geolocations.get_column("state", default=pl.lit(None)).alias("state"),
+                geolocations.get_column("zip_code", default=pl.lit(None))
+                .cast(str)
+                .alias("postal_code"),
                 geolocations.get_column("country", default=pl.lit(country)).alias(
                     "country"
                 ),
@@ -181,30 +184,8 @@ def main() -> Mapping:
 
 if __name__ == "__main__":
     m = main()
-
+    with open("queries/facilities_and_their_country.sparql", "r") as d:
+        facilities_and_their_country = d.read()
     print(
-        m.query(
-            """
-PREFIX vkg:<https://gitlab.dlr.de/vkg#>
-PREFIX chio:<https://dlr-ve-esy.github.io/charging_ontology/>
-PREFIX cco:<https://www.commoncoreontologies.org/>
-PREFIX bfo:<http://purl.obolibrary.org/obo/>
-PREFIX skos:<http://www.w3.org/2004/02/skos/core#>
-PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX dbo:<https://dbpedia.org/ontology/>
-
-SELECT ?a ?b ?c WHERE {
-    ?a rdf:type chio:CHIO_00000004 .
-    ?a bfo:BFO_0000171+ ?b .
-    ?b dbo:iso31661Code ?c .
-}
-""",
-            graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
-        )
+        m.query(facilities_and_their_country, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
     )
-    # m.write_triples(
-    #     file_path="PT-20250116-MOBIE-DATEXII.ttl",
-    #     format="turtle",
-    #     graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
-    # )

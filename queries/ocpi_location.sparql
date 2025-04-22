@@ -7,14 +7,34 @@ PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX dbo:<https://dbpedia.org/ontology/>
 
-SELECT ?country_code ?party_id ?id ?name ?address ?city ?postal_code ?state ?country ?time_zone WHERE {
-    ?location rdf:type chio:CHIO_00000004 ;
-        bfo:BFO_0000171  ?site .
-    ?site bfo:BFO_0000171  ?streetLoc .
-    OPTIONAL{?streetLoc cco:ont00001879 ?streetID.}.
-    OPTIONAL{?streetID rdf:value ?address .} .
-    ?postalLoc  bfo:BFO_0000171  ?streetLoc . 
-    OPTIONAL{?postalLoc cco:ont00001879 ?cityID .} .
-    OPTIONAL{?cityID rdf:value ?city .} .
-    ?b dbo:iso31661Code ?c .
+SELECT ?party_id ?id ?name ?country_code ?address ?city ?postal_code ?state ?country ?time_zone WHERE {
+  ?location rdf:type chio:CHIO_00000004;
+    bfo:BFO_0000171 ?geolocation;
+    cco:ont00001879 ?identifier.
+  ?identifier rdf:value ?id.
+  ?operator chio:CHIO_00000090 ?location ;
+            cco:ont00001879 ?partyId.
+  OPTIONAL { ?partyId rdf:value ?party_id. }
+  ?geolocation bfo:BFO_0000171 ?site.
+  ?site cco:ont00001879 ?addressObject.
+  ?addressObject rdf:type chio:CHIO_00000096.
+  OPTIONAL { ?addressObject rdf:value ?address. }
+  OPTIONAL {
+    ?geolocation cco:ont00001879 ?pcodeObject.
+    ?pcodeObject rdf:type chio:CHIO_00000095;
+      rdf:value ?postal_code.
+  }
+  ?site bfo:BFO_0000171 ?cityLocation.
+  ?cityLocation rdf:type cco:ont00000460;
+    cco:ont00001879 ?cityName.
+  OPTIONAL { ?cityName rdf:value ?city. }
+  ?cityLocation bfo:BFO_0000171 ?stateLocation.
+  ?stateLocation rdf:type cco:ont00000126;
+    cco:ont00001879 ?stateName.
+  OPTIONAL { ?stateName rdf:value ?state. }
+  ?stateLocation bfo:BFO_0000171 ?countryLocation.
+  ?countryLocation rdf:type cco:ont00001152;
+    cco:ont00001879 ?countryName.
+  OPTIONAL { ?countryName rdf:value ?country. }
+  OPTIONAL { ?countryLocation dbo:iso31661Code ?country_code. }
 }
