@@ -1,16 +1,87 @@
 from glob import glob
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Union, Tuple
 import polars as pl
 from maplib import Mapping
 
 paths: List[Path] = [Path(f) for f in glob("operational/*")]
 mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
 
-namespace = "https://gitlab.dlr.de/vkg#"
+CHIO = "https://dlr-ve-esy.github.io/charging_ontology/"
+VKG = "https://gitlab.dlr.de/vkg#"
 
 CHALLENGE_MODE = True
 # USE THE polars sample API to do the challenge mode
+
+
+def map_plug_standards(text: str) -> str:
+    match text.lower():
+        # Domestic patterns
+        case "domestica" | "domestic_a":
+            out = f"{CHIO}CHIO_00000071"
+        case "domesticb" | "domestic_b":
+            out = f"{CHIO}CHIO_00000072"
+        case "domesticc" | "domestic_c":
+            out = f"{CHIO}CHIO_00000073"
+        case "domesticd" | "domestic_d":
+            out = f"{CHIO}CHIO_00000074"
+        case "domestice" | "domestic_e":
+            out = f"{CHIO}CHIO_00000075"
+        case "domesticf" | "domestic_f" | "schuko":
+            out = f"{CHIO}CHIO_00000076"
+        case "domesticg" | "domestic_g":
+            out = f"{CHIO}CHIO_00000077"
+        case "domestich" | "domestic_h":
+            out = f"{CHIO}CHIO_00000078"
+        case "domestici" | "domestic_i":
+            out = f"{CHIO}CHIO_00000079"
+        case "domesticj" | "domestic_j":
+            out = f"{CHIO}CHIO_00000080"
+        case "domestick" | "domestic_k":
+            out = f"{CHIO}CHIO_00000081"
+        case "domesticl" | "domestic_l":
+            out = f"{CHIO}CHIO_00000082"
+        # Industrial Patterns
+        case "iec_60309_2_single_16" | "iec60309x2single16" | "iec60309_2single16":
+            out = f"{CHIO}CHIO_00000062"
+        case "iec_60309_2_three_16" | "iec60309x2three16" | "iec60309_2three16":
+            out = f"{CHIO}CHIO_00000063"
+        case "iec_60309_2_three_32" | "iec60309x2three32" | "iec60309_2three32":
+            out = f"{CHIO}CHIO_00000064"
+        case "iec_60309_2_three_64" | "iec60309x2three64" | "iec60309_2three64":
+            out = f"{CHIO}CHIO_00000065"
+        # AC Patterns
+        case "iec62196t1" | "type1" | "type_1" | "iec_62196_t1":
+            out = f"{CHIO}CHIO_00000025"
+        case "iec62196t2" | "type2" | "type_2" | "iec_62196_t2" | "cee5" | "mennekes":
+            out = f"{CHIO}CHIO_00000026"
+        # DC Patterns
+        case "iec62196t1combo" | "iec_62196_t1_combo":
+            out = f"{CHIO}CHIO_00000027"
+        case "iec62196t2combo" | "iec_62196_t2_combo":
+            out = f"{CHIO}CHIO_00000028"
+        case "chademo":
+            out = f"{CHIO}CHIO_00000024"
+        case "tesla" | "tesla_s" | "teslas" | "nacs":
+            out = f"{CHIO}CHIO_00000043"
+        case "teslar" | "tesla_r" | "roadster" | "tesla_roadster":
+            out = f"{CHIO}CHIO_00000045"
+        case _:
+            # print(f"Unkown pattern: {text}")
+            out = f"{CHIO}CHIO_00000015"  # TODO: Add logging
+    return out
+
+
+def map_coupling_method(text: str) -> str:
+    match text.lower():
+        case "cable":
+            out = f"{CHIO}CHIO_00000013"
+        case "socket":
+            out = f"{CHIO}CHIO_00000014"
+        case _:
+            # print(f"Unkown pattern: {text}. Defaulting to cable")
+            out = f"{CHIO}CHIO_00000013"
+    return out
 
 
 def main() -> Mapping:
@@ -24,12 +95,12 @@ def main() -> Mapping:
         if (p := Path(f"{path}/facilities.csv")).exists():
             facility: pl.DataFrame = pl.read_csv(p)
             facility = facility.select(
-                (namespace + pl.col("id").cast(str)).alias("facility"),
-                (namespace + pl.col("operator_id").cast(str)).alias("operator"),
-                (namespace + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+                (VKG + pl.col("id").cast(str)).alias("facility"),
+                (VKG + pl.col("operator_id").cast(str)).alias("operator"),
+                (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
                 pl.col("id").cast(str).alias("ID"),
             )
-            m.expand("vkg-evse:Facility", facility, graph=f"{namespace}{name}")
+            m.expand("vkg-evse:Facility", facility, graph=f"{VKG}{name}")
         country: str = name.split("-")[0]
         pl.Config.set_fmt_str_lengths(150)
         if (p := Path(f"{path}/geolocations.csv")).exists():
@@ -43,7 +114,7 @@ def main() -> Mapping:
                     pl.read_csv(p), left_on="address_id", right_on="id"
                 )
             geolocations = geolocations.select(
-                (namespace + pl.col("id").cast(str)).alias("geolocation"),
+                (VKG + pl.col("id").cast(str)).alias("geolocation"),
                 pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
                 .cast(str)
                 .alias("centroid"),
@@ -56,12 +127,12 @@ def main() -> Mapping:
                     "country"
                 ),
             )
-            m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{namespace}{name}")
+            m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{VKG}{name}")
 
         if (p := Path(f"{path}/operators.csv")).exists():
             operator: pl.DataFrame = pl.read_csv(p)
             operator = operator.select(
-                (namespace + pl.col("id").cast(str)).alias("operator"),
+                (VKG + pl.col("id").cast(str)).alias("operator"),
                 pl.col("name").cast(str).alias("label"),
                 pl.col("id").cast(str).alias("ID"),
                 pl.col("type")
@@ -73,16 +144,16 @@ def main() -> Mapping:
                 )
                 .alias("role"),
             )
-            m.expand("vkg-evse:Operator", operator, graph=f"{namespace}{name}")
+            m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
         if (p := Path(f"{path}/evses.csv")).exists():
             evse: pl.DataFrame = pl.read_csv(p).select(
-                (namespace + pl.col("id").cast(str)).alias("evse"),
-                (namespace + pl.col("facility_id").cast(str)).alias("facility"),
+                (VKG + pl.col("id").cast(str)).alias("evse"),
+                (VKG + pl.col("facility_id").cast(str)).alias("facility"),
                 pl.col("id").cast(str).alias("ID"),
                 pl.col("evseid").cast(str).alias("altID"),
             )
 
-            m.expand("vkg-evse:EVSE", evse, graph=f"{namespace}{name}")
+            m.expand("vkg-evse:EVSE", evse, graph=f"{VKG}{name}")
 
         if (p := Path(f"{path}/connections.csv")).exists():
             connections: pl.DataFrame = pl.read_csv(p)
@@ -90,7 +161,19 @@ def main() -> Mapping:
             if (p := Path(f"{path}/connectors.csv")).exists():
                 connections = connections.join(
                     pl.read_csv(p), left_on="connector_id", right_on="id"
+                ).select(
+                    (VKG + pl.col("evse_id").cast(str)).alias("evse"),
+                    pl.col("standard")
+                    .map_elements(map_plug_standards, return_dtype=pl.String)
+                    .alias("pattern"),
+                    pl.col("coupling").map_elements(
+                        map_coupling_method, return_dtype=pl.String
+                    ),
+                    pl.col("max_voltage"),
+                    pl.col("max_amperage"),
+                    pl.col("max_power"),
                 )
+                connections
     return m
 
 
@@ -115,11 +198,11 @@ SELECT ?a ?b ?c WHERE {
     ?b dbo:iso31661Code ?c .
 }
 """,
-            graph=f"{namespace}PT-20250116-MOBIE-DATEXII",
+            graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
         )
     )
     # m.write_triples(
     #     file_path="PT-20250116-MOBIE-DATEXII.ttl",
     #     format="turtle",
-    #     graph=f"{namespace}PT-20250116-MOBIE-DATEXII",
+    #     graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
     # )

@@ -31,6 +31,10 @@ vkg-common:LocatedIn[ ottr:IRI ?inner, ottr:IRI ?outer ] :: {
     ottr:Triple(?inner, bfo:BFO_0000171, ?outer),
 } .
 
+vkg-common:PartOf[ ottr:IRI ?left, ottr:IRI ?right ] :: {
+    ottr:Triple(?left, bfo:BFO_0000176, ?right),
+} .
+
 vkg-common:hasCentroid[ottr:IRI ?geolocation, geo:WktLiteral ?centroid ] :: {
     ottr:Triple(?geolocation, geo:hasCentroid, _:centroid)
     ottr:Triple(_:centroid, geo:asWKT, ?centroid)

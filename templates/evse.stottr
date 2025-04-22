@@ -14,7 +14,9 @@
 
 vkg-evse:EVSE[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
   vkg-common:Type(?evse, chio:CHIO_00000016),
-  ottr:Triple(?evse, bfo:BFO_0000176, ?facility ),
+  vkg-common:Type(_:column, chio:CHIO_00000005)
+  vkg-common:PartOf(_:column, ?facility),
+  vkg-common:PartOf(?evse, _:column),
   vkg-common:Identifier(_:identifier, ?ID),
   vkg-common:Identifier(_:identifierAlt, ?altID),
   vkg-common:DesignatedBy(?evse, _:identifier ), 
@@ -53,5 +55,7 @@ vkg-evse:Operator[ ottr:IRI ?operator, ? xsd:string ?label, ? xsd:string ?ID, ? 
 } .
 
 vkg-evse:Connection[ ottr:IRI ?evse, ottr:IRI ?pattern, ottr:IRI ?coupling, ? xsd:decimal ?max_voltage, ? xsd:decimal ?max_amperage, ? xsd:decimal ?max_power] :: {
-
+  vkg-common:Type(_:connector, ?coupling),
+  vkg-common:PartOf(_:connector, ?evse),
+  vkg-common:BearerOf(_:connector, ?pattern),
 } .
