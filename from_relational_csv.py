@@ -1,6 +1,6 @@
 from glob import glob
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Tuple
 import polars as pl
 from maplib import Mapping
 
