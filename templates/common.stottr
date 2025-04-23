@@ -37,6 +37,14 @@ vkg-common:DesignatedBy[ ottr:IRI ?designated, ottr:IRI ?designator] :: {
     ottr:Triple(?designated, cco:ont00001879, ?designator ),
 } .
 
+vkg-common:PrescribedBy[ ottr:IRI ?prescribed, ottr:IRI ?prescriptor] :: {
+    ottr:Triple(?prescribed, cco:ont00001920, ?prescriptor ),
+} .
+
+vkg-common:DescribedBy[ ottr:IRI ?described, ottr:IRI ?descriptor] :: {
+    ottr:Triple(?described, cco:ont00001917, ?descriptor ),
+} .
+
 vkg-common:Location[ ottr:IRI ?location, ? xsd:string ?label] :: {
     vkg-common:Type(?location, cco:ont00000487),
     vkg-common:Identifier(_:identifier, ?label),

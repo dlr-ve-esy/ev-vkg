@@ -53,6 +53,11 @@ vkg-evse:Operator[ ottr:IRI ?operator, ? xsd:string ?label, ? xsd:string ?ID, ? 
   vkg-common:BearerOf(?operator, ?role),
 } .
 
+vkg-evse:MaxVoltage[ ottr:IRI ?ice, xsd:decimal ?voltage ] :: {
+  
+} .
+
+
 vkg-evse:Connection[ ottr:IRI ?evse, ottr:IRI ?pattern, ottr:IRI ?coupling, ? xsd:decimal ?max_voltage, ? xsd:decimal ?max_amperage, ? xsd:decimal ?max_power] :: {
   vkg-common:Type(_:connector, ?coupling),
   vkg-common:PartOf(_:connector, ?evse),
