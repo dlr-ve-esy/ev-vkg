@@ -184,8 +184,20 @@ def main() -> Mapping:
 
 if __name__ == "__main__":
     m = main()
+    m.read_triples(
+        "ontology/chio-full.ttl",
+        transient=False,
+        graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
+    )
     with open("queries/facilities_and_their_country.sparql", "r") as d:
         facilities_and_their_country = d.read()
-    print(
-        m.query(facilities_and_their_country, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
-    )
+
+    with open("reasoning/rdfs_subclass.sparql", "r") as d:
+        rdfs_subclass = d.read()
+
+    res = m.query(rdfs_subclass, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
+
+    print(res[0])
+    # print(
+    #     m.query(facilities_and_their_country, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
+    # )
