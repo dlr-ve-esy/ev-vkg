@@ -53,13 +53,29 @@ vkg-evse:Operator[ ottr:IRI ?operator, ? xsd:string ?label, ? xsd:string ?ID, ? 
   vkg-common:BearerOf(?operator, ?role),
 } .
 
-vkg-evse:MaxVoltage[ ottr:IRI ?ice, xsd:decimal ?voltage ] :: {
-  
+vkg-evse:MaxVoltage[ ottr:IRI ?object, ottr:IRI ?ice, xsd:decimal ?voltage ] :: {
+  vkg-common:Type(?ice, chio:CHIO_00000091),
+  ottr:Triple(?ice, chio:CHIO_00000106, ?voltage),
+  ottr:Triple(?object, chio:CHIO_00000110, ?ice)
 } .
 
+vkg-evse:MaxAmperage[ ottr:IRI ?object, ottr:IRI ?ice, xsd:decimal ?amperage ] :: {
+  vkg-common:Type(?ice, chio:CHIO_00000093),
+  ottr:Triple(?ice, chio:CHIO_00000106, ?amperage),
+  ottr:Triple(?object, chio:CHIO_00000111, ?ice)
+} .
+
+vkg-evse:MaxPower[ ottr:IRI ?object, ottr:IRI ?ice, xsd:decimal ?power ] :: {
+  vkg-common:Type(?ice, chio:CHIO_00000092),
+  ottr:Triple(?ice, chio:CHIO_00000106, ?power),
+  ottr:Triple(?object, chio:CHIO_00000112, ?ice)
+} .
 
 vkg-evse:Connection[ ottr:IRI ?evse, ottr:IRI ?pattern, ottr:IRI ?coupling, ? xsd:decimal ?max_voltage, ? xsd:decimal ?max_amperage, ? xsd:decimal ?max_power] :: {
   vkg-common:Type(_:connector, ?coupling),
   vkg-common:PartOf(_:connector, ?evse),
   vkg-common:BearerOf(_:connector, ?pattern),
+  vkg-evse:MaxVoltage(_:connector, _:max_voltage, ?max_voltage),
+  vkg-evse:MaxAmperage(_:connector, _:max_amperage, ?max_amperage),
+  vkg-evse:MaxPower(_:connector, _:max_power, ?max_power),
 } .

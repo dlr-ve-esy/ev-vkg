@@ -1,0 +1,16 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+CONSTRUCT { ?object ?inverse ?subject }
+WHERE {
+    {
+    ?subject ?property ?object .
+    OPTIONAL { ?property a owl:ObjectProperty ;
+        owl:inverseOf ?inverse . }
+    }
+    UNION
+    {
+    ?subject ?property ?object .
+    OPTIONAL { ?property a owl:ObjectProperty .
+               ?inverse owl:inverseOf ?property . }
+    }
+}

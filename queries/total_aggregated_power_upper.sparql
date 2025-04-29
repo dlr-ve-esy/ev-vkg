@@ -1,0 +1,15 @@
+PREFIX chio:<https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX bfo:<http://purl.obolibrary.org/obo/>
+
+SELECT (SUM(?accounted_power) AS ?total_accounted_power)
+WHERE {
+  SELECT ?evse (MAX(?value) AS ?accounted_power)
+  WHERE {
+    ?evse a chio:CHIO_00000016 ;
+          bfo:BFO_0000178 ?connector .
+    ?connector a chio:CHIO_00000012 ;
+          chio:CHIO_00000112 ?power .
+    ?power chio:CHIO_00000106 ?value .
+  }
+  GROUP BY ?evse
+}

@@ -7,7 +7,7 @@ from maplib import Mapping
 paths: List[Path] = [Path(f) for f in glob("operational/*")]
 mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
 
-CHIO = "https://dlr-ve-esy.github.io/charging_ontology/"
+CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
 VKG = "https://gitlab.dlr.de/vkg#"
 
 CHALLENGE_MODE = True
@@ -174,30 +174,31 @@ def main() -> Mapping:
                     pl.col("coupling").map_elements(
                         map_coupling_method, return_dtype=pl.String
                     ),
-                    pl.col("max_voltage"),
-                    pl.col("max_amperage"),
-                    pl.col("max_power"),
+                    pl.col("max_voltage").cast(float),
+                    pl.col("max_amperage").cast(float),
+                    pl.col("max_power").cast(float),
                 )
-                connections
+                m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
     return m
 
 
 if __name__ == "__main__":
     m = main()
-    m.read_triples(
-        "ontology/chio-full.ttl",
-        transient=False,
-        graph=f"{VKG}PT-20250116-MOBIE-DATEXII",
-    )
-    with open("queries/facilities_and_their_country.sparql", "r") as d:
-        facilities_and_their_country = d.read()
+    TEST_GRAPH = f"{VKG}PT-20250116-MOBIE-DATEXII"
+    m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
     with open("reasoning/rdfs_subclass.sparql", "r") as d:
         rdfs_subclass = d.read()
 
-    res = m.query(rdfs_subclass, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
+    with open("reasoning/inverse_object_properties.sparql", "r") as d:
+        inverse_object_properties = d.read()
 
-    print(res[0])
-    # print(
-    #     m.query(facilities_and_their_country, graph=f"{VKG}PT-20250116-MOBIE-DATEXII")
-    # )
+    with open("queries/total_aggregated_power_upper.sparql", "r") as d:
+        total_aggregated_power_upper = d.read()
+
+    m.insert(rdfs_subclass, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
+    m.insert(
+        inverse_object_properties, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
+    )
+
+    print(m.query(total_aggregated_power_upper, graph=TEST_GRAPH))
