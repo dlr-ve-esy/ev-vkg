@@ -71,10 +71,15 @@ vkg-evse:MaxPower[ ottr:IRI ?object, ottr:IRI ?ice, xsd:decimal ?power ] :: {
   ottr:Triple(?object, chio:CHIO_00000112, ?ice)
 } .
 
+vkg-evse:Pattern[ ottr:IRI ?entity, ottr:IRI ?type] :: {
+  vkg-common:Type(?entity, ?type)
+} .
+
 vkg-evse:Connection[ ottr:IRI ?evse, ottr:IRI ?pattern, ottr:IRI ?coupling, ? xsd:decimal ?max_voltage, ? xsd:decimal ?max_amperage, ? xsd:decimal ?max_power] :: {
   vkg-common:Type(_:connector, ?coupling),
   vkg-common:PartOf(_:connector, ?evse),
-  vkg-common:BearerOf(_:connector, ?pattern),
+  vkg-evse:Pattern(_:pattern, ?pattern)
+  vkg-common:BearerOf(_:connector, _:pattern),
   vkg-evse:MaxVoltage(_:connector, _:max_voltage, ?max_voltage),
   vkg-evse:MaxAmperage(_:connector, _:max_amperage, ?max_amperage),
   vkg-evse:MaxPower(_:connector, _:max_power, ?max_power),
