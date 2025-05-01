@@ -72,7 +72,7 @@ def map_plug_standards(text: str) -> str:
     return out
 
 
-def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = None):
+def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = None, challenge: bool = False):
     if mapping is None:
         with open("templates/evse.stottr", "r") as d:
             vkg_evse = d.read()
@@ -82,8 +82,16 @@ def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = Non
     else:
         m = mapping
 
+    country: str = name.split("-")[0]
+    pl.Config.set_fmt_str_lengths(150)
+
     if (p := Path(f"{path}/facilities.csv")).exists():
         facility: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            facility = facility.sample(5)
+        geo_ids = facility["geolocation_id"].unique()
+        operator_ids = facility["operator_id"].unique()
+        facility_ids = facility["id"].unique()
         facility = facility.select(
             (VKG + pl.col("id").cast(str)).alias("facility"),
             (VKG + pl.col("operator_id").cast(str)).alias("operator"),
@@ -91,10 +99,10 @@ def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = Non
             pl.col("id").cast(str).alias("ID"),
         )
         m.expand("vkg-evse:Facility", facility, graph=f"{VKG}{name}")
-    country: str = name.split("-")[0]
-    pl.Config.set_fmt_str_lengths(150)
     if (p := Path(f"{path}/geolocations.csv")).exists():
         geolocations: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            geolocations = geolocations.filter(pl.col("id").is_in(geo_ids))
         if (p := Path(f"{path}/spatial.csv")).exists():
             geolocations = geolocations.join(
                 pl.read_csv(p), left_on="spatial_id", right_on="id"
@@ -124,6 +132,8 @@ def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = Non
 
     if (p := Path(f"{path}/operators.csv")).exists():
         operator: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            operator = operator.filter(pl.col("id").is_in(operator_ids))
         operator = operator.select(
             (VKG + pl.col("id").cast(str)).alias("operator"),
             pl.col("name").cast(str).alias("label"),
@@ -139,18 +149,22 @@ def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = Non
         )
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
     if (p := Path(f"{path}/evses.csv")).exists():
-        evse: pl.DataFrame = pl.read_csv(p).select(
+        evse: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            evse = evse.filter(pl.col("facility_id").is_in(facility_ids))
+        evse_ids = evse["id"].unique()
+        evse = evse.select(
             (VKG + pl.col("id").cast(str)).alias("evse"),
             (VKG + pl.col("facility_id").cast(str)).alias("facility"),
             pl.col("id").cast(str).alias("ID"),
             pl.col("evseid").cast(str).alias("altID"),
         )
-
         m.expand("vkg-evse:EVSE", evse, graph=f"{VKG}{name}")
 
     if (p := Path(f"{path}/connections.csv")).exists():
         connections: pl.DataFrame = pl.read_csv(p)
-
+        if challenge:
+            connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
         if (p := Path(f"{path}/connectors.csv")).exists():
             connections = connections.join(
                 pl.read_csv(p), left_on="connector_id", right_on="id"
@@ -189,13 +203,13 @@ def main() -> Mapping:
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
-        expand_relational_csv(name, path, m)
+        expand_relational_csv(name, path, m, challenge=False)
     return m
 
 
 if __name__ == "__main__":
     m = main()
-    TEST_GRAPH = f"{VKG}LV-20250120-NPPDK-DATEXII"
+    TEST_GRAPH = f"{VKG}PT-20250131-MOBIE-DATEXII"
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
     with open("reasoning/rdfs_subclass.sparql", "r") as d:
