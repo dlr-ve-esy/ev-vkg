@@ -11,7 +11,7 @@ m.write_triples("triples.ttl", format="turtle", graph=TEST_GRAPH)
 2. Replace the blank nodes with iris using regex:
 
 ```regex
-_:([a-zA-Z]+_l\d+_p\d+_r\d+)
+_:([A-Za-z0-9-_]+)
 ```
 
 3. Merge the file with the ontology
