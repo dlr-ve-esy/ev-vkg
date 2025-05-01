@@ -1,0 +1,19 @@
+PREFIX vkg: <https://gitlab.dlr.de/vkg#>
+
+CONSTRUCT {
+  ?newIRI ?p ?o .
+  ?s ?p ?newIRI .
+}
+WHERE {
+  {
+    ?bnode ?p ?o .
+    FILTER(isBlank(?bnode))
+    BIND(IRI(CONCAT("https://gitlab.dlr.de/vkg#", STRAFTER(STR(?bnode), "_:"))) AS ?newIRI)
+  }
+  UNION
+  {
+    ?s ?p ?bnode .
+    FILTER(isBlank(?bnode))
+    BIND(IRI(CONCAT("https://gitlab.dlr.de/vkg#", STRAFTER(STR(?bnode), "_:"))) AS ?newIRI)
+  }
+}
