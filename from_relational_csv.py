@@ -4,9 +4,6 @@ from typing import List, Tuple, Optional
 import polars as pl
 from maplib import Mapping
 
-paths: List[Path] = [Path(f) for f in glob("operational/*")]
-mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
-
 CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
 VKG = "https://gitlab.dlr.de/vkg#"
 
@@ -72,7 +69,9 @@ def map_plug_standards(text: str) -> str:
     return out
 
 
-def expand_relational_csv(name: str, path: str, mapping: Optional[Mapping] = None, challenge: bool = False):
+def expand_relational_csv(
+    name: str, path: str, mapping: Optional[Mapping] = None, challenge: bool = False
+):
     if mapping is None:
         with open("templates/evse.stottr", "r") as d:
             vkg_evse = d.read()
@@ -196,6 +195,9 @@ def map_coupling_method(text: str) -> str:
 
 
 def main() -> Mapping:
+    paths: List[Path] = [Path(f) for f in glob("operational/*")]
+    mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
+
     with open("templates/evse.stottr", "r") as d:
         vkg_evse = d.read()
     with open("templates/common.stottr", "r") as d:
@@ -209,7 +211,7 @@ def main() -> Mapping:
 
 if __name__ == "__main__":
     m = main()
-    TEST_GRAPH = f"{VKG}PT-20250131-MOBIE-DATEXII"
+    TEST_GRAPH = f"{VKG}NO-20250120-NOBIL-NOBIL"
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
     with open("reasoning/rdfs_subclass.sparql", "r") as d:
