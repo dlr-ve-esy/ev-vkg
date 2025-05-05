@@ -1,0 +1,21 @@
+PREFIX chio:<https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX bfo:<http://purl.obolibrary.org/obo/>
+PREFIX dbo:<https://dbpedia.org/ontology/>
+
+SELECT ?code (SUM(?accounted_power)/1000 AS ?total_accounted_power)
+WHERE {
+  SELECT ?code ?evse (MAX(?value) AS ?accounted_power)
+  WHERE {
+    ?evse a chio:CHIO_00000016 ;
+          bfo:BFO_0000178 ?connector ;
+          bfo:BFO_0000176+ ?facility .
+    ?connector a chio:CHIO_00000012 ;
+          chio:CHIO_00000112 ?power .
+    ?power chio:CHIO_00000106 ?value .
+    ?facility a chio:CHIO_00000004 ;
+         bfo:BFO_0000171+ ?country .
+    ?country dbo:iso31661Code ?code .
+  }
+  GROUP BY ?code ?evse
+}
+GROUP BY ?code

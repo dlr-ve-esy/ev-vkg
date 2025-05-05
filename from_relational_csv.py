@@ -70,7 +70,11 @@ def map_plug_standards(text: str) -> str:
 
 
 def expand_relational_csv(
-    name: str, path: str, mapping: Optional[Mapping] = None, challenge: bool = False
+    name: str,
+    path: str,
+    mapping: Optional[Mapping] = None,
+    challenge: bool = False,
+    country: Optional[str] = None,
 ):
     if mapping is None:
         with open("templates/evse.stottr", "r") as d:
@@ -80,8 +84,6 @@ def expand_relational_csv(
         m = Mapping([vkg_common, vkg_evse])
     else:
         m = mapping
-
-    country: str = name.split("-")[0]
     pl.Config.set_fmt_str_lengths(150)
 
     if (p := Path(f"{path}/facilities.csv")).exists():
@@ -123,9 +125,9 @@ def expand_relational_csv(
             geolocations.get_column("zip_code", default=pl.lit(None))
             .cast(str)
             .alias("postal_code"),
-            geolocations.get_column("country", default=pl.lit(country)).alias(
-                "country"
-            ),
+            geolocations.get_column("country", default=pl.lit(country))
+            .fill_null(country)
+            .alias("country"),
         )
         m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{VKG}{name}")
 
@@ -205,13 +207,14 @@ def main() -> Mapping:
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
-        expand_relational_csv(name, path, m, challenge=False)
+        country: str = name.split("-")[0]
+        expand_relational_csv("graph", path, m, challenge=False, country=country)
     return m
 
 
 if __name__ == "__main__":
     m = main()
-    TEST_GRAPH = f"{VKG}NO-20250120-NOBIL-NOBIL"
+    TEST_GRAPH = f"{VKG}graph"
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
     with open("reasoning/rdfs_subclass.sparql", "r") as d:
@@ -220,12 +223,12 @@ if __name__ == "__main__":
     with open("reasoning/inverse_object_properties.sparql", "r") as d:
         inverse_object_properties = d.read()
 
-    with open("queries/total_aggregated_power_upper.sparql", "r") as d:
-        total_aggregated_power_upper = d.read()
+    with open("queries/total_aggregated_power_per_country.sparql", "r") as d:
+        total_aggregated_power_per_country = d.read()
 
     m.insert(rdfs_subclass, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     m.insert(
         inverse_object_properties, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
     )
 
-    print(m.query(total_aggregated_power_upper, graph=TEST_GRAPH))
+    print(m.query(total_aggregated_power_per_country, graph=TEST_GRAPH))
