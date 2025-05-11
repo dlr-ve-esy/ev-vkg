@@ -51,7 +51,7 @@ def _(mo):
 
 
 @app.cell
-def _(Mapping, expand_relational_csv, mappings, vkg_common, vkg_evse):
+def _(Mapping, expand_relational_csv, mappings, mo, vkg_common, vkg_evse):
     # Initialize mappiing
     m = Mapping([vkg_common, vkg_evse])
 
@@ -59,6 +59,7 @@ def _(Mapping, expand_relational_csv, mappings, vkg_common, vkg_evse):
         if ("nobil" in name.lower()) or ("datexii" in path.lower()):
             country: str = name.split("-")[0]
             expand_relational_csv("graph", path, m, challenge=False, country=country)
+    mo.show_code()
     return (m,)
 
 
@@ -69,16 +70,21 @@ def _(mo):
 
 
 @app.cell
+def _(VKG, m, mo):
+    TEST_GRAPH = f"{VKG}graph"
+    m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
+    mo.show_code()
+    return (TEST_GRAPH,)
+
+
+@app.cell
 def _(mo):
     mo.md(r"""### Reason SubClass relations""")
     return
 
 
 @app.cell
-def _(VKG, m, mo):
-    TEST_GRAPH = f"{VKG}graph"
-    m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
-
+def _(TEST_GRAPH, m, mo):
     with open("reasoning/rdfs_subclass.sparql", "r") as input_c:
         rdfs_subclass = input_c.read()
 
@@ -86,7 +92,7 @@ def _(VKG, m, mo):
     mo.md(f"""```sparql
     {rdfs_subclass}
     ```""")
-    return (TEST_GRAPH,)
+    return
 
 
 @app.cell
@@ -126,7 +132,6 @@ def _(mo):
 
 @app.cell
 def _(TEST_GRAPH, m, total_aggregated_power_per_country):
-
     m.query(total_aggregated_power_per_country, graph=TEST_GRAPH)
     return
 
