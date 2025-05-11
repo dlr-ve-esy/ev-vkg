@@ -28,7 +28,7 @@ def _(mo):
 
 
 @app.cell
-def _(List, Path, Tuple, glob):
+def _(List, Path, Tuple, glob, mo):
     CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
     VKG = "https://gitlab.dlr.de/vkg#"
 
@@ -40,6 +40,7 @@ def _(List, Path, Tuple, glob):
         vkg_evse = input_a.read()
     with open("templates/common.stottr", "r") as input_b:
         vkg_common = input_b.read()
+    mo.show_code()
     return VKG, mappings, vkg_common, vkg_evse
 
 
@@ -68,24 +69,43 @@ def _(mo):
 
 
 @app.cell
-def _(VKG, m):
+def _(mo):
+    mo.md(r"""### Reason SubClass relations""")
+    return
+
+
+@app.cell
+def _(VKG, m, mo):
     TEST_GRAPH = f"{VKG}graph"
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
     with open("reasoning/rdfs_subclass.sparql", "r") as input_c:
         rdfs_subclass = input_c.read()
 
+    m.insert(rdfs_subclass, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
+    mo.md(f"""```sparql
+    {rdfs_subclass}
+    ```""")
+    return (TEST_GRAPH,)
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""### Reason inverse object properties""")
+    return
+
+
+@app.cell
+def _(TEST_GRAPH, m, mo):
     with open("reasoning/inverse_object_properties.sparql", "r") as input_d:
         inverse_object_properties = input_d.read()
-
-    with open("queries/total_aggregated_power_per_country.sparql", "r") as input_e:
-        total_aggregated_power_per_country = input_e.read()
-
-    m.insert(rdfs_subclass, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     m.insert(
         inverse_object_properties, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
     )
-    return TEST_GRAPH, total_aggregated_power_per_country
+    mo.md(f"""```sparql
+    {inverse_object_properties}
+    ```""")
+    return
 
 
 @app.cell
@@ -95,8 +115,24 @@ def _(mo):
 
 
 @app.cell
+def _(mo):
+    with open("queries/total_aggregated_power_per_country.sparql", "r") as input_e:
+        total_aggregated_power_per_country = input_e.read()
+    mo.md(f"""```sparql
+    {total_aggregated_power_per_country}
+    ```""")
+    return (total_aggregated_power_per_country,)
+
+
+@app.cell
 def _(TEST_GRAPH, m, total_aggregated_power_per_country):
+
     m.query(total_aggregated_power_per_country, graph=TEST_GRAPH)
+    return
+
+
+@app.cell
+def _():
     return
 
 
