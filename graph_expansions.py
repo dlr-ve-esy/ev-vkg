@@ -1,6 +1,5 @@
-from glob import glob
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import Optional
 import polars as pl
 from maplib import Mapping
 
@@ -68,6 +67,17 @@ def map_plug_standards(text: str) -> str:
             out = f"{CHIO}CHIO_00000015"  # TODO: Add logging
     return out
 
+
+def map_coupling_method(text: str) -> str:
+    match text.lower():
+        case "cable":
+            out = f"{CHIO}CHIO_00000013"
+        case "socket":
+            out = f"{CHIO}CHIO_00000014"
+        case _:
+            # print(f"Unkown pattern: {text}. Defaulting to cable")
+            out = f"{CHIO}CHIO_00000013"
+    return out
 
 def expand_relational_csv(
     name: str,
@@ -183,14 +193,11 @@ def expand_relational_csv(
             )
             m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
 
-
-def map_coupling_method(text: str) -> str:
-    match text.lower():
-        case "cable":
-            out = f"{CHIO}CHIO_00000013"
-        case "socket":
-            out = f"{CHIO}CHIO_00000014"
-        case _:
-            # print(f"Unkown pattern: {text}. Defaulting to cable")
-            out = f"{CHIO}CHIO_00000013"
-    return out
+def expand_bnezta(
+    name: str,
+    path: str,
+    mapping: Optional[Mapping] = None,
+    challenge: bool = False,
+    country: Optional[str] = None,
+):
+    pass
