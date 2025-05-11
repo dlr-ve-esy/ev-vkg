@@ -196,7 +196,7 @@ def map_coupling_method(text: str) -> str:
     return out
 
 
-def main() -> Mapping:
+def main():
     paths: List[Path] = [Path(f) for f in glob("operational/*")]
     mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
 
@@ -207,13 +207,10 @@ def main() -> Mapping:
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
-        country: str = name.split("-")[0]
-        expand_relational_csv("graph", path, m, challenge=False, country=country)
-    return m
+        if ("nobil" in name.lower()) or ("datexii" in path.lower()):
+            country: str = name.split("-")[0]
+            expand_relational_csv("graph", path, m, challenge=False, country=country)
 
-
-if __name__ == "__main__":
-    m = main()
     TEST_GRAPH = f"{VKG}graph"
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
 
@@ -232,3 +229,7 @@ if __name__ == "__main__":
     )
 
     print(m.query(total_aggregated_power_per_country, graph=TEST_GRAPH))
+
+
+if __name__ == "__main__":
+    main()
