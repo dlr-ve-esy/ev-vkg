@@ -7,6 +7,7 @@ requires-python = ">=3.13"
 dependencies = [
     "frictionless>=5.18.1",
     "maplib>=0.15.11",
+    "marimo>=0.13.6",
     "openpyxl>=3.1.5",
     "pandas>=2.2.3",
     "polars>=1.26.0",
