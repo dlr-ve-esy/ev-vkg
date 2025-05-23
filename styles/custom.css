@@ -1,0 +1,10 @@
+/* Load Inter from Google Fonts */
+
+:root {
+  --marimo-heading-font: 'Frutiger', sans-serif;
+  --marimo-text-font: 'Frutiger 45 Light', sans-serif;
+}
+
+.mo-slide-content {
+  box-shadow: inset 2.4rem 0px 0px rgb(0,102,141);
+}

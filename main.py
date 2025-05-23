@@ -1,12 +1,22 @@
 import marimo
 
-__generated_with = "0.13.6"
-app = marimo.App(width="medium")
+__generated_with = "0.13.11"
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/main.slides.json",
+    css_file="styles/custom.css",
+)
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Knowledge Graph Analysis""")
+    mo.md(
+        r"""
+    # Knowledge Graph Analysis
+
+    This is the best text
+    """
+    )
     return
 
 
@@ -18,6 +28,7 @@ def _():
     from pathlib import Path
     from typing import List, Tuple
     from maplib import Mapping
+
     return List, Mapping, Path, Tuple, expand_relational_csv, glob, mo
 
 
@@ -52,7 +63,6 @@ def _(mo):
 
 @app.cell
 def _(Mapping, expand_relational_csv, mappings, mo, vkg_common, vkg_evse):
-    # Initialize mappiing
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
@@ -78,12 +88,6 @@ def _(VKG, m, mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""### Reason SubClass relations""")
-    return
-
-
-@app.cell
 def _(TEST_GRAPH, m, mo):
     with open("reasoning/rdfs_subclass.sparql", "r") as input_c:
         rdfs_subclass = input_c.read()
@@ -96,19 +100,15 @@ def _(TEST_GRAPH, m, mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""### Reason inverse object properties""")
-    return
-
-
-@app.cell
 def _(TEST_GRAPH, m, mo):
     with open("reasoning/inverse_object_properties.sparql", "r") as input_d:
         inverse_object_properties = input_d.read()
     m.insert(
         inverse_object_properties, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
     )
-    mo.md(f"""```sparql
+    mo.md(f"""### Reason inverse object properties
+
+    ```sparql
     {inverse_object_properties}
     ```""")
     return
