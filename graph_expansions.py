@@ -2,6 +2,8 @@ from pathlib import Path
 from typing import Optional
 import polars as pl
 from maplib import Mapping
+import re
+import datetime
 
 CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
 VKG = "https://gitlab.dlr.de/vkg#"
@@ -78,6 +80,7 @@ def map_coupling_method(text: str) -> str:
             # print(f"Unkown pattern: {text}. Defaulting to cable")
             out = f"{CHIO}CHIO_00000013"
     return out
+
 
 def expand_relational_csv(
     name: str,
@@ -193,6 +196,7 @@ def expand_relational_csv(
             )
             m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
 
+
 def expand_bnezta(
     name: str,
     path: str,
@@ -200,4 +204,25 @@ def expand_bnezta(
     challenge: bool = False,
     country: Optional[str] = None,
 ):
-    pass
+    if mapping is None:
+        with open("templates/evse.stottr", "r") as d:
+            vkg_evse = d.read()
+        with open("templates/common.stottr", "r") as d:
+            vkg_common = d.read()
+        m = Mapping([vkg_common, vkg_evse])
+    else:
+        m = mapping
+    pl.Config.set_fmt_str_lengths(150)
+    pattern = r"(\d{4})(\d{2})(\d{2})"
+    matches = re.search(pattern, path)
+    if matches:
+        yyyy, mm, dd = matches.groups()
+    else:
+        now = datetime.datetime.now()
+        yyyy = str(now.year)
+        mm = str(now.month)
+        dd = str(now.day)
+
+    if (p := Path(f"{path}/bnetza_charging_columns_{dd}_{mm}_{yyyy}.csv")).exists():
+        ch_columns: pl.DataFrame = pl.read_csv(p)
+        pass

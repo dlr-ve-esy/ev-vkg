@@ -23,13 +23,13 @@ def _(mo):
 @app.cell
 def _():
     import marimo as mo
-    from graph_expansions import expand_relational_csv
+    from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
     from pathlib import Path
     from typing import List, Tuple
     from maplib import Mapping
 
-    return List, Mapping, Path, Tuple, expand_relational_csv, glob, mo
+    return List, Mapping, Path, Tuple, expand_relational_csv, expand_bnezta, glob, mo
 
 
 @app.cell
@@ -62,13 +62,17 @@ def _(mo):
 
 
 @app.cell
-def _(Mapping, expand_relational_csv, mappings, mo, vkg_common, vkg_evse):
+def _(
+    Mapping, expand_relational_csv, expand_bnezta, mappings, mo, vkg_common, vkg_evse
+):
     m = Mapping([vkg_common, vkg_evse])
 
     for name, path in mappings:
+        country: str = name.split("-")[0]
         if ("nobil" in name.lower()) or ("datexii" in path.lower()):
-            country: str = name.split("-")[0]
             expand_relational_csv("graph", path, m, challenge=False, country=country)
+        if "bnetza" in name.lower():
+            expand_bnezta("graph", path, m, challenge=False, country=country)
     mo.show_code()
     return (m,)
 
