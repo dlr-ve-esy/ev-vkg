@@ -225,4 +225,8 @@ def expand_bnezta(
 
     if (p := Path(f"{path}/bnetza_charging_columns_{dd}_{mm}_{yyyy}.csv")).exists():
         ch_columns: pl.DataFrame = pl.read_csv(p)
+        # FIXME: By switching keine angabe to null we can do better aggregations
+        # cols = [pl.col("operator_id"), pl.col("location_id"), pl.col("opening_times"), pl.col("opening_days"), pl.col("opeing_hours")]
+        # check = ch_columns.group_by(*cols).count().sort(by="count").drop(pl.col("count"))
+        # check.filter(~check.select(pl.col("operator_id"), pl.col("location_id")).is_unique()).write_csv("nnqs.csv")
         pass
