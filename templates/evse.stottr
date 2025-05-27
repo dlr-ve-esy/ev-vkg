@@ -11,7 +11,16 @@
 @prefix vkg-evse: 	<https://gitlab.dlr.de/vkg-evse#> . 
 @prefix vkg-common: 	<https://gitlab.dlr.de/vkg-common#> . 
 
-vkg-evse:EVSE[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
+vkg-evse:EVSE[ ottr:IRI ?evse, ?column, ?ID, ? ?altID ] :: {
+  vkg-common:Type(?evse, chio:CHIO_00000016),
+  vkg-common:PartOf(?evse, ?column),
+  vkg-common:Identifier(_:identifier, ?ID),
+  vkg-common:Identifier(_:identifierAlt, ?altID),
+  vkg-common:DesignatedBy(?evse, _:identifier ), 
+  vkg-common:DesignatedBy(?evse, _:identifierAlt ), 
+} .
+
+vkg-evse:EVSEColumn[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
   vkg-common:Type(?evse, chio:CHIO_00000016),
   vkg-common:Type(_:column, chio:CHIO_00000005)
   vkg-common:PartOf(_:column, ?facility),
@@ -20,6 +29,16 @@ vkg-evse:EVSE[ ottr:IRI ?evse, ?facility, ?ID, ? ?altID ] :: {
   vkg-common:Identifier(_:identifierAlt, ?altID),
   vkg-common:DesignatedBy(?evse, _:identifier ), 
   vkg-common:DesignatedBy(?evse, _:identifierAlt ), 
+} .
+
+vkg-evse:Column[ ottr:IRI ?column,  ottr:IRI ?facility, ? ottr:IRI ?geolocation, ? ?ID, ? xsd:decimal ?max_power, ? xsd:dateTime ?commisioning ] :: {
+  vkg-common:Type(?column, chio:CHIO_00000005),
+  vkg-common:PartOf(?column, ?facility),
+  vkg-common:Identifier(_:identifier, ?ID),
+  vkg-common:DesignatedBy(?column, _:identifier ), 
+  vkg-common:LocatedIn(?column, ?geolocation),
+  vkg-evse:MaxPower(?column, _:max_power, ?max_power),
+  vkg-evse:CommissioningDate(?column, ?commisioning),
 } .
 
 vkg-evse:Facility[ ottr:IRI ?facility, ? ottr:IRI ?operator, ? ottr:IRI ?geolocation, ? xsd:string ?ID] :: {
@@ -70,6 +89,16 @@ vkg-evse:MaxPower[ ottr:IRI ?object, ottr:IRI ?ice, xsd:decimal ?power ] :: {
   vkg-common:Type(?ice, chio:CHIO_00000092),
   ottr:Triple(?ice, chio:CHIO_00000106, ?power),
   ottr:Triple(?object, chio:CHIO_00000112, ?ice)
+} .
+
+vkg-evse:CommissioningDate[ ottr:IRI ?column, xsd:dateTime ?commisioning] :: {
+  ottr:Triple(?column, bfo:BFO_0000056, _:stasis)
+  vkg-common:Type(_:stasis, cco:ont00000924),
+  vkg-common:Type(_:tregion, bfo:BFO_0000008),
+  vkg-common:Type(_:identifier, cco:ont00001340),
+  ottr:Triple(_:stasis, bfo:BFO_0000199, _:tregion)
+  vkg-common:DesignatedBy(_:tregion, _:identifier), 
+  ottr:Triple(_:identifier, chio:CHIO_00000106, ?commisioning),
 } .
 
 vkg-evse:Connection[ ottr:IRI ?evse, ottr:IRI ?pattern, ottr:IRI ?coupling, ? xsd:decimal ?max_voltage, ? xsd:decimal ?max_amperage, ? xsd:decimal ?max_power] :: {

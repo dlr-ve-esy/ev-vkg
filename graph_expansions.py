@@ -173,7 +173,7 @@ def expand_relational_csv(
             pl.col("id").cast(str).alias("ID"),
             pl.col("evseid").cast(str).alias("altID"),
         )
-        m.expand("vkg-evse:EVSE", evse, graph=f"{VKG}{name}")
+        m.expand("vkg-evse:EVSEColumn", evse, graph=f"{VKG}{name}")
 
     if (p := Path(f"{path}/connections.csv")).exists():
         connections: pl.DataFrame = pl.read_csv(p)
@@ -231,7 +231,7 @@ def expand_bnezta(
         operator_ids = facility["operator_id"].unique()
         facility_ids = facility["id"].unique()
         facility = facility.select(
-            (VKG + pl.col("id").cast(str)).alias("facility"),
+            (VKG + "bnetza_facility" + pl.col("facility_id").cast(str).str.zfill(8)).alias("facility"),
             (VKG + pl.col("operator_id").cast(str)).alias("operator"),
             (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
             pl.col("id").cast(str).alias("ID"),
@@ -276,7 +276,7 @@ def expand_bnezta(
         if challenge:
             operator = operator.filter(pl.col("id").is_in(operator_ids))
         operator = operator.select(
-            (VKG + pl.col("id").cast(str)).alias("operator"),
+            (VKG + "bnetza_operator" + pl.col("id").cast(str).str.zfill(8)).alias("operator"),
             pl.col("operator").cast(str).alias("label"),
             operator.get_column("type", default=pl.lit("operator"))
             .map_elements(
@@ -288,3 +288,50 @@ def expand_bnezta(
             .alias("role"),
         )
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
+
+    if (p := Path(f"{path}/bnetza_columns_{dd}_{mm}_{yyyy}.csv")).exists():
+        columns: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
+        column_ids = columns["id"].unique()
+        columns = columns.select(
+            (VKG + "bnetza_column" + pl.col("column_id").cast(str).str.zfill(8)).alias("column"),
+            (VKG + "bnetza_facility" + pl.col("facility_id").cast(str).str.zfill(8)).alias("facility"),
+            (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+            pl.col("display_name").cast(str).alias("ID"),
+            pl.col("net_capacity").alias("max_power"),
+            pl.col("commissioning_date").str.to_datetime().alias("commisioning"),
+        )
+        m.expand("vkg-evse:Column", columns, graph=f"{VKG}{name}")
+
+    if (p := Path(f"{path}/bnetza_points_{dd}_{mm}_{yyyy}.csv")).exists():
+        evse: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            evse = evse.filter(pl.col("facility_id").is_in(facility_ids))
+        evse_ids = evse["id"].unique()
+        evse = evse.select(
+            (VKG + "bnetza_evse" + pl.col("id").cast(str).str.zfill(8)).alias("evse"),
+            (VKG + "bnetza_column" + pl.col("column_id").cast(str).str.zfill(8)).alias("column"),
+            pl.col("EVSE-ID").cast(str).alias("ID"),
+            pl.col("Key").cast(str).alias("altID"),
+        )
+        m.expand("vkg-evse:EVSE", evse, graph=f"{VKG}{name}")
+
+    if (p := Path(f"{path}/bnetza_compatibility_{dd}_{mm}_{yyyy}.csv")).exists():
+        connections: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
+        if (p := Path(f"{path}/bnetza_sockets_{dd}_{mm}_{yyyy}.csv")).exists():
+            connections = connections.join(
+                pl.read_csv(p), left_on="socket_id", right_on="id"
+            ).select(
+                (VKG + "bnetza_evse" + pl.col("point_id").cast(str).str.zfill(8)).alias("evse"),
+                pl.col("pattern")
+                .map_elements(map_plug_standards, return_dtype=pl.String)
+                .alias("pattern"),
+                pl.col("connector").map_elements(
+                    map_coupling_method, return_dtype=pl.String
+                ),
+                pl.col("power").cast(float),
+            )
+            m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
