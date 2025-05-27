@@ -223,10 +223,68 @@ def expand_bnezta(
         mm = str(now.month)
         dd = str(now.day)
 
-    if (p := Path(f"{path}/bnetza_charging_columns_{dd}_{mm}_{yyyy}.csv")).exists():
-        ch_columns: pl.DataFrame = pl.read_csv(p)
-        # FIXME: By switching keine angabe to null we can do better aggregations
-        # cols = [pl.col("operator_id"), pl.col("location_id"), pl.col("opening_times"), pl.col("opening_days"), pl.col("opeing_hours")]
-        # check = ch_columns.group_by(*cols).count().sort(by="count").drop(pl.col("count"))
-        # check.filter(~check.select(pl.col("operator_id"), pl.col("location_id")).is_unique()).write_csv("nnqs.csv")
-        pass
+    if (p := Path(f"{path}/bnetza_facilities_{dd}_{mm}_{yyyy}.csv")).exists():
+        facility: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            facility = facility.sample(5)
+        geo_ids = facility["geolocation_id"].unique()
+        operator_ids = facility["operator_id"].unique()
+        facility_ids = facility["id"].unique()
+        facility = facility.select(
+            (VKG + pl.col("id").cast(str)).alias("facility"),
+            (VKG + pl.col("operator_id").cast(str)).alias("operator"),
+            (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+            pl.col("id").cast(str).alias("ID"),
+        )
+        m.expand("vkg-evse:Facility", facility, graph=f"{VKG}{name}")
+
+    if (p := Path(f"{path}/bnetza_geolocations_{dd}_{mm}_{yyyy}.csv")).exists():
+        geolocations: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            geolocations = geolocations.filter(pl.col("id").is_in(geo_ids))
+        if (p := Path(f"{path}/bnetza_coordinates_{dd}_{mm}_{yyyy}.csv")).exists():
+            geolocations = geolocations.join(
+                pl.read_csv(p), left_on="coordinate_id", right_on="id"
+            )
+        if (p := Path(f"{path}/addresses.csv")).exists():
+            geolocations = geolocations.join(
+                pl.read_csv(p), left_on="address_id", right_on="id"
+            )
+        geolocations = geolocations.select(
+            (VKG + pl.col("id").cast(str)).alias("geolocation"),
+            pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
+            .cast(str)
+            .alias("centroid"),
+            geolocations.get_column("thoroughfare", default=pl.lit(None)).alias(
+                "address"
+            ),
+            geolocations.get_column("post_name", default=pl.lit(None)).alias(
+                "postal_name"
+            ),
+            geolocations.get_column("county", default=pl.lit(None)).alias("state"),
+            geolocations.get_column("postcode", default=pl.lit(None))
+            .cast(str)
+            .alias("postal_code"),
+            geolocations.get_column("country", default=pl.lit(country))
+            .fill_null(country)
+            .alias("country"),
+        )
+        m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{VKG}{name}")
+
+    if (p := Path(f"{path}/bnetza_operators_{dd}_{mm}_{yyyy}.csv")).exists():
+        operator: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            operator = operator.filter(pl.col("id").is_in(operator_ids))
+        operator = operator.select(
+            (VKG + pl.col("id").cast(str)).alias("operator"),
+            pl.col("operator").cast(str).alias("label"),
+            operator.get_column("type", default=pl.lit("operator"))
+            .map_elements(
+                lambda x: "https://www.commoncoreontologies.org/ont00001006"
+                if x == "operator"
+                else pl.Null,
+                return_dtype=pl.String,
+            )
+            .alias("role"),
+        )
+        m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
