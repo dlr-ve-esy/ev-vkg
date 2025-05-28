@@ -16,11 +16,7 @@ WHERE {
           chio:CHIO_00000112 ?power .
     ?power chio:CHIO_00000106 ?value .
     ?facility a chio:CHIO_00000004 ;
-         bfo:BFO_0000171 ?geolocation .
-    ?geolocation bfo:BFO_0000171 ?address . 
-    ?address bfo:BFO_0000171 ?local . 
-    ?local bfo:BFO_0000171 ?state . 
-    ?state bfo:BFO_0000171 ?country . 
+         bfo:BFO_0000171+ ?country . 
     ?country dbo:iso31661Code ?code .
     BIND(xsd:float(?value) AS ?floatValue)
   }
