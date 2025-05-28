@@ -28,8 +28,17 @@ def _():
     from pathlib import Path
     from typing import List, Tuple
     from maplib import Mapping
-
-    return List, Mapping, Path, Tuple, expand_relational_csv, expand_bnezta, glob, mo
+    import polars as pl
+    return (
+        List,
+        Mapping,
+        Path,
+        Tuple,
+        expand_bnezta,
+        expand_relational_csv,
+        glob,
+        mo,
+    )
 
 
 @app.cell
@@ -63,10 +72,15 @@ def _(mo):
 
 @app.cell
 def _(
-    Mapping, expand_relational_csv, expand_bnezta, mappings, mo, vkg_common, vkg_evse
+    Mapping,
+    expand_bnezta,
+    expand_relational_csv,
+    mappings,
+    mo,
+    vkg_common,
+    vkg_evse,
 ):
     m = Mapping([vkg_common, vkg_evse])
-
     for name, path in mappings:
         country: str = name.split("-")[0]
         if ("nobil" in name.lower()) or ("datexii" in path.lower()):
@@ -137,11 +151,6 @@ def _(mo):
 @app.cell
 def _(TEST_GRAPH, m, total_aggregated_power_per_country):
     m.query(total_aggregated_power_per_country, graph=TEST_GRAPH)
-    return
-
-
-@app.cell
-def _():
     return
 
 

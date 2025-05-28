@@ -1,0 +1,19 @@
+PREFIX chio:<https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX bfo:<http://purl.obolibrary.org/obo/>
+PREFIX dbo:<https://dbpedia.org/ontology/>
+
+
+SELECT ?code ?column ?value
+  WHERE {
+    ?column a chio:CHIO_00000005 ;
+          chio:CHIO_00000112 ?power ;
+          bfo:BFO_0000176 ?facility . 
+    ?power chio:CHIO_00000106 ?value .
+    ?facility a chio:CHIO_00000004 ;
+         bfo:BFO_0000171 ?geolocation .
+    ?geolocation bfo:BFO_0000171 ?address . 
+    ?address bfo:BFO_0000171 ?local . 
+    ?local bfo:BFO_0000171 ?state . 
+    ?state bfo:BFO_0000171 ?country . 
+    ?country dbo:iso31661Code ?code .
+  } 

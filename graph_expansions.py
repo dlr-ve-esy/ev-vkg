@@ -223,17 +223,33 @@ def expand_bnezta(
         mm = str(now.month)
         dd = str(now.day)
 
-    if (p := Path(f"{path}/bnetza_facilities_{dd}_{mm}_{yyyy}.csv")).exists():
+    def facility_iri(id):
+        return VKG + "bnetza_facility" + pl.col(id).cast(str).str.zfill(8)
+
+    def operator_iri(id):
+        return VKG + "bnetza_operator" + pl.col(id).cast(str).str.zfill(8)
+
+    def geolocation_iri(id):
+        return VKG + "bnetza_operator" + pl.col(id).cast(str).str.zfill(8)
+
+    def column_iri(id):
+        return VKG + "bnetza_column" + pl.col(id).cast(str).str.zfill(8)
+
+    def evse_iri(id):
+        return VKG + "bnetza_evse" + pl.col(id).cast(str).str.zfill(8)
+
+    if (p := Path(f"{path}/bnetza_charging_facilities_{dd}_{mm}_{yyyy}.csv")).exists():
         facility: pl.DataFrame = pl.read_csv(p)
         if challenge:
             facility = facility.sample(5)
         geo_ids = facility["geolocation_id"].unique()
         operator_ids = facility["operator_id"].unique()
         facility_ids = facility["id"].unique()
+
         facility = facility.select(
-            (VKG + "bnetza_facility" + pl.col("facility_id").cast(str).str.zfill(8)).alias("facility"),
-            (VKG + pl.col("operator_id").cast(str)).alias("operator"),
-            (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+            (facility_iri("id")).alias("facility"),
+            (operator_iri("operator_id")).alias("operator"),
+            (geolocation_iri("geolocation_id")).alias("geolocation"),
             pl.col("id").cast(str).alias("ID"),
         )
         m.expand("vkg-evse:Facility", facility, graph=f"{VKG}{name}")
@@ -251,7 +267,7 @@ def expand_bnezta(
                 pl.read_csv(p), left_on="address_id", right_on="id"
             )
         geolocations = geolocations.select(
-            (VKG + pl.col("id").cast(str)).alias("geolocation"),
+            (geolocation_iri("id")).alias("geolocation"),
             pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
             .cast(str)
             .alias("centroid"),
@@ -276,7 +292,7 @@ def expand_bnezta(
         if challenge:
             operator = operator.filter(pl.col("id").is_in(operator_ids))
         operator = operator.select(
-            (VKG + "bnetza_operator" + pl.col("id").cast(str).str.zfill(8)).alias("operator"),
+            (operator_iri("id")).alias("operator"),
             pl.col("operator").cast(str).alias("label"),
             operator.get_column("type", default=pl.lit("operator"))
             .map_elements(
@@ -289,49 +305,58 @@ def expand_bnezta(
         )
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
 
-    if (p := Path(f"{path}/bnetza_columns_{dd}_{mm}_{yyyy}.csv")).exists():
+    if (p := Path(f"{path}/bnetza_charging_columns_{dd}_{mm}_{yyyy}.csv")).exists():
         columns: pl.DataFrame = pl.read_csv(p)
         if challenge:
             columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
         column_ids = columns["id"].unique()
         columns = columns.select(
-            (VKG + "bnetza_column" + pl.col("column_id").cast(str).str.zfill(8)).alias("column"),
-            (VKG + "bnetza_facility" + pl.col("facility_id").cast(str).str.zfill(8)).alias("facility"),
-            (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+            (column_iri("id")).alias("column"),
+            (facility_iri("facility_id")).alias("facility"),
+            (geolocation_iri("geolocation_id")).alias("geolocation"),
             pl.col("display_name").cast(str).alias("ID"),
-            pl.col("net_capacity").alias("max_power"),
-            pl.col("commissioning_date").str.to_datetime().alias("commisioning"),
+            pl.col("net_capacity").fill_null(0.0).fill_nan(0.0).alias("max_power"),
+            pl.col("commissioning_date")
+            .cast(str)
+            .alias("commisioning"),  # datetimes currently break the model
         )
         m.expand("vkg-evse:Column", columns, graph=f"{VKG}{name}")
 
-    if (p := Path(f"{path}/bnetza_points_{dd}_{mm}_{yyyy}.csv")).exists():
+    if (p := Path(f"{path}/bnetza_charging_points_{dd}_{mm}_{yyyy}.csv")).exists():
         evse: pl.DataFrame = pl.read_csv(p)
         if challenge:
             evse = evse.filter(pl.col("facility_id").is_in(facility_ids))
         evse_ids = evse["id"].unique()
         evse = evse.select(
-            (VKG + "bnetza_evse" + pl.col("id").cast(str).str.zfill(8)).alias("evse"),
-            (VKG + "bnetza_column" + pl.col("column_id").cast(str).str.zfill(8)).alias("column"),
+            (evse_iri("id")).alias("evse"),
+            (column_iri("column_id")).alias("column"),
             pl.col("EVSE-ID").cast(str).alias("ID"),
             pl.col("Key").cast(str).alias("altID"),
         )
         m.expand("vkg-evse:EVSE", evse, graph=f"{VKG}{name}")
 
-    if (p := Path(f"{path}/bnetza_compatibility_{dd}_{mm}_{yyyy}.csv")).exists():
+    if (
+        p := Path(f"{path}/bnetza_charging_compatibility_{dd}_{mm}_{yyyy}.csv")
+    ).exists():
         connections: pl.DataFrame = pl.read_csv(p)
         if challenge:
             connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
-        if (p := Path(f"{path}/bnetza_sockets_{dd}_{mm}_{yyyy}.csv")).exists():
+        if (p := Path(f"{path}/bnetza_charging_sockets_{dd}_{mm}_{yyyy}.csv")).exists():
             connections = connections.join(
                 pl.read_csv(p), left_on="socket_id", right_on="id"
             ).select(
-                (VKG + "bnetza_evse" + pl.col("point_id").cast(str).str.zfill(8)).alias("evse"),
+                (evse_iri("point_id")).alias("evse"),
                 pl.col("pattern")
                 .map_elements(map_plug_standards, return_dtype=pl.String)
                 .alias("pattern"),
-                pl.col("connector").map_elements(
-                    map_coupling_method, return_dtype=pl.String
-                ),
-                pl.col("power").cast(float),
+                pl.col("connector")
+                .map_elements(map_coupling_method, return_dtype=pl.String)
+                .alias("coupling"),
+                pl.col("power")
+                .cast(float)
+                .fill_null(0.0)
+                .fill_nan(0.0)
+                .mul(1000)
+                .alias("max_power"),
             )
             m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
