@@ -25,6 +25,7 @@ def _():
     from typing import List, Tuple
     from maplib import Mapping
     import polars as pl
+
     return (
         List,
         Mapping,
@@ -119,9 +120,7 @@ def _(TEST_GRAPH, m, mo):
 def _(TEST_GRAPH, m, mo):
     with open("reasoning/has_part.sparql", "r") as input_d:
         has_part = input_d.read()
-    m.insert(
-        has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
-    )
+    m.insert(has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     mo.md(f"""### Mereology: has part
 
     ```sparql
@@ -134,11 +133,18 @@ def _(TEST_GRAPH, m, mo):
 def _(TEST_GRAPH, m, mo):
     with open("reasoning/part_of.sparql", "r") as input_g:
         part_of = input_g.read()
-    m.insert(
-        part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
-    )
+    m.insert(part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     mo.md(f"""### Mereology: part of
-
+    Common logic axiomatization from BFO:
+    ```lisp
+    (cl:comment "continuant-part-of is transitive at a time [plp-1]"
+    (forall (a b c t t2)
+     (if
+      (and (continuant-part-of a b t) (continuant-part-of b c t2)
+       (temporal-part-of t t2))
+      (continuant-part-of a c t))))
+    ```
+    SPARQL query:
     ```sparql
     {part_of}
     ```""")
@@ -153,7 +159,9 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    with open("queries/total_aggregated_power_per_country_lower.sparql", "r") as input_e:
+    with open(
+        "queries/total_aggregated_power_per_country_lower.sparql", "r"
+    ) as input_e:
         total_aggregated_power_per_country_lower = input_e.read()
     mo.md(f"""### Total power accounting minimum EVSE potential 
 
@@ -171,7 +179,9 @@ def _(TEST_GRAPH, m, total_aggregated_power_per_country_lower):
 
 @app.cell
 def _(mo):
-    with open("queries/total_aggregated_power_per_country_upper.sparql", "r") as input_f:
+    with open(
+        "queries/total_aggregated_power_per_country_upper.sparql", "r"
+    ) as input_f:
         total_aggregated_power_per_country_upper = input_f.read()
     mo.md(f"""### Total power accounting maximum EVSE potential 
 
