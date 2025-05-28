@@ -103,27 +103,44 @@ def _(VKG, m, mo):
 
 @app.cell
 def _(TEST_GRAPH, m, mo):
-    with open("reasoning/rdfs_subclass.sparql", "r") as input_c:
-        rdfs_subclass = input_c.read()
+    with open("reasoning/charging_connector.sparql", "r") as input_c:
+        charging_connector = input_c.read()
 
-    m.insert(rdfs_subclass, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""```sparql
-    {rdfs_subclass}
+    m.insert(charging_connector, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
+    mo.md(f"""### Infer connector class
+
+    ```sparql
+    {charging_connector}
     ```""")
     return
 
 
 @app.cell
 def _(TEST_GRAPH, m, mo):
-    with open("reasoning/inverse_object_properties.sparql", "r") as input_d:
-        inverse_object_properties = input_d.read()
+    with open("reasoning/has_part.sparql", "r") as input_d:
+        has_part = input_d.read()
     m.insert(
-        inverse_object_properties, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
+        has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
     )
-    mo.md(f"""### Reason inverse object properties
+    mo.md(f"""### Mereology: has part
 
     ```sparql
-    {inverse_object_properties}
+    {has_part}
+    ```""")
+    return
+
+
+@app.cell
+def _(TEST_GRAPH, m, mo):
+    with open("reasoning/part_of.sparql", "r") as input_g:
+        part_of = input_g.read()
+    m.insert(
+        part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH
+    )
+    mo.md(f"""### Mereology: part of
+
+    ```sparql
+    {part_of}
     ```""")
     return
 

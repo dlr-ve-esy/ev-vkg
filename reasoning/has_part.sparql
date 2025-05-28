@@ -1,0 +1,6 @@
+PREFIX bfo: <http://purl.obolibrary.org/obo/>
+
+CONSTRUCT { ?object bfo:BFO_0000178 ?subject }
+WHERE {
+    ?subject bfo:BFO_0000176 ?object .
+}

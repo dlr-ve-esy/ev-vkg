@@ -1,0 +1,9 @@
+PREFIX rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+PREFIX chio: <https://dlr-ve-esy.github.io/charging-ontology/>
+
+CONSTRUCT { ?a a chio:CHIO_00000012 }
+WHERE {
+    ?a a ?c .
+    ?c rdfs:subClassOf+ chio:CHIO_00000012 .
+    
+}
