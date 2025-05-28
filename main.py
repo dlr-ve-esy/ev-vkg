@@ -1,11 +1,7 @@
 import marimo
 
 __generated_with = "0.13.11"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
@@ -140,17 +136,37 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    with open("queries/total_aggregated_power_per_country.sparql", "r") as input_e:
-        total_aggregated_power_per_country = input_e.read()
-    mo.md(f"""```sparql
-    {total_aggregated_power_per_country}
+    with open("queries/total_aggregated_power_per_country_lower.sparql", "r") as input_e:
+        total_aggregated_power_per_country_lower = input_e.read()
+    mo.md(f"""### Total power accounting minimum EVSE potential 
+
+    ```sparql
+    {total_aggregated_power_per_country_lower}
     ```""")
-    return (total_aggregated_power_per_country,)
+    return (total_aggregated_power_per_country_lower,)
 
 
 @app.cell
-def _(TEST_GRAPH, m, total_aggregated_power_per_country):
-    m.query(total_aggregated_power_per_country, graph=TEST_GRAPH)
+def _(TEST_GRAPH, m, total_aggregated_power_per_country_lower):
+    m.query(total_aggregated_power_per_country_lower, graph=TEST_GRAPH)
+    return
+
+
+@app.cell
+def _(mo):
+    with open("queries/total_aggregated_power_per_country_upper.sparql", "r") as input_f:
+        total_aggregated_power_per_country_upper = input_f.read()
+    mo.md(f"""### Total power accounting maximum EVSE potential 
+
+    ```sparql
+    {total_aggregated_power_per_country_upper}
+    ```""")
+    return (total_aggregated_power_per_country_upper,)
+
+
+@app.cell
+def _(TEST_GRAPH, m, total_aggregated_power_per_country_upper):
+    m.query(total_aggregated_power_per_country_upper, graph=TEST_GRAPH)
     return
 
 
