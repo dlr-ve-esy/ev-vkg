@@ -121,9 +121,13 @@ def expand_relational_csv(
             geolocations = geolocations.join(
                 pl.read_csv(p), left_on="spatial_id", right_on="id"
             )
+        elif (p := Path(f"{path}/coordinates.csv")).exists():
+            geolocations = geolocations.join(
+                pl.read_csv(p), left_on="spatial_id", right_on="id"
+            )
         if (p := Path(f"{path}/addresses.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p), left_on="address_id", right_on="id"
+                pl.read_csv(p, infer_schema_length=None), left_on="address_id", right_on="id"
             )
         geolocations = geolocations.select(
             (VKG + pl.col("id").cast(str)).alias("geolocation"),
@@ -160,20 +164,40 @@ def expand_relational_csv(
                 return_dtype=pl.String,
             )
             .alias("role"),
-        )
+        ).drop_nulls(subset="operator")
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
+    if (p := Path(f"{path}/columns.csv")).exists():
+        columns: pl.DataFrame = pl.read_csv(p)
+        if challenge:
+            columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
+        column_ids = columns["id"].unique()
+        challenge_ids = column_ids
+        columns = columns.select(
+            (VKG + pl.col("id").cast(str)).alias("column"),
+            (VKG + pl.col("facility_id").cast(str)).alias("facility"),
+            (VKG + pl.col("geolocation_id").cast(str)).alias("geolocation"),
+        )
+
+        m.expand("vkg-evse:Column", columns, graph=f"{VKG}{name}")
+
+        evse_fk = (VKG + pl.col("column_id").cast(str)).alias("column")
+        evse_expansion_template = "vkg-evse:EVSE"
+    else:
+        challenge_ids = facility_ids
+        evse_fk = (VKG + pl.col("facility_id").cast(str)).alias("facility")
+        evse_expansion_template = "vkg-evse:EVSEColumn"
     if (p := Path(f"{path}/evses.csv")).exists():
         evse: pl.DataFrame = pl.read_csv(p)
         if challenge:
-            evse = evse.filter(pl.col("facility_id").is_in(facility_ids))
+            evse = evse.filter(pl.col("facility_id").is_in(challenge_ids))
         evse_ids = evse["id"].unique()
         evse = evse.select(
             (VKG + pl.col("id").cast(str)).alias("evse"),
-            (VKG + pl.col("facility_id").cast(str)).alias("facility"),
+            evse_fk,
             pl.col("id").cast(str).alias("ID"),
-            pl.col("evseid").cast(str).alias("altID"),
+            evse.get_column("evseid", default=pl.lit(None)).cast(str).alias("altID"),
         )
-        m.expand("vkg-evse:EVSEColumn", evse, graph=f"{VKG}{name}")
+        m.expand(evse_expansion_template, evse, graph=f"{VKG}{name}")
 
     if (p := Path(f"{path}/connections.csv")).exists():
         connections: pl.DataFrame = pl.read_csv(p)
@@ -182,7 +206,10 @@ def expand_relational_csv(
         if (p := Path(f"{path}/connectors.csv")).exists():
             connections = connections.join(
                 pl.read_csv(p), left_on="connector_id", right_on="id"
-            ).select(
+            ).with_columns(
+                connections.get_column("coupling", default=pl.lit("connector")).alias("coupling")
+            )
+            connections = connections.select(
                 (VKG + pl.col("evse_id").cast(str)).alias("evse"),
                 pl.col("standard")
                 .map_elements(map_plug_standards, return_dtype=pl.String)
@@ -190,9 +217,9 @@ def expand_relational_csv(
                 pl.col("coupling").map_elements(
                     map_coupling_method, return_dtype=pl.String
                 ),
-                pl.col("max_voltage").cast(float),
-                pl.col("max_amperage").cast(float),
-                pl.col("max_power").cast(float),
+                connections.get_column("max_voltage", default=pl.lit(None)).cast(float).alias("max_voltage"),
+                connections.get_column("max_amperage", default=pl.lit(None)).cast(float).alias("max_amperage"),
+                connections.get_column("max_power", default=pl.lit(None)).cast(float).alias("max_power"),
             )
             m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
 
@@ -289,12 +316,15 @@ def expand_bnezta(
 
     if (p := Path(f"{path}/bnetza_operators_{dd}_{mm}_{yyyy}.csv")).exists():
         operator: pl.DataFrame = pl.read_csv(p)
+        operator = operator.with_columns(
+            operator.get_column("type", default=pl.lit("operator")).alias("type")
+        )
         if challenge:
             operator = operator.filter(pl.col("id").is_in(operator_ids))
         operator = operator.select(
             (operator_iri("id")).alias("operator"),
             pl.col("operator").cast(str).alias("label"),
-            operator.get_column("type", default=pl.lit("operator"))
+            pl.col("type")
             .map_elements(
                 lambda x: "https://www.commoncoreontologies.org/ont00001006"
                 if x == "operator"
