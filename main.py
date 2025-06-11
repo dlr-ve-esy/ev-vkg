@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.11"
+__generated_with = "0.13.14"
 app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
@@ -26,16 +26,7 @@ def _():
     from maplib import Mapping
     import polars as pl
 
-    return (
-        List,
-        Mapping,
-        Path,
-        Tuple,
-        expand_bnezta,
-        expand_relational_csv,
-        glob,
-        mo,
-    )
+    return List, Mapping, Path, Tuple, expand_relational_csv, glob, mo
 
 
 @app.cell
@@ -70,9 +61,8 @@ def _(mo):
 @app.cell
 def _(
     Mapping,
-    expand_bnezta,
     expand_relational_csv,
-    mappings,
+    mappings: "List[Tuple[str, str]]",
     mo,
     vkg_common,
     vkg_evse,
@@ -80,7 +70,11 @@ def _(
     m = Mapping([vkg_common, vkg_evse])
     for name, path in mappings:
         country: str = name.split("-")[0]
-        if ("nobil" in name.lower()) or ("datexii" in path.lower()):
+        if (
+            ("nobil" in name.lower())
+            or ("datexii" in path.lower())
+            or ("irve" in path.lower())
+        ):
             expand_relational_csv("graph", path, m, challenge=False, country=country)
         if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
