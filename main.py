@@ -80,7 +80,11 @@ def _(
     m = Mapping([vkg_common, vkg_evse])
     for name, path in mappings:
         country: str = name.split("-")[0]
-        if ("nobil" in name.lower()) or ("datexii" in path.lower()):
+        if (
+            ("nobil" in name.lower())
+            or ("datexii" in path.lower())
+            or ("irve" in path.lower())
+        ):
             expand_relational_csv("graph", path, m, challenge=False, country=country)
         if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
