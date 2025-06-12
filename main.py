@@ -1,23 +1,17 @@
 import marimo
 
-__generated_with = "0.13.14"
-app = marimo.App(width="medium", css_file="styles/custom.css")
-
-
-@app.cell
-def _(mo):
-    mo.md(
-        r"""
-    # Knowledge Graph Analysis
-
-    This is the best text
-    """
-    )
-    return
+__generated_with = "0.13.11"
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/main.slides.json",
+    css_file="styles/custom.css",
+)
 
 
 @app.cell
 def _():
+    import json
+    from widgets.sources_cartogram_widget import SourcesCartogramWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -25,8 +19,81 @@ def _():
     from typing import List, Tuple
     from maplib import Mapping
     import polars as pl
+    return (
+        List,
+        Mapping,
+        Path,
+        SourcesCartogramWidget,
+        Tuple,
+        expand_bnezta,
+        expand_relational_csv,
+        glob,
+        json,
+        mo,
+    )
 
-    return List, Mapping, Path, Tuple, expand_relational_csv, glob, mo
+
+@app.cell
+def _(mo):
+    mo.md(r"""# Background""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    ## Charging infrastructure data from the AFIR
+
+    - The European union published in 2023 the Alternative Fuels Infrastructure Regulation (AFIR)
+    - This regulation contains data provisions regarding the availability of charging infrastructure data.
+    - The union reports the regulations performance through European Alternative Fuels Observatory (EAFO)
+    """
+    )
+    return
+
+
+@app.cell
+def _(json):
+    with open("viz_data/sources_per_country.json", "r") as f:
+        sources_per_country = json.load(f)
+    with open("viz_data/source_colors.json", "r") as f:
+        source_colors = json.load(f)
+    with open("viz_data/color_legend.json", "r") as f:
+        color_legend = json.load(f)
+    with open("viz_data/countries_9x9_xy.json", "r") as f:
+        country_grid = json.load(f)
+    return color_legend, country_grid, source_colors, sources_per_country
+
+
+@app.cell
+def _(
+    SourcesCartogramWidget,
+    color_legend,
+    country_grid,
+    mo,
+    source_colors,
+    sources_per_country,
+):
+
+    widget = mo.ui.anywidget(SourcesCartogramWidget(sources_per_country=sources_per_country, source_colors=source_colors, color_legend=color_legend,country_grid=country_grid))
+    mo.md(f"""## The EAFO data ecosystem
+    {widget}
+    <p style="text-align: center;">Data providers used by the EAFO distribuited by state.</p>
+    """)
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""# FAIR Analysis""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""# Knowledge Graph Analysis""")
+    return
 
 
 @app.cell
@@ -61,8 +128,9 @@ def _(mo):
 @app.cell
 def _(
     Mapping,
+    expand_bnezta,
     expand_relational_csv,
-    mappings: "List[Tuple[str, str]]",
+    mappings,
     mo,
     vkg_common,
     vkg_evse,
