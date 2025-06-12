@@ -100,7 +100,7 @@ def expand_relational_csv(
     pl.Config.set_fmt_str_lengths(150)
 
     if (p := Path(f"{path}/facilities.csv")).exists():
-        facility: pl.DataFrame = pl.read_csv(p)
+        facility = pl.read_csv(p)
         if challenge:
             facility = facility.sample(5)
         geo_ids = facility["geolocation_id"].unique()
@@ -119,15 +119,27 @@ def expand_relational_csv(
             geolocations = geolocations.filter(pl.col("id").is_in(geo_ids))
         if (p := Path(f"{path}/spatial.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p), left_on="spatial_id", right_on="id"
+                pl.read_csv(p),
+                left_on="spatial_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             )
         elif (p := Path(f"{path}/coordinates.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p), left_on="spatial_id", right_on="id"
+                pl.read_csv(p),
+                left_on="spatial_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             )
         if (p := Path(f"{path}/addresses.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p, infer_schema_length=None), left_on="address_id", right_on="id"
+                pl.read_csv(p, infer_schema_length=None),
+                left_on="address_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             )
         geolocations = geolocations.select(
             (VKG + pl.col("id").cast(str)).alias("geolocation"),
@@ -205,9 +217,15 @@ def expand_relational_csv(
             connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
         if (p := Path(f"{path}/connectors.csv")).exists():
             connections = connections.join(
-                pl.read_csv(p), left_on="connector_id", right_on="id"
+                pl.read_csv(p),
+                left_on="connector_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             ).with_columns(
-                connections.get_column("coupling", default=pl.lit("connector")).alias("coupling")
+                connections.get_column("coupling", default=pl.lit("connector")).alias(
+                    "coupling"
+                )
             )
             connections = connections.select(
                 (VKG + pl.col("evse_id").cast(str)).alias("evse"),
@@ -217,9 +235,15 @@ def expand_relational_csv(
                 pl.col("coupling").map_elements(
                     map_coupling_method, return_dtype=pl.String
                 ),
-                connections.get_column("max_voltage", default=pl.lit(None)).cast(float).alias("max_voltage"),
-                connections.get_column("max_amperage", default=pl.lit(None)).cast(float).alias("max_amperage"),
-                connections.get_column("max_power", default=pl.lit(None)).cast(float).alias("max_power"),
+                connections.get_column("max_voltage", default=pl.lit(None))
+                .cast(float)
+                .alias("max_voltage"),
+                connections.get_column("max_amperage", default=pl.lit(None))
+                .cast(float)
+                .alias("max_amperage"),
+                connections.get_column("max_power", default=pl.lit(None))
+                .cast(float)
+                .alias("max_power"),
             )
             m.expand("vkg-evse:Connection", connections, graph=f"{VKG}{name}")
 
@@ -287,11 +311,19 @@ def expand_bnezta(
             geolocations = geolocations.filter(pl.col("id").is_in(geo_ids))
         if (p := Path(f"{path}/bnetza_coordinates_{dd}_{mm}_{yyyy}.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p), left_on="coordinate_id", right_on="id"
+                pl.read_csv(p),
+                left_on="coordinate_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             )
         if (p := Path(f"{path}/addresses.csv")).exists():
             geolocations = geolocations.join(
-                pl.read_csv(p), left_on="address_id", right_on="id"
+                pl.read_csv(p),
+                left_on="address_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             )
         geolocations = geolocations.select(
             (geolocation_iri("id")).alias("geolocation"),
@@ -373,7 +405,11 @@ def expand_bnezta(
             connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
         if (p := Path(f"{path}/bnetza_charging_sockets_{dd}_{mm}_{yyyy}.csv")).exists():
             connections = connections.join(
-                pl.read_csv(p), left_on="socket_id", right_on="id"
+                pl.read_csv(p),
+                left_on="socket_id",
+                right_on="id",
+                nulls_equal=True,
+                how="left",
             ).select(
                 (evse_iri("point_id")).alias("evse"),
                 pl.col("pattern")
