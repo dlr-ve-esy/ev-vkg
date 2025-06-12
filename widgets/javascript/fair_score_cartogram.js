@@ -1,18 +1,19 @@
 import * as d3 from "d3";
 
-GlobalRegistrator.register();
-
-async function main() {
+async function render({ model,el}) {
   const fairData = model.get("fair_scores");
   const colorsData = model.get("source_colors");
   const grid = model.get("country_grid");
 
-  const body = d3.select(el);
+  let continer = document.createElement("div");
+  continer.classList.add("cartogram");
+  const body = d3.select(continer);
+
+  el.appendChild(continer);
 
   renderFigure(body, grid, fairData, colorsData);
 }
 
-main();
 
 const renderFigure = (element, grid, data, colors) => {
   const width = 539;
@@ -484,3 +485,5 @@ const data2Array = (data, grid) => {
 function zipArrays(arr1, arr2) {
   return arr1.map((element, index) => [element, arr2[index]]);
 }
+
+export default { render };

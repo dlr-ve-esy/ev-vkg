@@ -1,17 +1,13 @@
 import marimo
 
-__generated_with = "0.13.11"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+__generated_with = "0.13.14"
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
 def _():
     import json
-    from widgets.sources_cartogram_widget import SourcesCartogramWidget
+    from widgets.cartogram import SourcesCartogramWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -130,7 +126,7 @@ def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
-    mappings,
+    mappings: "List[Tuple[str, str]]",
     mo,
     vkg_common,
     vkg_evse,
