@@ -1,4 +1,5 @@
-import * as d3 from "d3";
+import * as d3 from "https://esm.sh/d3@7";
+
 
 async function render({ model,el}) {
   const fairData = model.get("fair_scores");
