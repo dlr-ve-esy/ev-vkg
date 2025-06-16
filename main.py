@@ -12,6 +12,7 @@ app = marimo.App(
 def _():
     import json
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
+    from widgets.barchart import BarChartWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -20,18 +21,22 @@ def _():
     from maplib import Mapping
     import polars as pl
     import requests
+    from datetime import datetime
     return (
+        BarChartWidget,
         FAIRCartogramWidget,
         List,
         Mapping,
         Path,
         SourcesCartogramWidget,
         Tuple,
+        datetime,
         expand_bnezta,
         expand_relational_csv,
         glob,
         json,
         mo,
+        pl,
         requests,
     )
 
@@ -66,14 +71,11 @@ def _(json):
         color_legend = json.load(f)
     with open("viz_data/countries_9x9_xy.json", "r") as f:
         country_grid = json.load(f)
-    with open("viz_data/fair_scores.json", "r") as f:
-        fair_scores = json.load(f)
     with open("viz_data/spectrum_colors.json", "r") as f:
         spectrum_colors = json.load(f)
     return (
         color_legend,
         country_grid,
-        fair_scores,
         source_colors,
         sources_per_country,
         spectrum_colors,
@@ -158,6 +160,82 @@ def _(INDENT, colored_square, mo):
     """
     )
     return
+
+
+@app.cell
+def _(BarChartWidget, datetime, mo, pl, sources_per_country):
+    sources_nap = pl.read_csv("sources/metadata.csv")
+    sources_nap = sources_nap.with_columns(
+        pl.col("actionable").replace_strict({"NO": False, "YES": True}),
+        pl.col("identifier").replace_strict({"NO": False, "YES": True}),
+    )
+
+    countries = list(sources_per_country.keys())
+
+    fair_scores = {c: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0} for c in countries}
+    accesible = [
+        "OPEN",
+        "REGISTERED_USERS",
+        "PER_REQUEST",
+    ]
+    optimal_access_media = ["ARCHIVE", "API"]
+    interoperable_formats = ["OCPI", "OICP", "DATEXII"]
+    for ct in countries:
+        records = sources_nap.filter(
+            pl.col("id").str.slice(0, 2).str.contains(ct)
+        ).to_dicts()
+        if len(records) == 0:
+            continue
+        dates = [datetime.strptime(r["publication_date"], "%m/%d/%Y") for r in records]
+        latest_idx = dates.index(max(dates))
+        latest_record = records[latest_idx]
+        # FINDABILITY
+        if (latest_record["metadata_url"] is None) & (
+            not (latest_record["access_url"] is None)
+        ):
+            if latest_record["medium"] in optimal_access_media:
+                fair_scores[ct]["F"] = 1
+        elif not (latest_record["metadata_url"] is None):
+            fair_scores[ct]["F"] = 2
+            if latest_record["actionable"]:
+                fair_scores[ct]["F"] = 3
+        # ACCESIBILITY
+        if latest_record["access"] in accesible:
+            fair_scores[ct]["A"] += 1
+            if not (latest_record["metadata_url"] is None):
+                fair_scores[ct]["A"] += 1
+                if latest_record["medium"] in optimal_access_media:
+                    fair_scores[ct]["A"] += 1
+        # INTEROPERABILITY
+        if latest_record["standard"] == "DOCUMENTED":
+            fair_scores[ct]["I"] += 1
+        if latest_record["standard"] in interoperable_formats:
+            fair_scores[ct]["I"] += 3
+        # REUSABILITY
+        if not (latest_record["license"] is None):
+            fair_scores[ct]["R"] += 1
+            if latest_record["provenance"] == "TEXTUAL":
+                fair_scores[ct]["R"] += 1
+            elif latest_record["provenance"] == "EU":
+                fair_scores[ct]["R"] += 2
+        fair_scores[ct]["TOTAL"] = sum(list(fair_scores[ct].values()))
+
+    totals = {k: s["TOTAL"] for k, s in fair_scores.items()}
+
+    total_data ={k: v for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True) if v > 0}
+    wg = BarChartWidget(
+            input=total_data,
+            bar_radius=4,
+            bar_color="#9d6b92",
+            width=539,
+            height=404,
+            y_max= 12,
+            y_ticks = [3,6,9]
+        )
+    mo.ui.anywidget(
+        wg
+    )
+    return (fair_scores,)
 
 
 @app.cell
@@ -252,7 +330,7 @@ def _(Path, VKG, m, mo, requests):
         if response.status_code == 200:
             with open(p, "wb") as onto_file:
                 onto_file.write(response.content)
-                
+
 
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
     mo.show_code()
