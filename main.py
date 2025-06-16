@@ -20,7 +20,6 @@ def _():
     from maplib import Mapping
     import polars as pl
     import requests
-
     return (
         FAIRCartogramWidget,
         List,
