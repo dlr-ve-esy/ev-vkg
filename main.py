@@ -1,17 +1,13 @@
 import marimo
 
-__generated_with = "0.13.11"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+__generated_with = "0.13.15"
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
 def _():
     import json
-    from widgets.sources_cartogram_widget import SourcesCartogramWidget
+    from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -20,6 +16,7 @@ def _():
     from maplib import Mapping
     import polars as pl
     return (
+        FAIRCartogramWidget,
         List,
         Mapping,
         Path,
@@ -63,7 +60,15 @@ def _(json):
         color_legend = json.load(f)
     with open("viz_data/countries_9x9_xy.json", "r") as f:
         country_grid = json.load(f)
-    return color_legend, country_grid, source_colors, sources_per_country
+    with open("viz_data/fair_scores.json", "r") as f:
+        fair_scores= json.load(f)
+    return (
+        color_legend,
+        country_grid,
+        fair_scores,
+        source_colors,
+        sources_per_country,
+    )
 
 
 @app.cell
@@ -75,7 +80,6 @@ def _(
     source_colors,
     sources_per_country,
 ):
-
     widget = mo.ui.anywidget(SourcesCartogramWidget(sources_per_country=sources_per_country, source_colors=source_colors, color_legend=color_legend,country_grid=country_grid))
     mo.md(f"""## The EAFO data ecosystem
     {widget}
@@ -87,6 +91,16 @@ def _(
 @app.cell
 def _(mo):
     mo.md(r"""# FAIR Analysis""")
+    return
+
+
+@app.cell
+def _(FAIRCartogramWidget, country_grid, fair_scores, mo, source_colors):
+    fair_widget = mo.ui.anywidget(FAIRCartogramWidget(fair_scores=fair_scores, source_colors=source_colors, country_grid=country_grid))
+    mo.md(f"""## FAIR Scores assigned by our methodology
+    {fair_widget}
+    <p style="text-align: center;">The Heuristics to assign these FAIR scores are specific to this use case.</p>
+    """)
     return
 
 
@@ -130,7 +144,7 @@ def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
-    mappings,
+    mappings: "List[Tuple[str, str]]",
     mo,
     vkg_common,
     vkg_evse,

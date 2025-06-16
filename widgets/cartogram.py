@@ -26,3 +26,27 @@ class SourcesCartogramWidget(anywidget.AnyWidget):
         max-height: 100%;
         }
     """
+
+
+class FAIRCartogramWidget(anywidget.AnyWidget):
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/fair_score_cartogram.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    fair_scores = tt.Dict({}).tag(sync=True)
+    source_colors = tt.Dict({}).tag(sync=True)
+    country_grid = tt.Dict({}).tag(sync=True)
+    _css = """
+    .cartogram {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%; /* Adjust as needed */
+        width: 100%; /* Adjust as needed */
+        }
+
+    .cartogram svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
