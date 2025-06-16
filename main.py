@@ -412,25 +412,5 @@ def _(TEST_GRAPH, m, total_aggregated_power_per_country_lower):
     return
 
 
-@app.cell
-def _(mo):
-    with open(
-        "queries/total_aggregated_power_per_country_upper.sparql", "r"
-    ) as input_f:
-        total_aggregated_power_per_country_upper = input_f.read()
-    mo.md(f"""### Total power accounting maximum EVSE potential 
-
-    ```sparql
-    {total_aggregated_power_per_country_upper}
-    ```""")
-    return (total_aggregated_power_per_country_upper,)
-
-
-@app.cell
-def _(TEST_GRAPH, m, total_aggregated_power_per_country_upper):
-    m.query(total_aggregated_power_per_country_upper, graph=TEST_GRAPH)
-    return
-
-
 if __name__ == "__main__":
     app.run()
