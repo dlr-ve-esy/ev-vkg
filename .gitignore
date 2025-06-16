@@ -20,5 +20,8 @@ wheels/
 uv.lock
 .python-version
 
+# Do not commit ontology files
+*.ttl
+
 # macOS
 .DS_Store
