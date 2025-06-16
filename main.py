@@ -19,6 +19,7 @@ def _():
     from typing import List, Tuple
     from maplib import Mapping
     import polars as pl
+    import requests
 
     return (
         FAIRCartogramWidget,
@@ -32,6 +33,7 @@ def _():
         glob,
         json,
         mo,
+        requests,
     )
 
 
@@ -240,8 +242,19 @@ def _(mo):
 
 
 @app.cell
-def _(VKG, m, mo):
+def _(Path, VKG, m, mo, requests):
     TEST_GRAPH = f"{VKG}graph"
+    ONTOLOGY_IRI = (
+        "https://dlr-ve-esy.github.io/charging-ontology/releases/0.2.0/chio-full.ttl"
+    )
+    ONTOLOGY_LOCAL = "ontology/chio-full.ttl"
+    if not (p := Path(ONTOLOGY_LOCAL)).exists():
+        response = requests.get(ONTOLOGY_IRI)
+        if response.status_code == 200:
+            with open(p, "wb") as onto_file:
+                onto_file.write(response.content)
+                
+
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
     mo.show_code()
     return (TEST_GRAPH,)
