@@ -1,0 +1,35 @@
+from traitlets.traitlets import List
+from traitlets.traitlets import Any
+import pathlib
+import anywidget
+import traitlets as tt
+
+
+class BarChartWidget(anywidget.AnyWidget):
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/batchart.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    input = tt.Dict({}).tag(sync=True)
+    width = tt.Int(500).tag(sync=True)
+    height = tt.Int(300).tag(sync=True)
+    bar_color = tt.Unicode("steelblue").tag(sync=True)
+    custom_colors = tt.Dict({}).tag(sync=True)
+    bar_radius = tt.Int(5).tag(sync=True)
+    y_max = tt.Int(0).tag(sync=True)
+    y_ticks: List[Any] = tt.List([]).tag(sync=True)
+    x_ticks: List[Any] = tt.List([]).tag(sync=True)
+    _css = """
+    .barchart {
+        display: flex;
+        justify-content: center; 
+        align-items: center;
+        height: 100%; /* Adjust as needed */
+        width: 100%; /* Adjust as needed */
+        }
+
+    .barchart svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
