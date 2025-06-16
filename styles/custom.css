@@ -1,8 +1,8 @@
 /* Load Inter from Google Fonts */
 
 :root {
-  --marimo-heading-font: 'Frutiger', sans-serif;
-  --marimo-text-font: 'Frutiger 45 Light', sans-serif;
+  --marimo-heading-font: 'Tinos Bold', serif;
+  --marimo-text-font: 'Tinos Regular', serif;
 }
 
 .mo-slide-content {
