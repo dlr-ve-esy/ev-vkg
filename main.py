@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.11"
+__generated_with = "0.13.15"
 app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
@@ -291,7 +291,7 @@ def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
-    mappings,
+    mappings: "List[Tuple[str, str]]",
     mo,
     vkg_common,
     vkg_evse,
@@ -355,8 +355,13 @@ def _(TEST_GRAPH, m, mo):
     with open("reasoning/has_part.sparql", "r") as input_d:
         has_part = input_d.read()
     m.insert(has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""### Mereology: has part
-
+    mo.md(f"""### Mereology: "has part" is inverse of "part of"
+    Common logic axiomatization:
+    ```lisp
+    (cl:comment "continuant-part-of and has-continuant-part are inverse relations [eld-1]"
+      (forall (t a b)
+        (iff (continuant-part-of a b t) (has-continuant-part b a t))))
+    ```
     ```sparql
     {has_part}
     ```""")
@@ -368,8 +373,8 @@ def _(TEST_GRAPH, m, mo):
     with open("reasoning/part_of.sparql", "r") as input_g:
         part_of = input_g.read()
     m.insert(part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""### Mereology: part of
-    Common logic axiomatization from BFO:
+    mo.md(f"""### Mereology: "part of" is transitive
+    Common logic axiomatization:
     ```lisp
     (cl:comment "continuant-part-of is transitive at a time [plp-1]"
     (forall (a b c t t2)
@@ -382,6 +387,22 @@ def _(TEST_GRAPH, m, mo):
     ```sparql
     {part_of}
     ```""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""### Mereology: "part of" is reflexive
+    Common logic axiomatization:
+    ```lisp
+    (cl:comment "continuant-part-of is reflexive at a time [mcd-1]"
+      (forall (a t)
+        (if (instance-of a independent-continuant t)
+          (continuant-part-of a a t))))
+    ```
+
+    In this excercise we have no practical application for this property, so we do not infer it.
+    """)
     return
 
 
