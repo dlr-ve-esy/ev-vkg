@@ -1,7 +1,11 @@
 import marimo
 
-__generated_with = "0.13.15"
-app = marimo.App(width="medium", css_file="styles/custom.css")
+__generated_with = "0.13.11"
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/main.slides.json",
+    css_file="styles/custom.css",
+)
 
 
 @app.cell
@@ -15,6 +19,7 @@ def _():
     from typing import List, Tuple
     from maplib import Mapping
     import polars as pl
+
     return (
         FAIRCartogramWidget,
         List,
@@ -61,13 +66,16 @@ def _(json):
     with open("viz_data/countries_9x9_xy.json", "r") as f:
         country_grid = json.load(f)
     with open("viz_data/fair_scores.json", "r") as f:
-        fair_scores= json.load(f)
+        fair_scores = json.load(f)
+    with open("viz_data/spectrum_colors.json", "r") as f:
+        spectrum_colors = json.load(f)
     return (
         color_legend,
         country_grid,
         fair_scores,
         source_colors,
         sources_per_country,
+        spectrum_colors,
     )
 
 
@@ -80,7 +88,14 @@ def _(
     source_colors,
     sources_per_country,
 ):
-    widget = mo.ui.anywidget(SourcesCartogramWidget(sources_per_country=sources_per_country, source_colors=source_colors, color_legend=color_legend,country_grid=country_grid))
+    widget = mo.ui.anywidget(
+        SourcesCartogramWidget(
+            sources_per_country=sources_per_country,
+            source_colors=source_colors,
+            color_legend=color_legend,
+            country_grid=country_grid,
+        )
+    )
     mo.md(f"""## The EAFO data ecosystem
     {widget}
     <p style="text-align: center;">Data providers used by the EAFO distribuited by state.</p>
@@ -90,17 +105,71 @@ def _(
 
 @app.cell
 def _(mo):
-    mo.md(r"""# FAIR Analysis""")
+    INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+
+    def colored_square(color):
+        return f'<span style="display: inline-block; width: 10px; height: 10px; background-color: {color}; border-radius: 2px;"></span>'
+
+    mo.md(f"""# FAIR Analysis
+
+    ## Heuristics 
+
+    To address the alignment of the sources with the FAIR principles we rely on a simple set of heuristics.  
+    The final values of the assesment are summed to calculate the final score""")
+    return INDENT, colored_square
+
+
+@app.cell
+def _(INDENT, colored_square, mo):
+    mo.md(
+        f"""
+    ### Findability
+
+    {INDENT}{colored_square("#c2cfdf")} If the resource can be accessed through a URL but has no metadata associated, we assign it one point.  
+    {INDENT}{colored_square("#6181ab")} If the resource has a persistent metadata descriptor we assign it two points.  
+    {INDENT}{colored_square("#435d7f")} If said metadata record is in a standarized actionable format (DCAT, OEMetadata) we assign it three points. 
+
+    ### Accesibility
+
+    {INDENT}{colored_square("#e9cf6f")} If the metadata reports clear paths of accesibility we add a point to the score.  
+    {INDENT}{colored_square("#e0ba2f")} If the repository allows persisting archived versions of the data we assign a point.  
+    {INDENT}{colored_square("#aa8b1a")} If the access media is either an API or an archive we assign a point.
+    """
+    )
     return
 
 
 @app.cell
-def _(FAIRCartogramWidget, country_grid, fair_scores, mo, source_colors):
-    fair_widget = mo.ui.anywidget(FAIRCartogramWidget(fair_scores=fair_scores, source_colors=source_colors, country_grid=country_grid))
+def _(INDENT, colored_square, mo):
+    mo.md(
+        f"""
+    ### Interoperability
+
+    {INDENT}{colored_square("#d97c78")} If the resource has a non-standarized exchange format but has rich documentation it gets one point.  
+    {INDENT}{colored_square("#c8433e")} If the resource follows an standard format but such format can't be validated with an automatic tool it gets two points.  
+    {INDENT}{colored_square("#932d2a")} If the standard format can be validated with automatic tools it gets three points. 
+
+    ### Reusability
+
+    {INDENT}{colored_square("#9dc291")} If the resource provides a clear license it gets one point.  
+    {INDENT}{colored_square("#73a861")} If the resource records provenance textually it gets a point.  
+    {INDENT}{colored_square("#527a44")} If the resource properly uses  the EU framework as source it gets an additional point.
+    """
+    )
+    return
+
+
+@app.cell
+def _(FAIRCartogramWidget, country_grid, fair_scores, mo, spectrum_colors):
+    fair_widget = mo.ui.anywidget(
+        FAIRCartogramWidget(
+            fair_scores=fair_scores,
+            source_colors=spectrum_colors,
+            country_grid=country_grid,
+        )
+    )
     mo.md(f"""## FAIR Scores assigned by our methodology
-    {fair_widget}
-    <p style="text-align: center;">The Heuristics to assign these FAIR scores are specific to this use case.</p>
-    """)
+    {fair_widget}""")
     return
 
 
@@ -144,7 +213,7 @@ def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
-    mappings: "List[Tuple[str, str]]",
+    mappings,
     mo,
     vkg_common,
     vkg_evse,
