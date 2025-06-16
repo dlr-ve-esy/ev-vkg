@@ -7,7 +7,7 @@ import traitlets as tt
 
 class BarChartWidget(anywidget.AnyWidget):
     # Widget front-end JavaScript code
-    _esm = pathlib.Path("widgets/javascript/batchart.js")
+    _esm = pathlib.Path("widgets/javascript/barchart.js")
 
     # Stateful property that can be accessed by JavaScript & Python
     input = tt.Dict({}).tag(sync=True)
