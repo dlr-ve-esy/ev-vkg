@@ -276,7 +276,16 @@ def _(List, Path, Tuple, glob, mo):
         vkg_evse = input_a.read()
     with open("templates/common.stottr", "r") as input_b:
         vkg_common = input_b.read()
-    mo.show_code()
+
+    snippet = "\n".join(vkg_evse.split("\n")[13:22])
+    mo.md(f"""## Graph is expanded using OTTR templates
+
+    For example, with this graph we expand an EVSE from a tabular source
+    ```
+    {snippet}
+    ```
+    Each comand expands to different patterns.
+    """)
     return VKG, mappings, vkg_common, vkg_evse
 
 
@@ -392,7 +401,9 @@ def _(TEST_GRAPH, m, mo):
 
 @app.cell
 def _(mo):
-    mo.md("""### Mereology: "part of" is reflexive
+    mo.md(
+        """
+    ### Mereology: "part of" is reflexive
     Common logic axiomatization:
     ```lisp
     (cl:comment "continuant-part-of is reflexive at a time [mcd-1]"
@@ -402,7 +413,8 @@ def _(mo):
     ```
 
     In this excercise we have no practical application for this property, so we do not infer it.
-    """)
+    """
+    )
     return
 
 
