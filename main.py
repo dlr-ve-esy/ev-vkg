@@ -1,11 +1,7 @@
 import marimo
 
 __generated_with = "0.13.11"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
@@ -56,6 +52,7 @@ def _(mo):
     - The European union published in 2023 the Alternative Fuels Infrastructure Regulation (AFIR)
     - This regulation contains data provisions regarding the availability of charging infrastructure data.
     - The union reports the regulations performance through European Alternative Fuels Observatory (EAFO)
+    - Some of the sources reported by the EAFO cannot be validated.
     """
     )
     return
@@ -101,8 +98,7 @@ def _(
     )
     mo.md(f"""## The EAFO data ecosystem
     {widget}
-    <p style="text-align: center;">Data providers used by the EAFO distribuited by state.</p>
-    """)
+    <p style="text-align: center;">Data providers disclosed as sources by the EAFO distribuited by state.</p>""")
     return
 
 
@@ -117,7 +113,7 @@ def _(mo):
 
     ## Heuristics 
 
-    To address the alignment of the sources with the FAIR principles we rely on a simple set of heuristics.  
+    To address the FAIR alignment of the charging infrastructure data provided by EU+ states we rely on a simple set of heuristics.  
     The final values of the assesment are summed to calculate the final score""")
     return INDENT, colored_square
 
@@ -223,7 +219,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     totals = {k: s["TOTAL"] for k, s in fair_scores.items()}
 
     total_data ={k: v for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True) if v > 0}
-    wg = BarChartWidget(
+    wg = mo.ui.anywidget(BarChartWidget(
             input=total_data,
             bar_radius=4,
             bar_color="#9d6b92",
@@ -231,10 +227,13 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             height=404,
             y_max= 12,
             y_ticks = [3,6,9]
-        )
-    mo.ui.anywidget(
-        wg
-    )
+        ))
+
+
+
+    mo.md(f"""## Total FAIR Scores assigned by our methodology
+    {wg}
+    <p style="text-align: center;">States with zero score were excluded.</p>""")
     return (fair_scores,)
 
 
@@ -247,7 +246,7 @@ def _(FAIRCartogramWidget, country_grid, fair_scores, mo, spectrum_colors):
             country_grid=country_grid,
         )
     )
-    mo.md(f"""## FAIR Scores assigned by our methodology
+    mo.md(f"""## FAIR Scores by principle
     {fair_widget}""")
     return
 
