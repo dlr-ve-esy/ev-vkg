@@ -18,6 +18,7 @@ def _():
     import polars as pl
     import requests
     from datetime import datetime
+    import pyqrcode
     return (
         BarChartWidget,
         FAIRCartogramWidget,
@@ -33,20 +34,16 @@ def _():
         json,
         mo,
         pl,
+        pyqrcode,
         requests,
     )
 
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Background""")
-    return
-
-
-@app.cell
-def _(mo):
     mo.md(
         r"""
+    # Background
     ## Charging infrastructure data from the AFIR
 
     - The European union published in 2023 the Alternative Fuels Infrastructure Regulation (AFIR)
@@ -99,6 +96,49 @@ def _(
     mo.md(f"""## The EAFO data ecosystem
     {widget}
     <p style="text-align: center;">Data providers disclosed as sources by the EAFO distribuited by state.</p>""")
+    return
+
+
+@app.cell
+def _(BarChartWidget, mo, pl):
+    country_codes = pl.read_csv("viz_data/code_mappings.csv")
+    target_tracker = pl.read_csv("viz_data/17.06.2025-eafo-target-tracker.csv").join(country_codes, left_on="Category", right_on="Country", how="left").select("Category", "Code", "Target kW", "Total power (kW) output").with_columns(
+        pl.col("Target kW").floordiv(1000).alias("target_mw"),
+        pl.col("Total power (kW) output").floordiv(1000).alias("total_mw")
+    )
+
+    def df_to_dict(df: pl.DataFrame,key_col: str,value_col: str):
+        """
+        Get a Python dict from two columns of a DataFrame
+        If the key column is not unique, the last row is used
+        """
+        return dict(df.select(key_col,value_col).iter_rows())
+
+    capacities_plot = BarChartWidget(
+            input=df_to_dict(target_tracker,key_col="Code", value_col="total_mw"),
+            markers=df_to_dict(target_tracker,key_col="Code", value_col="target_mw"),
+            bar_radius=4,
+            bar_color="#de8f05",
+            marker_color="#d55e00",
+            width=539,
+            height=202,
+            y_ticks=[2000,4000,6000,8000],
+            y_label="Power (MW)",
+            offset=36
+        )
+    cap_wg = mo.ui.anywidget(capacities_plot)
+    cap_table = mo.ui.table(data=target_tracker.select("Code", "Target kW", "Total power (kW) output"),show_column_summaries=False,show_download=False)
+    mo.md(
+        f"""
+    # EAFO Policy performance reports
+
+    Can the performance indicator reports provided by the EAFO be reproduced with the data published openly in context of the AFIR?
+
+    {cap_wg}
+    <p style="text-align: center;">According to the EAFOs criteria, all EU27 states reached the charging capacity targets.</p>
+    {cap_table}
+    """
+    )
     return
 
 
@@ -219,15 +259,19 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     totals = {k: s["TOTAL"] for k, s in fair_scores.items()}
 
     total_data ={k: v for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True) if v > 0}
-    wg = mo.ui.anywidget(BarChartWidget(
+
+    total_widget = BarChartWidget(
             input=total_data,
             bar_radius=4,
             bar_color="#9d6b92",
             width=539,
-            height=404,
+            height=202,
             y_max= 12,
-            y_ticks = [3,6,9]
-        ))
+            y_ticks = [3,6,9],
+            y_label="score",
+            offset=36
+        )
+    wg = mo.ui.anywidget(total_widget)
 
 
 
@@ -258,12 +302,6 @@ def _(mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""## Set global namespaces and load filepaths""")
-    return
-
-
-@app.cell
 def _(List, Path, Tuple, glob, mo):
     CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
     VKG = "https://gitlab.dlr.de/vkg#"
@@ -290,18 +328,11 @@ def _(List, Path, Tuple, glob, mo):
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""## Expand data into Knowledge Graph""")
-    return
-
-
-@app.cell
 def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
     mappings: "List[Tuple[str, str]]",
-    mo,
     vkg_common,
     vkg_evse,
 ):
@@ -316,18 +347,11 @@ def _(
             expand_relational_csv("graph", path, m, challenge=False, country=country)
         if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
-    mo.show_code()
     return (m,)
 
 
 @app.cell
-def _(mo):
-    mo.md(r"""## Load Ontology into graph and perform reasoning""")
-    return
-
-
-@app.cell
-def _(Path, VKG, m, mo, requests):
+def _(Path, VKG, m, mo, pyqrcode, requests):
     TEST_GRAPH = f"{VKG}graph"
     ONTOLOGY_IRI = (
         "https://dlr-ve-esy.github.io/charging-ontology/releases/0.2.0/chio-full.ttl"
@@ -339,9 +363,16 @@ def _(Path, VKG, m, mo, requests):
             with open(p, "wb") as onto_file:
                 onto_file.write(response.content)
 
+    qr = pyqrcode.create("https://dlr-ve-esy.github.io/charging-ontology/")
+    Path("public").mkdir(exist_ok=True)
+    img = "public/qr-code.png"
+    qr.png(img, scale=5)
 
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
-    mo.show_code()
+    mo.md("""## Load Ontology into graph and perform reasoning
+
+    The charging ontology is in GitHub and it is hosted as a static site
+    <p style="justify-content: space-evenly; display: flex;"><a href="https://github.com/dlr-ve-esy/charging-ontology" rel="noopener" target="_blank"><img alt="dlr-ve-esy/charging-ontology - GitHub" src="https://gh-card.dev/repos/dlr-ve-esy/charging-ontology.svg"></a><img src="public/qr-code.png" width="100"/></p>""")
     return (TEST_GRAPH,)
 
 
@@ -351,8 +382,13 @@ def _(TEST_GRAPH, m, mo):
         charging_connector = input_c.read()
 
     m.insert(charging_connector, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""### Infer connector class
+    mo.md(f"""## Perform reasoning
 
+    In theory, we could try to infer all the axioms of the graph, but doing so would consume a lot of memory. We only need a handful of inferences so we perform them individually.
+
+    ### Infer connector class
+
+    We find everything that is being assigned to a subclass of connector and  assign it the connector class
     ```sparql
     {charging_connector}
     ```""")
@@ -365,12 +401,17 @@ def _(TEST_GRAPH, m, mo):
         has_part = input_d.read()
     m.insert(has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     mo.md(f"""### Mereology: "has part" is inverse of "part of"
+
+    When an object A is part of some object B means that that B has A as part. 
+
     Common logic axiomatization:
     ```lisp
     (cl:comment "continuant-part-of and has-continuant-part are inverse relations [eld-1]"
       (forall (t a b)
         (iff (continuant-part-of a b t) (has-continuant-part b a t))))
     ```
+
+    SPARQL query:
     ```sparql
     {has_part}
     ```""")
@@ -383,6 +424,9 @@ def _(TEST_GRAPH, m, mo):
         part_of = input_g.read()
     m.insert(part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
     mo.md(f"""### Mereology: "part of" is transitive
+
+    If A is part of B and B is part of C then A is part of C.
+
     Common logic axiomatization:
     ```lisp
     (cl:comment "continuant-part-of is transitive at a time [plp-1]"
@@ -395,7 +439,9 @@ def _(TEST_GRAPH, m, mo):
     SPARQL query:
     ```sparql
     {part_of}
-    ```""")
+    ```
+    Note that the inverse relation, "has part" is not transitive
+    """)
     return
 
 
@@ -404,6 +450,9 @@ def _(mo):
     mo.md(
         """
     ### Mereology: "part of" is reflexive
+
+    Everything is a part of itself, in BFO "part of" is a primitive relation and has axioms to distinguish it from "proper part of" where reflixibility is excluded.
+
     Common logic axiomatization:
     ```lisp
     (cl:comment "continuant-part-of is reflexive at a time [mcd-1]"
