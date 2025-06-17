@@ -171,7 +171,7 @@ def _(mo):
     def colored_square(color):
         return f'<span style="display: inline-block; width: 10px; height: 10px; background-color: {color}; border-radius: 2px;"></span>'
 
-    mo.md(f"""## Heuristics 
+    mo.md("""## Heuristics 
 
     To address the FAIR alignment of the charging infrastructure data provided by EU+ states we rely on a simple set of heuristics.  
     The final values of the assesment are summed to calculate the final score""")
@@ -247,18 +247,18 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         latest_record = records[latest_idx]
         # FINDABILITY
         if (latest_record["metadata_url"] is None) & (
-            not (latest_record["access_url"] is None)
+            latest_record["access_url"] is not None
         ):
             if latest_record["medium"] in optimal_access_media:
                 fair_scores[ct]["F"] = 1
-        elif not (latest_record["metadata_url"] is None):
+        elif latest_record["metadata_url"] is not None:
             fair_scores[ct]["F"] = 2
             if latest_record["actionable"]:
                 fair_scores[ct]["F"] = 3
         # ACCESIBILITY
         if latest_record["access"] in accesible:
             fair_scores[ct]["A"] += 1
-            if not (latest_record["metadata_url"] is None):
+            if latest_record["metadata_url"] is not None:
                 fair_scores[ct]["A"] += 1
                 if latest_record["medium"] in optimal_access_media:
                     fair_scores[ct]["A"] += 1
@@ -268,7 +268,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         if latest_record["standard"] in interoperable_formats:
             fair_scores[ct]["I"] += 3
         # REUSABILITY
-        if not (latest_record["license"] is None):
+        if latest_record["license"] is not None:
             fair_scores[ct]["R"] += 1
             if latest_record["provenance"] == "TEXTUAL":
                 fair_scores[ct]["R"] += 1
@@ -323,7 +323,7 @@ def _(mo):
 
 @app.cell
 def _(List, Path, Tuple, glob, mo):
-    CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
+    __CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
     VKG = "https://gitlab.dlr.de/vkg#"
 
     paths: List[Path] = [Path(f) for f in glob("operational/*")]
