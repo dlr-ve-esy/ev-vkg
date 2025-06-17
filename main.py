@@ -23,6 +23,7 @@ def _():
     import requests
     from datetime import datetime
     import pyqrcode
+
     return (
         BarChartWidget,
         FAIRCartogramWidget,
@@ -106,32 +107,41 @@ def _(
 @app.cell
 def _(BarChartWidget, mo, pl):
     country_codes = pl.read_csv("viz_data/code_mappings.csv")
-    target_tracker = pl.read_csv("viz_data/17.06.2025-eafo-target-tracker.csv").join(country_codes, left_on="Category", right_on="Country", how="left").select("Category", "Code", "Target kW", "Total power (kW) output").with_columns(
-        pl.col("Target kW").floordiv(1000).alias("target_mw"),
-        pl.col("Total power (kW) output").floordiv(1000).alias("total_mw")
+    target_tracker = (
+        pl.read_csv("viz_data/17.06.2025-eafo-target-tracker.csv")
+        .join(country_codes, left_on="Category", right_on="Country", how="left")
+        .select("Category", "Code", "Target kW", "Total power (kW) output")
+        .with_columns(
+            pl.col("Target kW").floordiv(1000).alias("target_mw"),
+            pl.col("Total power (kW) output").floordiv(1000).alias("total_mw"),
+        )
     )
 
-    def df_to_dict(df: pl.DataFrame,key_col: str,value_col: str):
+    def df_to_dict(df: pl.DataFrame, key_col: str, value_col: str):
         """
         Get a Python dict from two columns of a DataFrame
         If the key column is not unique, the last row is used
         """
-        return dict(df.select(key_col,value_col).iter_rows())
+        return dict(df.select(key_col, value_col).iter_rows())
 
     capacities_plot = BarChartWidget(
-            input=df_to_dict(target_tracker,key_col="Code", value_col="total_mw"),
-            markers=df_to_dict(target_tracker,key_col="Code", value_col="target_mw"),
-            bar_radius=4,
-            bar_color="#de8f05",
-            marker_color="#d55e00",
-            width=539 * 2,
-            height=202,
-            y_ticks=[2000,4000,6000,8000],
-            y_label="Power (MW)",
-            offset=36
-        )
+        input=df_to_dict(target_tracker, key_col="Code", value_col="total_mw"),
+        markers=df_to_dict(target_tracker, key_col="Code", value_col="target_mw"),
+        bar_radius=4,
+        bar_color="#de8f05",
+        marker_color="#d55e00",
+        width=539 * 2,
+        height=202,
+        y_ticks=[2000, 4000, 6000, 8000],
+        y_label="Power (MW)",
+        offset=36,
+    )
     cap_wg = mo.ui.anywidget(capacities_plot)
-    cap_table = mo.ui.table(data=target_tracker.select("Code", "Target kW", "Total power (kW) output"),show_column_summaries=False,show_download=False)
+    cap_table = mo.ui.table(
+        data=target_tracker.select("Code", "Target kW", "Total power (kW) output"),
+        show_column_summaries=False,
+        show_download=False,
+    )
     mo.md(
         f"""
     # EAFO Policy performance reports
@@ -148,9 +158,17 @@ def _(BarChartWidget, mo, pl):
 
 @app.cell
 def _(mo, pl, sources_nap):
-    considered_sources = sources_nap.with_columns(pl.col("id").str.split("-").list[0].alias("country"))
+    considered_sources = sources_nap.with_columns(
+        pl.col("id").str.split("-").list[0].alias("country")
+    )
 
-    sources_table = mo.ui.table(data=considered_sources.select("country","name", "publication_date","metadata_url","standard"),show_column_summaries=False,show_download=False)
+    sources_table = mo.ui.table(
+        data=considered_sources.select(
+            "country", "name", "publication_date", "metadata_url", "standard"
+        ),
+        show_column_summaries=False,
+        show_download=False,
+    )
     num_countries = len(considered_sources)
     avail_data = len(sources_nap.filter(~pl.col("local").is_null()))
     mo.md(
@@ -278,22 +296,24 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
 
     totals = {k: s["TOTAL"] for k, s in fair_scores.items()}
 
-    total_data ={k: v for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True) if v > 0}
+    total_data = {
+        k: v
+        for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True)
+        if v > 0
+    }
 
     total_widget = BarChartWidget(
-            input=total_data,
-            bar_radius=4,
-            bar_color="#9d6b92",
-            width=539 * 2,
-            height=202 * 2,
-            y_max= 12,
-            y_ticks = [3,6,9],
-            y_label="Score",
-            offset=36
-        )
+        input=total_data,
+        bar_radius=4,
+        bar_color="#9d6b92",
+        width=539 * 2,
+        height=202 * 2,
+        y_max=12,
+        y_ticks=[3, 6, 9],
+        y_label="Score",
+        offset=36,
+    )
     wg = mo.ui.anywidget(total_widget)
-
-
 
     mo.md(f"""## Total FAIR Scores assigned by our methodology
     {wg}
@@ -516,32 +536,44 @@ def _(
     target_tracker,
     total_aggregated_power_per_country_lower,
 ):
-    aggregated_power_df = m.query(total_aggregated_power_per_country_lower, graph=TEST_GRAPH)
+    aggregated_power_df = m.query(
+        total_aggregated_power_per_country_lower, graph=TEST_GRAPH
+    )
     study_filter = list(aggregated_power_df["code"].unique())
-    results = target_tracker.join(aggregated_power_df, left_on="Code", right_on="code", how="left").with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000)).filter(pl.col("Code").is_in(study_filter))
+    results = (
+        target_tracker.join(
+            aggregated_power_df, left_on="Code", right_on="code", how="left"
+        )
+        .with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000))
+        .filter(pl.col("Code").is_in(study_filter))
+    )
 
     result_codes = list(aggregated_power_df["code"].unique())
-    filtered_markers = {k:v for k,v in df_to_dict(results,key_col="Code", value_col="target_mw").items() if k in result_codes}
+    filtered_markers = {
+        k: v
+        for k, v in df_to_dict(results, key_col="Code", value_col="target_mw").items()
+        if k in result_codes
+    }
     return filtered_markers, results
 
 
 @app.cell
 def _(BarChartWidget, df_to_dict, filtered_markers, results):
     results_plot = BarChartWidget(
-            input=df_to_dict(results,key_col="Code", value_col="total_accounted_power"),
-            shadow=df_to_dict(results,key_col="Code", value_col="total_mw"),
-            markers=filtered_markers,
-            bar_radius=4,
-            bar_color="#0173b2",
-            marker_color="#d55e00",
-            shadow_color="#d55e00",
-            width=539 * 2,
-            height=202 * 2,
-            y_max= 10000,
-            y_ticks=[2000,4000,6000,8000],
-            y_label="Power (MW)",
-            offset=36
-        )
+        input=df_to_dict(results, key_col="Code", value_col="total_accounted_power"),
+        shadow=df_to_dict(results, key_col="Code", value_col="total_mw"),
+        markers=filtered_markers,
+        bar_radius=4,
+        bar_color="#0173b2",
+        marker_color="#d55e00",
+        shadow_color="#d55e00",
+        width=539 * 2,
+        height=202 * 2,
+        y_max=10000,
+        y_ticks=[2000, 4000, 6000, 8000],
+        y_label="Power (MW)",
+        offset=36,
+    )
 
     results_plot
     return
