@@ -143,15 +143,31 @@ def _(BarChartWidget, mo, pl):
 
 
 @app.cell
+def _(mo, pl, sources_nap):
+    considered_sources = sources_nap.with_columns(pl.col("id").str.split("-").list[0].alias("country"))
+
+    sources_table = mo.ui.table(data=considered_sources.select("country","name", "publication_date","metadata_url","standard"),show_column_summaries=False,show_download=False)
+    num_countries = len(considered_sources)
+    avail_data = len(sources_nap.filter(~pl.col("local").is_null()))
+    mo.md(
+        f"""
+    # FAIR Analysis
+
+    As a proof of concept of our analysis we selected data reports published in the NAP of {num_countries} countries. From which only {avail_data} could be aqcuired, the rest is either behind a paywall or no longer availaible.
+    {sources_table}
+    """
+    )
+    return
+
+
+@app.cell
 def _(mo):
     INDENT = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
 
     def colored_square(color):
         return f'<span style="display: inline-block; width: 10px; height: 10px; background-color: {color}; border-radius: 2px;"></span>'
 
-    mo.md(f"""# FAIR Analysis
-
-    ## Heuristics 
+    mo.md(f"""## Heuristics 
 
     To address the FAIR alignment of the charging infrastructure data provided by EU+ states we rely on a simple set of heuristics.  
     The final values of the assesment are summed to calculate the final score""")
@@ -268,7 +284,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             height=202,
             y_max= 12,
             y_ticks = [3,6,9],
-            y_label="score",
+            y_label="Score",
             offset=36
         )
     wg = mo.ui.anywidget(total_widget)
@@ -278,7 +294,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     mo.md(f"""## Total FAIR Scores assigned by our methodology
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>""")
-    return (fair_scores,)
+    return fair_scores, sources_nap
 
 
 @app.cell
