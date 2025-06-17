@@ -2,11 +2,13 @@ import * as d3 from "https://esm.sh/d3@7";
 
 async function render({ model, el }) {
   const input = model.get("input");
+  const shadow = model.get("shadow");
   const markers = model.get("markers");
   const width = model.get("width");
   const height = model.get("height");
   const barColor = model.get("bar_color");
   const markerColor = model.get("marker_color");
+  const shadowColor = model.get("shadow_color");
   const customColors = model.get("custom_colors");
   const barRadius = model.get("bar_radius");
   const yTicks = model.get("y_ticks");
@@ -25,12 +27,14 @@ async function render({ model, el }) {
 
   renderBarChart(
     input,
+    shadow,
     markers,
     body,
     width,
     height,
     barColor,
     markerColor,
+    shadowColor,
     customColors,
     barRadius,
     yTicks,
@@ -45,12 +49,14 @@ async function render({ model, el }) {
 
 function renderBarChart(
   data,
+  shadow,
   markers,
   container,
   width = 500,
   height = 300,
   barColor = "steelblue",
   markerColor = "indianred",
+  shadowColor = "black",
   customColors = {},
   barRadius = 5,
   yTicks,
@@ -125,6 +131,44 @@ function renderBarChart(
       `;
     });
 
+  // Add clip-paths for shadow
+  chartGroup
+    .selectAll(".shadow-clip")
+    .data(Object.entries(shadow)) // Use object entries for data
+    .join("clipPath")
+    .attr("class", "shadow-clip")
+    .attr("id", (d, i) => `clip-shadow-${i}`)
+    .append("path")
+    .attr("d", (d) => {
+      const x = xScale(d[0]) + xScale.bandwidth() * 0.1;
+      const y = yScale(d[1]);
+      const barWidth = xScale.bandwidth();
+      const barHeight = innerHeight - y;
+      return `
+      M${x},${y + barRadius} 
+      Q${x},${y} ${x + barRadius},${y} 
+      L${x + barWidth - barRadius},${y} 
+      Q${x + barWidth},${y} ${x + barWidth},${y + barRadius} 
+      L${x + barWidth},${y + barHeight} 
+      L${x},${y + barHeight} 
+      Z
+    `;
+    });
+
+  // Add shadow bars
+  chartGroup
+    .selectAll(".shadow")
+    .data(Object.entries(shadow))
+    .join("rect")
+    .attr("class", "shadow")
+    .attr("x", (d) => xScale(d[0]) + xScale.bandwidth() * 0.1)
+    .attr("y", (d) => yScale(d[1]))
+    .attr("width", xScale.bandwidth())
+    .attr("height", (d) => innerHeight - yScale(d[1]))
+    .attr("fill", shadowColor)
+    .attr("clip-path", (d, i) => `url(#clip-shadow-${i})`)
+    .style("opacity", 0.6);
+
   // Add bars
   chartGroup
     .selectAll(".bar")
@@ -144,10 +188,12 @@ function renderBarChart(
     .data(Object.entries(markers))
     .join("rect")
     .attr("class", "marker")
-    .attr("x", (d) => xScale(d[0]))
+    .attr("x", (d) => xScale(d[0]) + xScale.bandwidth() / 2 - 4)
     .attr("y", (d) => yScale(d[1]) - 2)
-    .attr("width", xScale.bandwidth())
+    .attr("width", 8)
     .attr("height", 2)
+    .attr("rx", 1)
+    .attr("ry", 1)
     .attr("fill", markerColor);
 
   // Add x-axis with tick padding

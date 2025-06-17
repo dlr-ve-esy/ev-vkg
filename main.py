@@ -139,7 +139,7 @@ def _(BarChartWidget, mo, pl):
     {cap_table}
     """
     )
-    return
+    return df_to_dict, target_tracker
 
 
 @app.cell
@@ -504,8 +504,42 @@ def _(mo):
 
 
 @app.cell
-def _(TEST_GRAPH, m, total_aggregated_power_per_country_lower):
-    m.query(total_aggregated_power_per_country_lower, graph=TEST_GRAPH)
+def _(
+    TEST_GRAPH,
+    df_to_dict,
+    m,
+    pl,
+    target_tracker,
+    total_aggregated_power_per_country_lower,
+):
+    aggregated_power_df = m.query(total_aggregated_power_per_country_lower, graph=TEST_GRAPH)
+    study_filter = list(aggregated_power_df["code"].unique())
+    results = target_tracker.join(aggregated_power_df, left_on="Code", right_on="code", how="left").with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000)).filter(pl.col("Code").is_in(study_filter))
+
+    result_codes = list(aggregated_power_df["code"].unique())
+    filtered_markers = {k:v for k,v in df_to_dict(results,key_col="Code", value_col="target_mw").items() if k in result_codes}
+    return filtered_markers, results
+
+
+@app.cell
+def _(BarChartWidget, df_to_dict, filtered_markers, results):
+    results_plot = BarChartWidget(
+            input=df_to_dict(results,key_col="Code", value_col="total_accounted_power"),
+            shadow=df_to_dict(results,key_col="Code", value_col="total_mw"),
+            markers=filtered_markers,
+            bar_radius=4,
+            bar_color="#0173b2",
+            marker_color="#d55e00",
+            shadow_color="#d55e00",
+            width=539,
+            height=202,
+            y_max= 10000,
+            y_ticks=[2000,4000,6000,8000],
+            y_label="Power (MW)",
+            offset=36
+        )
+
+    results_plot
     return
 
 
