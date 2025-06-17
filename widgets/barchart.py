@@ -11,14 +11,20 @@ class BarChartWidget(anywidget.AnyWidget):
 
     # Stateful property that can be accessed by JavaScript & Python
     input = tt.Dict({}).tag(sync=True)
+    markers = tt.Dict({}).tag(sync=True)
     width = tt.Int(500).tag(sync=True)
     height = tt.Int(300).tag(sync=True)
     bar_color = tt.Unicode("steelblue").tag(sync=True)
+    marker_color = tt.Unicode("indianred").tag(sync=True)
     custom_colors = tt.Dict({}).tag(sync=True)
     bar_radius = tt.Int(5).tag(sync=True)
     y_max = tt.Int(0).tag(sync=True)
     y_ticks: List[Any] = tt.List([]).tag(sync=True)
     x_ticks: List[Any] = tt.List([]).tag(sync=True)
+    y_grid: List[Any] = tt.List([]).tag(sync=True)
+    x_label = tt.Unicode("").tag(sync=True)
+    y_label = tt.Unicode("").tag(sync=True)
+    offset = tt.Int(0).tag(sync=True)
     _css = """
     .barchart {
         display: flex;

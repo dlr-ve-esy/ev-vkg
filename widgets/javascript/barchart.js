@@ -2,13 +2,19 @@ import * as d3 from "https://esm.sh/d3@7";
 
 async function render({ model, el }) {
   const input = model.get("input");
+  const markers = model.get("markers");
   const width = model.get("width");
   const height = model.get("height");
   const barColor = model.get("bar_color");
+  const markerColor = model.get("marker_color");
   const customColors = model.get("custom_colors");
   const barRadius = model.get("bar_radius");
   const yTicks = model.get("y_ticks");
   const xTicks = model.get("x_ticks");
+  const yGrid = model.get("y_grid");
+  const xLabel = model.get("x_label");
+  const yLabel = model.get("y_label");
+  const Offset = model.get("offset");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -19,29 +25,41 @@ async function render({ model, el }) {
 
   renderBarChart(
     input,
+    markers,
     body,
     width,
     height,
     barColor,
+    markerColor,
     customColors,
     barRadius,
     yTicks,
     xTicks,
-    yMax
+    yGrid,
+    xLabel,
+    yLabel,
+    yMax,
+    Offset
   );
 }
 
 function renderBarChart(
   data,
+  markers,
   container,
   width = 500,
   height = 300,
   barColor = "steelblue",
+  markerColor = "indianred",
   customColors = {},
   barRadius = 5,
   yTicks,
   xTicks,
-  yMax
+  yGrid,
+  xLabel,
+  yLabel,
+  yMax,
+  Offset
 ) {
   // Create SVG
   const svg = container
@@ -74,17 +92,15 @@ function renderBarChart(
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
+  const y_grid = d3.axisLeft(yScale).tickSize(-innerWidth).tickFormat("");
+  if (yGrid.length > 0) {
+    y_grid.tickValues(yGrid);
+  }
+
   // Add y-axis gridlines
-  chartGroup
-    .append("g")
-    .attr("class", "y-grid")
-    .call(
-      d3
-        .axisLeft(yScale)
-        .tickSize(-innerWidth) // Extend ticks across the width
-        .tickFormat("") // Remove tick labels
-    )
-    .attr("stroke-opacity", 0.2); // Make gridlines lighter
+  var axis = chartGroup.append("g").attr("class", "y-grid");
+  axis.call(y_grid).attr("stroke-opacity", 0.2);
+  axis.selectAll("path").style("opacity", 0);
 
   // Add clip-paths for rounded tops
   chartGroup
@@ -122,21 +138,71 @@ function renderBarChart(
     .attr("fill", (d) => customColors[d[0]] || barColor)
     .attr("clip-path", (d, i) => `url(#clip-${i})`);
 
-  // Add x-axis with tick padding
+  // add markers
   chartGroup
+    .selectAll(".marker")
+    .data(Object.entries(markers))
+    .join("rect")
+    .attr("class", "marker")
+    .attr("x", (d) => xScale(d[0]))
+    .attr("y", (d) => yScale(d[1]) - 2)
+    .attr("width", xScale.bandwidth())
+    .attr("height", 2)
+    .attr("fill", markerColor);
+
+  // Add x-axis with tick padding
+  var x_axis = chartGroup
     .append("g")
-    .attr("transform", `translate(0, ${innerHeight})`)
+    .attr("transform", `translate(0, ${innerHeight})`);
+
+  x_axis
     .call(d3.axisBottom(xScale).tickSize(0).tickPadding(10)) // Add padding to x-axis ticks
     .selectAll("text")
     .style("text-anchor", "middle")
-    .style("font-family", "Tinos, serif");
+    .style("font-family", "Tinos, serif")
+    .style("opacity", 0.8);
+
+  x_axis.selectAll("path").style("opacity", 0.8);
 
   const y_axis = d3.axisLeft(yScale).tickSize(0).tickPadding(10);
   if (yTicks.length > 0) {
     y_axis.tickValues(yTicks);
   }
   // Add y-axis with tick padding
-  chartGroup.append("g").call(y_axis).style("font-family", "Tinos, serif"); // Add padding to y-axis ticks
+  var y_axis_ticks = chartGroup.append("g");
+
+  y_axis_ticks
+    .call(y_axis)
+    .style("font-family", "Tinos, serif")
+    .style("opacity", 0.6); // Add padding to y-axis ticks
+  y_axis_ticks.selectAll("path").style("opacity", 0);
+
+  // Add y label
+  if (yLabel.length > 0) {
+    chartGroup
+      .append("text")
+      .attr("class", "label")
+      .attr("text-anchor", "start")
+      .attr("y", "-0.5em")
+      .attr("x", "0")
+      .attr("opacity", 0.6)
+      .style("font-family", "Tinos, serif")
+      .attr("font-size", "0.8em")
+      .text(yLabel);
+  }
+  // Add x label
+  if (xLabel.length > 0) {
+    chartGroup
+      .append("text")
+      .attr("class", "label")
+      .attr("text-anchor", "middle")
+      .attr("y", innerHeight + Offset)
+      .attr("x", innerWidth / 2)
+      .attr("opacity", 0.6)
+      .style("font-family", "Tinos, serif")
+      .attr("font-size", "0.8em")
+      .text(xLabel);
+  }
 }
 
 export default { render };

@@ -4,7 +4,3 @@
   --marimo-heading-font: 'Tinos Bold', serif;
   --marimo-text-font: 'Tinos Regular', serif;
 }
-
-.mo-slide-content {
-  box-shadow: inset 2.4rem 0px 0px rgb(0,102,141);
-}
