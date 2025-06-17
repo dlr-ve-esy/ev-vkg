@@ -1,10 +1,11 @@
 import * as d3 from "https://esm.sh/d3@7";
 
-
-async function render({ model,el}) {
+async function render({ model, el }) {
   const fairData = model.get("fair_scores");
   const colorsData = model.get("source_colors");
   const grid = model.get("country_grid");
+  const width = model.get("width");
+  const height = model.get("height");
 
   let continer = document.createElement("div");
   continer.classList.add("cartogram");
@@ -12,14 +13,17 @@ async function render({ model,el}) {
 
   el.appendChild(continer);
 
-  renderFigure(body, grid, fairData, colorsData);
+  renderFigure(body, grid, fairData, colorsData, width, height);
 }
 
-
-const renderFigure = (element, grid, data, colors) => {
-  const width = 539;
-  const height = 404.25;
-
+const renderFigure = (
+  element,
+  grid,
+  data,
+  colors,
+  width = 539,
+  height = 404
+) => {
   const svg = element
     .append("svg")
     .attr("xmlns", "http://www.w3.org/2000/svg")
@@ -268,10 +272,7 @@ const renderLegend = (legend, svg, x, y, height, width, size, rx) => {
       const grp = enter
         .append("g")
         .attr("class", "legend-item")
-        .attr(
-          "transform",
-          (d) => `translate(${innerScale(d.letter)}, 0)`
-        );
+        .attr("transform", (d) => `translate(${innerScale(d.letter)}, 0)`);
       grp
         .append("text")
         .text((d) => d.text)
@@ -366,8 +367,7 @@ const renderFAIR = (
         .attr("class", "element")
         .attr(
           "transform",
-          (d) =>
-            `translate(${xPos(d.position[0])} ${yPos(d.position[1])})`
+          (d) => `translate(${xPos(d.position[0])} ${yPos(d.position[1])})`
         );
       const pie = grp
         .selectAll(".pie")
@@ -432,8 +432,7 @@ const renderSub = (
         .attr("class", "element")
         .attr(
           "transform",
-          (d) =>
-            `translate(${xPos(d.position[0])} ${yPos(d.position[1])})`
+          (d) => `translate(${xPos(d.position[0])} ${yPos(d.position[1])})`
         );
       grp
         .append("rect")
@@ -442,23 +441,20 @@ const renderSub = (
         .attr("y", 0)
         .attr("width", size * 2)
         .attr("height", size * 2)
-        .attr(
-          "fill",
-          (d) => {
-            let sel;
-            if (selection == "TOTAL") {
-              if (d.total == 0) {
-                return color["F"](0);
-              } else {
-                sel = ["TOTAL", 0, d.total];
-                return color[sel[0]](sel[2]);
-              }
+        .attr("fill", (d) => {
+          let sel;
+          if (selection == "TOTAL") {
+            if (d.total == 0) {
+              return color["F"](0);
             } else {
-              sel = d.fair.filter((s) => s[0] == selection)[0];
+              sel = ["TOTAL", 0, d.total];
               return color[sel[0]](sel[2]);
             }
+          } else {
+            sel = d.fair.filter((s) => s[0] == selection)[0];
+            return color[sel[0]](sel[2]);
           }
-        );
+        });
     });
 };
 

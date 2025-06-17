@@ -5,6 +5,8 @@ function render({ model, el }) {
   const colorsData = model.get("source_colors");
   const legend = model.get("color_legend");
   const grid = model.get("country_grid");
+  const width = model.get("width");
+  const height = model.get("height");
 
   let continer = document.createElement("div");
   continer.classList.add("cartogram");
@@ -12,12 +14,10 @@ function render({ model, el }) {
 
   el.appendChild(continer);
 
-  renderFigure(body, grid, sourceData, colorsData, legend);
+  renderFigure(body, grid, sourceData, colorsData, legend, width, height);
 }
 
-const renderFigure = (element, grid, data, colors, legend) => {
-  const width = 539;
-  const height = 404.25;
+const renderFigure = (element, grid, data, colors, legend, width = 539, height = 404) => {
 
   const svg = element
     .append("svg")
