@@ -1,7 +1,11 @@
 import marimo
 
 __generated_with = "0.13.15"
-app = marimo.App(width="medium", css_file="styles/custom.css")
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/main.slides.json",
+    css_file="styles/custom.css",
+)
 
 
 @app.cell
@@ -120,7 +124,7 @@ def _(BarChartWidget, mo, pl):
             bar_radius=4,
             bar_color="#de8f05",
             marker_color="#d55e00",
-            width=539,
+            width=539 * 2,
             height=202,
             y_ticks=[2000,4000,6000,8000],
             y_label="Power (MW)",
@@ -280,8 +284,8 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             input=total_data,
             bar_radius=4,
             bar_color="#9d6b92",
-            width=539,
-            height=202,
+            width=539 * 2,
+            height=202 * 2,
             y_max= 12,
             y_ticks = [3,6,9],
             y_label="Score",
@@ -531,8 +535,8 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
             bar_color="#0173b2",
             marker_color="#d55e00",
             shadow_color="#d55e00",
-            width=539,
-            height=202,
+            width=539 * 2,
+            height=202 * 2,
             y_max= 10000,
             y_ticks=[2000,4000,6000,8000],
             y_label="Power (MW)",
