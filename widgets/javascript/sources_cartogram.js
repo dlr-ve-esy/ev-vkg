@@ -17,8 +17,15 @@ function render({ model, el }) {
   renderFigure(body, grid, sourceData, colorsData, legend, width, height);
 }
 
-const renderFigure = (element, grid, data, colors, legend, width = 539, height = 404) => {
-
+const renderFigure = (
+  element,
+  grid,
+  data,
+  colors,
+  legend,
+  width = 539,
+  height = 404
+) => {
   const svg = element
     .append("svg")
     .attr("xmlns", "http://www.w3.org/2000/svg")

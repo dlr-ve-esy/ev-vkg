@@ -12,9 +12,9 @@ class SourcesCartogramWidget(anywidget.AnyWidget):
     source_colors = tt.Dict({}).tag(sync=True)
     color_legend = tt.Dict({}).tag(sync=True)
     country_grid = tt.Dict({}).tag(sync=True)
-    width = tt.Int(500).tag(sync=True)
-    height = tt.Int(300).tag(sync=True)
-    
+    width = tt.Int(539).tag(sync=True)
+    height = tt.Int(404).tag(sync=True)
+
     _css = """
     .cartogram {
         display: flex;
@@ -39,8 +39,8 @@ class FAIRCartogramWidget(anywidget.AnyWidget):
     fair_scores = tt.Dict({}).tag(sync=True)
     source_colors = tt.Dict({}).tag(sync=True)
     country_grid = tt.Dict({}).tag(sync=True)
-    width = tt.Int(500).tag(sync=True)
-    height = tt.Int(300).tag(sync=True)
+    width = tt.Int(539).tag(sync=True)
+    height = tt.Int(404).tag(sync=True)
 
     _css = """
     .cartogram {
