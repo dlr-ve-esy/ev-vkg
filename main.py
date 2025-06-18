@@ -96,8 +96,12 @@ def _(
             source_colors=source_colors,
             color_legend=color_legend,
             country_grid=country_grid,
-            width=539,
-            height=404
+            width=int(539 * 1.3),
+            height=int(404 * 1.3),
+            marker_size=int(18 * 1.3),
+            marker_size_secondary=7,
+            legend_marker_size=13,
+            legend_height=26,
         )
     )
     mo.md(f"""## The EAFO data ecosystem

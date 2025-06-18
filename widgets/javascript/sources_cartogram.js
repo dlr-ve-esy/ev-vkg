@@ -7,6 +7,10 @@ function render({ model, el }) {
   const grid = model.get("country_grid");
   const width = model.get("width");
   const height = model.get("height");
+  const size = model.get("marker_size");
+  const sizeSecondary = model.get("marker_size_secondary");
+  const legendSize = model.get("legend_marker_size");
+  const legendHeight = model.get("legend_height");
 
   let continer = document.createElement("div");
   continer.classList.add("cartogram");
@@ -14,7 +18,19 @@ function render({ model, el }) {
 
   el.appendChild(continer);
 
-  renderFigure(body, grid, sourceData, colorsData, legend, width, height);
+  renderFigure(
+    body,
+    grid,
+    sourceData,
+    colorsData,
+    legend,
+    width,
+    height,
+    size,
+    sizeSecondary,
+    legendSize,
+    legendHeight
+  );
 }
 
 const renderFigure = (
@@ -24,7 +40,11 @@ const renderFigure = (
   colors,
   legend,
   width = 539,
-  height = 404
+  height = 404,
+  size = 18,
+  sizeSecondary = 6,
+  legendSize = 9,
+  legendHeight = 20
 ) => {
   const svg = element
     .append("svg")
@@ -51,10 +71,6 @@ const renderFigure = (
 
   const midSeparator = (innerHeight - 3 * widthSub) / 2;
 
-  const size = 18;
-  const sizeSecondary = 6;
-  const legendSize = 9;
-
   svg
     .append("defs")
     .append("svg:clipPath")
@@ -80,7 +96,7 @@ const renderFigure = (
     svg,
     width * 0.05,
     innerHeight + 3,
-    20,
+    legendHeight,
     width - width * 0.1,
     legendSize
   );
