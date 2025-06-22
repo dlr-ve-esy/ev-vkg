@@ -608,12 +608,12 @@ def _(TEST_GRAPH, m, total_evses_per_power):
 @app.cell
 def _(StackedBarChartWidget, pl, study_filter, total_evses_per_power_df):
     cat_colors = {
-        "0-7,4 kW": "#029e73",
-        "7,4-22 kW": "#de8f05",
-        "22-50 kW": "#cc78bc",
-        "50-150 kW": "#0173b2",
-        "150-350 kW": "#d55e00",
-        "350+ kW": "#ca9161",
+        "0-7,4 kW": "#9dc291",
+        "7,4-22 kW": "#73a861",
+        "22-50 kW": "#527a44",
+        "50-150 kW": "#e9cf6f",
+        "150-350 kW": "#e0ba2f",
+        "350+ kW": "#aa8b1a",
     }
 
     chart_input = (
