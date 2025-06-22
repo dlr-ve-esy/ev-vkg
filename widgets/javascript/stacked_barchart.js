@@ -18,7 +18,6 @@ async function render({ model, el }) {
   let continer = document.createElement("div");
   continer.classList.add("barchart");
   const body = d3.select(continer);
-  console.log(input);
   el.appendChild(continer);
 
   renderBarChart(
@@ -56,7 +55,6 @@ function renderBarChart(
   Offset
 ) {
   const keys = Object.keys(data[0]).filter(k => k !== xKey);
-  console.log(keys)
   // Stack the data
   const stack = d3.stack().keys(keys);
   const series = stack(data);
@@ -102,27 +100,30 @@ function renderBarChart(
   axis.selectAll("path").style("opacity", 0);
 
   // Add clip-paths for rounded tops
-  // chartGroup
-  //   .selectAll("clipPath")
-  //   .data(series) // Use object entries for data
-  //   .join("clipPath")
-  //   .attr("id", (d, i) => `clip-${i}`)
-  //   .append("path")
-  //   .attr("d", (d, i) => {
-  //     const x = xScale(data[i][xKey]);
-  //     const y = yScale(d[1]);
-  //     const barWidth = xScale.bandwidth();
-  //     const barHeight = innerHeight - y;
-  //     return `
-  //       M${x},${y + barRadius} 
-  //       Q${x},${y} ${x + barRadius},${y} 
-  //       L${x + barWidth - barRadius},${y} 
-  //       Q${x + barWidth},${y} ${x + barWidth},${y + barRadius} 
-  //       L${x + barWidth},${y + barHeight} 
-  //       L${x},${y + barHeight} 
-  //       Z
-  //     `;
-  //   });
+  chartGroup
+    .selectAll("clipPath")
+    .data(data.map(d => d[xKey])) // Use object entries for data
+    .join("clipPath")
+    .attr("id", (d, i) => `clip-${d}`)
+    .append("path")
+    .attr("d", (d, i) => {
+    const x = xScale(d);
+    const barWidth = xScale.bandwidth();
+    // Find the top of the stack (the minimum y of all stacks at this x)
+    console.log(series)
+    const stackTops = series.map(s => s[i][1]);
+    const y = yScale(Math.max(...stackTops));
+    const barHeight = innerHeight - y;
+      return `
+        M${x},${y + barRadius} 
+        Q${x},${y} ${x + barRadius},${y} 
+        L${x + barWidth - barRadius},${y} 
+        Q${x + barWidth},${y} ${x + barWidth},${y + barRadius} 
+        L${x + barWidth},${y + barHeight} 
+        L${x},${y + barHeight} 
+        Z
+      `;
+    });
 
 
   // Draw stacks
@@ -138,8 +139,8 @@ function renderBarChart(
     .attr("x", (d, i) => xScale(data[i][xKey]))
     .attr("y", d => yScale(d[1]))
     .attr("height", d => yScale(d[0]) - yScale(d[1]))
-    .attr("width", xScale.bandwidth());
-    // .attr("clip-path", (d, i) => `url(#clip-${i})`);
+    .attr("width", xScale.bandwidth())
+    .attr("clip-path", (d, i) => `url(#clip-${data[i][xKey]})`);
 
   // Add x-axis with tick padding
   var x_axis = chartGroup
