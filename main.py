@@ -585,5 +585,28 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
     return
 
 
+@app.cell
+def _(mo):
+    with open(
+        "queries/total_evses_per_power.sparql", "r"
+    ) as input_f:
+        total_evses_per_power = input_f.read()
+    mo.md(f"""### Count of EVSES based on max nominal capacity
+
+    ```sparql
+    {total_evses_per_power}
+    ```""")
+    return (total_evses_per_power,)
+
+
+@app.cell
+def _(TEST_GRAPH, m, total_evses_per_power):
+    total_evses_per_power_df = m.query(
+        total_evses_per_power, graph=TEST_GRAPH
+    )
+    total_evses_per_power_df
+    return
+
+
 if __name__ == "__main__":
     app.run()
