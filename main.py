@@ -12,7 +12,7 @@ app = marimo.App(
 def _():
     import json
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
-    from widgets.barchart import BarChartWidget
+    from widgets.barchart import BarChartWidget, StackedBarChartWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -31,6 +31,7 @@ def _():
         Mapping,
         Path,
         SourcesCartogramWidget,
+        StackedBarChartWidget,
         Tuple,
         datetime,
         expand_bnezta,
@@ -560,7 +561,7 @@ def _(
         for k, v in df_to_dict(results, key_col="Code", value_col="target_mw").items()
         if k in result_codes
     }
-    return filtered_markers, results
+    return filtered_markers, results, study_filter
 
 
 @app.cell
@@ -587,9 +588,7 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
 
 @app.cell
 def _(mo):
-    with open(
-        "queries/total_evses_per_power.sparql", "r"
-    ) as input_f:
+    with open("queries/total_evses_per_power.sparql", "r") as input_f:
         total_evses_per_power = input_f.read()
     mo.md(f"""### Count of EVSES based on max nominal capacity
 
@@ -601,10 +600,51 @@ def _(mo):
 
 @app.cell
 def _(TEST_GRAPH, m, total_evses_per_power):
-    total_evses_per_power_df = m.query(
-        total_evses_per_power, graph=TEST_GRAPH
-    )
+    total_evses_per_power_df = m.query(total_evses_per_power, graph=TEST_GRAPH)
     total_evses_per_power_df
+    return (total_evses_per_power_df,)
+
+
+@app.cell
+def _(StackedBarChartWidget, pl, study_filter, total_evses_per_power_df):
+    cat_colors = {
+        "0-7,4 kW": "#029e73",
+        "7,4-22 kW": "#de8f05",
+        "22-50 kW": "#cc78bc",
+        "50-150 kW": "#0173b2",
+        "150-350 kW": "#d55e00",
+        "350+ kW": "#ca9161",
+    }
+
+    chart_input = (
+        total_evses_per_power_df.pivot("power_bin", index="code", values="evse_count")
+        .select(
+            [
+                "code",
+                "0-7,4 kW",
+                "7,4-22 kW",
+                "22-50 kW",
+                "50-150 kW",
+                "150-350 kW",
+                "350+ kW",
+            ]
+        )
+        .filter(pl.col("code").is_in(study_filter))
+        .to_dicts()
+    )
+
+    stacked_chart = StackedBarChartWidget(
+        input=chart_input,
+        x_key="code",
+        bar_radius=4,
+        cat_colors=cat_colors,
+        width=539 * 2,
+        height=202 * 2,
+        y_label="counts",
+        offset=36,
+    )
+
+    stacked_chart
     return
 
 
