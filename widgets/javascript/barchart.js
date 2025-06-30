@@ -186,15 +186,31 @@ function renderBarChart(
   chartGroup
     .selectAll(".marker")
     .data(Object.entries(markers))
-    .join("rect")
+    .join("line")
     .attr("class", "marker")
-    .attr("x", (d) => xScale(d[0]) + xScale.bandwidth() / 2 - 4)
-    .attr("y", (d) => yScale(d[1]) - 2)
-    .attr("width", 8)
-    .attr("height", 2)
-    .attr("rx", 1)
-    .attr("ry", 1)
-    .attr("fill", markerColor);
+    .attr("x1", (d) => xScale(d[0]))
+    .attr("y1", (d) => yScale(d[1]))
+    .attr("x2", (d) => xScale(d[0]) + xScale.bandwidth() * 1.2)
+    .attr("y2", (d) => yScale(d[1]))
+    .attr("stroke", markerColor);
+
+  function formatNumberWithCommas(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  chartGroup
+    .selectAll(".marker-text")
+    .data(Object.entries(markers))
+    .join("text")
+    .attr("class", "marker-text")
+    .attr("x", (d) => xScale(d[0]) + xScale.bandwidth() * 1.2)
+    .attr("y", (d) => yScale(d[1]))
+    .attr("fill", markerColor)
+    .attr("text-anchor", "end")
+    .style("font-family", "Tinos, serif")
+    .attr("font-size", "0.6em")
+    .attr("dominant-baseline", "ideographic")
+    .text((d) => formatNumberWithCommas(d[1]));
 
   // Add x-axis with tick padding
   var x_axis = chartGroup
