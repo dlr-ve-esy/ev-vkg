@@ -1,0 +1,32 @@
+PREFIX bfo: <http://purl.obolibrary.org/obo/>
+PREFIX chio: <https://dlr-ve-esy.github.io/charging-ontology/>
+PREFIX dbo: <https://dbpedia.org/ontology/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT ?code ?power_bin (COUNT(DISTINCT ?evse) AS ?evse_count)
+WHERE {
+?evse a chio:CHIO_00000016 ;
+        bfo:BFO_0000178 ?connector ;
+        bfo:BFO_0000176 ?column .
+?column a chio:CHIO_00000005 ;
+        bfo:BFO_0000176 ?facility . 
+?connector a chio:CHIO_00000012 ;
+        chio:CHIO_00000112 ?power .
+?power chio:CHIO_00000106 ?value .
+?facility a chio:CHIO_00000004 ;
+        bfo:BFO_0000171+ ?country . 
+?country dbo:iso31661Code ?code .
+BIND(xsd:float(?value) AS ?floatValue)
+BIND(
+IF(?floatValue <= 7400, "0-7,4 kW",
+  IF(?floatValue <= 22000, "7,4-22 kW",
+    IF(?floatValue <= 50000, "22-50 kW",
+      IF(?floatValue <= 150000, "50-150 kW", 
+        IF(?floatValue <350000, "150-350 kW", "350+ kW")
+      ))
+    )
+) AS ?power_bin
+)
+}
+GROUP BY ?code ?power_bin
+ORDER BY ?code ?power_bin

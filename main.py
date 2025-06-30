@@ -1,18 +1,14 @@
 import marimo
 
 __generated_with = "0.13.15"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
 def _():
     import json
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
-    from widgets.barchart import BarChartWidget
+    from widgets.barchart import BarChartWidget, StackedBarChartWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -31,6 +27,7 @@ def _():
         Mapping,
         Path,
         SourcesCartogramWidget,
+        StackedBarChartWidget,
         Tuple,
         datetime,
         expand_bnezta,
@@ -159,7 +156,7 @@ def _(BarChartWidget, mo, pl):
     {cap_table}
     """
     )
-    return df_to_dict, target_tracker
+    return country_codes, df_to_dict, target_tracker
 
 
 @app.cell
@@ -560,7 +557,7 @@ def _(
         for k, v in df_to_dict(results, key_col="Code", value_col="target_mw").items()
         if k in result_codes
     }
-    return filtered_markers, results
+    return filtered_markers, results, study_filter
 
 
 @app.cell
@@ -582,6 +579,114 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
     )
 
     results_plot
+    return
+
+
+@app.cell
+def _(mo):
+    with open("queries/total_evses_per_power.sparql", "r") as input_f:
+        total_evses_per_power = input_f.read()
+    mo.md(f"""### Count of EVSES based on max nominal capacity
+
+    ```sparql
+    {total_evses_per_power}
+    ```""")
+    return (total_evses_per_power,)
+
+
+@app.cell
+def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
+    total_evses_per_power_df = m.query(total_evses_per_power, graph=TEST_GRAPH)
+    total_evses_per_power_df = total_evses_per_power_df.pivot("power_bin", index="code", values="evse_count").select(
+            [
+                "code",
+                "0-7,4 kW",
+                "7,4-22 kW",
+                "22-50 kW",
+                "50-150 kW",
+                "150-350 kW",
+                "350+ kW",
+            ]
+        ).filter(pl.col("code").is_in(study_filter))
+    total_evses_per_power_df
+    return (total_evses_per_power_df,)
+
+
+@app.cell
+def _(StackedBarChartWidget, total_evses_per_power_df):
+    cat_colors = {
+        "0-7,4 kW": "#9dc291",
+        "7,4-22 kW": "#73a861",
+        "22-50 kW": "#527a44",
+        "50-150 kW": "#e9cf6f",
+        "150-350 kW": "#e0ba2f",
+        "350+ kW": "#aa8b1a",
+    }
+
+    chart_input = total_evses_per_power_df.to_dicts()
+
+    stacked_chart = StackedBarChartWidget(
+        input=chart_input,
+        x_key="code",
+        bar_radius=4,
+        cat_colors=cat_colors,
+        width=539 * 2,
+        height=202 * 2,
+        y_label="counts",
+        offset=36,
+    )
+
+    stacked_chart
+    return (cat_colors,)
+
+
+@app.cell
+def _(country_codes, pl, study_filter):
+    power_counts_tracker = (
+        pl.read_csv("viz_data/17.06.2025-eafo-power-counts.csv")
+        .join(country_codes, left_on="Category", right_on="Country", how="left")
+        .with_columns(
+            pl.col("Code").alias("code"),
+            pl.col("Slow AC recharging point, single-phase (P < 7.4kW)").alias("0-7,4 kW"),
+            pl.col("Medium-speed AC recharging point, triple-phase (7.4kW ≤ P ≤ 22kW)").alias("7,4-22 kW"),
+            pl.sum_horizontal("Fast AC recharging point, triple-phase (P > 22kW)", "Slow DC recharging point (P < 50kW)").alias("22-50 kW"),
+            pl.col("Fast DC recharging point (50kW ≤ P < 150kW)").alias("50-150 kW"),
+            pl.col("Level 1 - Ultra-fast DC recharging point (150kW ≤ P < 350kW)").alias("150-350 kW"),
+            pl.col("Level 2 - Ultra-fast DC recharging point (P ≥ 350kW)").alias("350+ kW"),
+        
+        ).select(
+            [
+                "code",
+                "0-7,4 kW",
+                "7,4-22 kW",
+                "22-50 kW",
+                "50-150 kW",
+                "150-350 kW",
+                "350+ kW",
+            ]
+        ).filter(pl.col("code").is_in(study_filter))
+    )
+    power_counts_tracker
+
+    return (power_counts_tracker,)
+
+
+@app.cell
+def _(StackedBarChartWidget, cat_colors, power_counts_tracker):
+    chart_input_2 = power_counts_tracker.to_dicts()
+
+    stacked_chart_2 = StackedBarChartWidget(
+        input=chart_input_2,
+        x_key="code",
+        bar_radius=4,
+        cat_colors=cat_colors,
+        width=539 * 2,
+        height=202 * 2,
+        y_label="counts",
+        offset=36,
+    )
+
+    stacked_chart_2
     return
 
 

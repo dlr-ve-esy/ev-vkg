@@ -41,3 +41,37 @@ class BarChartWidget(anywidget.AnyWidget):
         max-height: 100%;
         }
     """
+
+
+class StackedBarChartWidget(anywidget.AnyWidget):
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/stacked_barchart.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    input = tt.List([]).tag(sync=True)
+    x_key = tt.Unicode("code").tag(sync=True)
+    width = tt.Int(500).tag(sync=True)
+    height = tt.Int(300).tag(sync=True)
+    cat_colors = tt.Dict({}).tag(sync=True)
+    bar_radius = tt.Int(5).tag(sync=True)
+    y_max = tt.Int(0).tag(sync=True)
+    y_ticks: List[Any] = tt.List([]).tag(sync=True)
+    x_ticks: List[Any] = tt.List([]).tag(sync=True)
+    y_grid: List[Any] = tt.List([]).tag(sync=True)
+    x_label = tt.Unicode("").tag(sync=True)
+    y_label = tt.Unicode("").tag(sync=True)
+    offset = tt.Int(0).tag(sync=True)
+    _css = """
+    .barchart {
+        display: flex;
+        justify-content: center; 
+        align-items: center;
+        height: 100%; /* Adjust as needed */
+        width: 100%; /* Adjust as needed */
+        }
+
+    .barchart svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
