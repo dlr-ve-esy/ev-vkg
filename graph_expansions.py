@@ -88,6 +88,7 @@ def expand_relational_csv(
     mapping: Optional[Mapping] = None,
     challenge: bool = False,
     country: Optional[str] = None,
+    country_filter=[],
 ):
     if mapping is None:
         with open("templates/evse.stottr", "r") as d:
@@ -103,7 +104,62 @@ def expand_relational_csv(
         facility = pl.read_csv(p)
         if challenge:
             facility = facility.sample(5)
-        geo_ids = facility["geolocation_id"].unique()
+        if (p := Path(f"{path}/geolocations.csv")).exists():
+            geolocations: pl.DataFrame = pl.read_csv(p)
+            if (p := Path(f"{path}/spatial.csv")).exists():
+                geolocations = geolocations.join(
+                    pl.read_csv(p),
+                    left_on="spatial_id",
+                    right_on="id",
+                    nulls_equal=True,
+                    how="left",
+                )
+            elif (p := Path(f"{path}/coordinates.csv")).exists():
+                geolocations = geolocations.join(
+                    pl.read_csv(p),
+                    left_on="spatial_id",
+                    right_on="id",
+                    nulls_equal=True,
+                    how="left",
+                )
+            if (p := Path(f"{path}/addresses.csv")).exists():
+                geolocations = geolocations.join(
+                    pl.read_csv(p, infer_schema_length=None),
+                    left_on="address_id",
+                    right_on="id",
+                    nulls_equal=True,
+                    how="left",
+                )
+
+            if len(country_filter) > 0:
+                geolocations = geolocations.filter(
+                    pl.col("country").is_in(country_filter)
+                )
+
+                geo_ids = geolocations["id"].unique().to_list()
+                facility = facility.filter(pl.col("geolocation_id").is_in(geo_ids))
+
+            geolocations = geolocations.select(
+                (VKG + pl.col("id").cast(str)).alias("geolocation"),
+                pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
+                .cast(str)
+                .alias("centroid"),
+                geolocations.get_column("street", default=pl.lit(None)).alias(
+                    "address"
+                ),
+                geolocations.get_column("postal_name", default=pl.lit(None)).alias(
+                    "postal_name"
+                ),
+                geolocations.get_column("state", default=pl.lit(None)).alias("state"),
+                geolocations.get_column("zip_code", default=pl.lit(None))
+                .cast(str)
+                .alias("postal_code"),
+                geolocations.get_column("country", default=pl.lit(country))
+                .fill_null(country)
+                .alias("country"),
+            )
+            m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{VKG}{name}")
+
         operator_ids = facility["operator_id"].unique()
         facility_ids = facility["id"].unique()
         facility = facility.select(
@@ -113,57 +169,10 @@ def expand_relational_csv(
             pl.col("id").cast(str).alias("ID"),
         )
         m.expand("vkg-evse:Facility", facility, graph=f"{VKG}{name}")
-    if (p := Path(f"{path}/geolocations.csv")).exists():
-        geolocations: pl.DataFrame = pl.read_csv(p)
-        if challenge:
-            geolocations = geolocations.filter(pl.col("id").is_in(geo_ids))
-        if (p := Path(f"{path}/spatial.csv")).exists():
-            geolocations = geolocations.join(
-                pl.read_csv(p),
-                left_on="spatial_id",
-                right_on="id",
-                nulls_equal=True,
-                how="left",
-            )
-        elif (p := Path(f"{path}/coordinates.csv")).exists():
-            geolocations = geolocations.join(
-                pl.read_csv(p),
-                left_on="spatial_id",
-                right_on="id",
-                nulls_equal=True,
-                how="left",
-            )
-        if (p := Path(f"{path}/addresses.csv")).exists():
-            geolocations = geolocations.join(
-                pl.read_csv(p, infer_schema_length=None),
-                left_on="address_id",
-                right_on="id",
-                nulls_equal=True,
-                how="left",
-            )
-        geolocations = geolocations.select(
-            (VKG + pl.col("id").cast(str)).alias("geolocation"),
-            pl.format("POINT ({} {})", pl.col("longitude"), pl.col("latitude"))
-            .cast(str)
-            .alias("centroid"),
-            geolocations.get_column("street", default=pl.lit(None)).alias("address"),
-            geolocations.get_column("postal_name", default=pl.lit(None)).alias(
-                "postal_name"
-            ),
-            geolocations.get_column("state", default=pl.lit(None)).alias("state"),
-            geolocations.get_column("zip_code", default=pl.lit(None))
-            .cast(str)
-            .alias("postal_code"),
-            geolocations.get_column("country", default=pl.lit(country))
-            .fill_null(country)
-            .alias("country"),
-        )
-        m.expand("vkg-evse:GeoLocation", geolocations, graph=f"{VKG}{name}")
 
     if (p := Path(f"{path}/operators.csv")).exists():
         operator: pl.DataFrame = pl.read_csv(p)
-        if challenge:
-            operator = operator.filter(pl.col("id").is_in(operator_ids))
+        operator = operator.filter(pl.col("id").is_in(operator_ids))
         operator = operator.select(
             (VKG + pl.col("id").cast(str)).alias("operator"),
             pl.col("name").cast(str).alias("label"),
@@ -180,10 +189,10 @@ def expand_relational_csv(
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
     if (p := Path(f"{path}/columns.csv")).exists():
         columns: pl.DataFrame = pl.read_csv(p)
-        if challenge:
-            columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
+        columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
         column_ids = columns["id"].unique()
         challenge_ids = column_ids
+        challenge_identifier = "column_id"
         columns = columns.select(
             (VKG + pl.col("id").cast(str)).alias("column"),
             (VKG + pl.col("facility_id").cast(str)).alias("facility"),
@@ -196,12 +205,12 @@ def expand_relational_csv(
         evse_expansion_template = "vkg-evse:EVSE"
     else:
         challenge_ids = facility_ids
+        challenge_identifier = "facility_id"
         evse_fk = (VKG + pl.col("facility_id").cast(str)).alias("facility")
         evse_expansion_template = "vkg-evse:EVSEColumn"
     if (p := Path(f"{path}/evses.csv")).exists():
         evse: pl.DataFrame = pl.read_csv(p)
-        if challenge:
-            evse = evse.filter(pl.col("facility_id").is_in(challenge_ids))
+        evse = evse.filter(pl.col(challenge_identifier).is_in(challenge_ids))
         evse_ids = evse["id"].unique()
         evse = evse.select(
             (VKG + pl.col("id").cast(str)).alias("evse"),
@@ -213,8 +222,7 @@ def expand_relational_csv(
 
     if (p := Path(f"{path}/connections.csv")).exists():
         connections: pl.DataFrame = pl.read_csv(p)
-        if challenge:
-            connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
+        connections = connections.filter(pl.col("evse_id").is_in(evse_ids))
         if (p := Path(f"{path}/connectors.csv")).exists():
             connections = connections.join(
                 pl.read_csv(p),

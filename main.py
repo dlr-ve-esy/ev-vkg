@@ -1,7 +1,11 @@
 import marimo
 
-__generated_with = "0.13.15"
-app = marimo.App(width="medium", css_file="styles/custom.css")
+__generated_with = "0.14.9"
+app = marimo.App(
+    width="medium",
+    layout_file="layouts/main.slides.json",
+    css_file="styles/custom.css",
+)
 
 
 @app.cell
@@ -387,7 +391,15 @@ def _(
             or ("datexii" in path.lower())
             or ("irve" in path.lower())
         ):
-            expand_relational_csv("graph", path, m, challenge=False, country=country)
+
+        
+            if country == "NO":
+                country_filter = ["NO", "SE", "IS"] 
+            if country == "AT":
+                country_filter = ["AT"] 
+            else:
+                country_filter = []    
+            expand_relational_csv("graph", path, m, challenge=False, country=country, country_filter=country_filter)
         if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
     return (m,)
@@ -607,7 +619,7 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
                 "150-350 kW",
                 "350+ kW",
             ]
-        ).filter(pl.col("code").is_in(study_filter))
+        ).filter(pl.col("code").is_in(study_filter)).sort(by="code")
     total_evses_per_power_df
     return (total_evses_per_power_df,)
 
@@ -643,7 +655,7 @@ def _(StackedBarChartWidget, total_evses_per_power_df):
 @app.cell
 def _(country_codes, pl, study_filter):
     power_counts_tracker = (
-        pl.read_csv("viz_data/17.06.2025-eafo-power-counts.csv")
+        pl.read_csv("viz_data/17.06.2025-eafo-counts.csv")
         .join(country_codes, left_on="Category", right_on="Country", how="left")
         .with_columns(
             pl.col("Code").alias("code"),
@@ -653,7 +665,7 @@ def _(country_codes, pl, study_filter):
             pl.col("Fast DC recharging point (50kW ≤ P < 150kW)").alias("50-150 kW"),
             pl.col("Level 1 - Ultra-fast DC recharging point (150kW ≤ P < 350kW)").alias("150-350 kW"),
             pl.col("Level 2 - Ultra-fast DC recharging point (P ≥ 350kW)").alias("350+ kW"),
-        
+
         ).select(
             [
                 "code",
@@ -664,7 +676,7 @@ def _(country_codes, pl, study_filter):
                 "150-350 kW",
                 "350+ kW",
             ]
-        ).filter(pl.col("code").is_in(study_filter))
+        ).filter(pl.col("code").is_in(study_filter)).sort(by="code")
     )
     power_counts_tracker
 
