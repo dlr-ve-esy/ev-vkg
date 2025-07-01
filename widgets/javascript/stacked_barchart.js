@@ -2,7 +2,7 @@ import * as d3 from "https://esm.sh/d3@7";
 
 async function render({ model, el }) {
   const input = model.get("input");
-  const xKey = model.get("x_key")
+  const xKey = model.get("x_key");
   const width = model.get("width");
   const height = model.get("height");
   const catColors = model.get("cat_colors");
@@ -13,6 +13,8 @@ async function render({ model, el }) {
   const xLabel = model.get("x_label");
   const yLabel = model.get("y_label");
   const Offset = model.get("offset");
+  const legend = model.get("legend");
+  const fontSize = model.get("font_size");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -34,7 +36,9 @@ async function render({ model, el }) {
     xLabel,
     yLabel,
     yMax,
-    Offset
+    Offset,
+    legend,
+    fontSize
   );
 }
 
@@ -52,9 +56,11 @@ function renderBarChart(
   xLabel,
   yLabel,
   yMax,
-  Offset
+  Offset,
+  legend,
+  fontSize
 ) {
-  const keys = Object.keys(data[0]).filter(k => k !== xKey);
+  const keys = Object.keys(data[0]).filter((k) => k !== xKey);
   // Stack the data
   const stack = d3.stack().keys(keys);
   const series = stack(data);
@@ -65,18 +71,18 @@ function renderBarChart(
     .attr("height", height);
 
   // Margins and inner dimensions
-  const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+  const margin = { top: 20, right: 20, bottom: 40, left: 50 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
   // Create scales
   const xScale = d3
     .scaleBand()
-    .domain(data.map(d => d[xKey])) // Use object keys for the x-axis
+    .domain(data.map((d) => d[xKey])) // Use object keys for the x-axis
     .range([0, innerWidth])
     .padding(0.2);
 
   if (!yMax || yMax === 0) {
-    yMax = d3.max(series, s => d3.max(s, d => d[1]));
+    yMax = d3.max(series, (s) => d3.max(s, (d) => d[1]));
   }
   const yScale = d3
     .scaleLinear()
@@ -102,18 +108,18 @@ function renderBarChart(
   // Add clip-paths for rounded tops
   chartGroup
     .selectAll("clipPath")
-    .data(data.map(d => d[xKey])) // Use object entries for data
+    .data(data.map((d) => d[xKey])) // Use object entries for data
     .join("clipPath")
     .attr("id", (d, i) => `clip-${d}`)
     .append("path")
     .attr("d", (d, i) => {
-    const x = xScale(d);
-    const barWidth = xScale.bandwidth();
-    // Find the top of the stack (the minimum y of all stacks at this x)
-    console.log(series)
-    const stackTops = series.map(s => s[i][1]);
-    const y = yScale(Math.max(...stackTops));
-    const barHeight = innerHeight - y;
+      const x = xScale(d);
+      const barWidth = xScale.bandwidth();
+      // Find the top of the stack (the minimum y of all stacks at this x)
+      console.log(series);
+      const stackTops = series.map((s) => s[i][1]);
+      const y = yScale(Math.max(...stackTops));
+      const barHeight = innerHeight - y;
       return `
         M${x},${y + barRadius} 
         Q${x},${y} ${x + barRadius},${y} 
@@ -125,20 +131,19 @@ function renderBarChart(
       `;
     });
 
-
   // Draw stacks
   chartGroup
     .selectAll("g.stack")
     .data(series)
     .join("g")
     .attr("class", "stack")
-    .attr("fill", d => catColors[d.key] || "#888")
+    .attr("fill", (d) => catColors[d.key] || "#888")
     .selectAll("rect")
-    .data(d => d)
+    .data((d) => d)
     .join("rect")
     .attr("x", (d, i) => xScale(data[i][xKey]))
-    .attr("y", d => yScale(d[1]))
-    .attr("height", d => yScale(d[0]) - yScale(d[1]))
+    .attr("y", (d) => yScale(d[1]))
+    .attr("height", (d) => yScale(d[0]) - yScale(d[1]))
     .attr("width", xScale.bandwidth())
     .attr("clip-path", (d, i) => `url(#clip-${data[i][xKey]})`);
 
@@ -194,6 +199,56 @@ function renderBarChart(
       .style("font-family", "Tinos, serif")
       .attr("font-size", "0.8em")
       .text(xLabel);
+  }
+
+  // Create legend items
+  if (legend) {
+    // Add legend below the plot
+    const legendGroup = svg
+      .append("g")
+      .attr("class", "legend")
+      .attr(
+        "transform",
+        `translate(${margin.left}, ${height - margin.bottom + Offset})`
+      );
+
+    const legendSpacing = 10; // Spacing between legend items
+    const legendItemWidth = 100; // Width of each legend item
+    const legendSquareSize = 10; // Size of the color square
+
+    legendGroup
+      .selectAll(".legend-item")
+      .data(Object.entries(catColors))
+      .join("g")
+      .attr("class", "legend-item")
+      .attr(
+        "transform",
+        (d, i) => `translate(${i * legendItemWidth}, 0)` // Position each legend item
+      )
+      .each(function (d) {
+        const legendItem = d3.select(this);
+
+        // Add color square
+        legendItem
+          .append("rect")
+          .attr("width", legendSquareSize)
+          .attr("height", legendSquareSize)
+          .attr("rx", barRadius / 2)
+          .attr("ry", barRadius / 2)
+          .attr("fill", d[1]) // Use the color from catColors
+          .attr("y", -legendSquareSize / 2);
+
+        // Add label
+        legendItem
+          .append("text")
+          .text(d[0]) // Use the key as the label
+          .attr("x", legendSquareSize + legendSpacing)
+          .attr("y", 0)
+          .attr("dominant-baseline", "middle")
+          .style("font-family", "Tinos, serif")
+          .style("font-size", "0.8em")
+          .style("opacity", 0.8);
+      });
   }
 }
 

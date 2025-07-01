@@ -17,6 +17,7 @@ async function render({ model, el }) {
   const xLabel = model.get("x_label");
   const yLabel = model.get("y_label");
   const Offset = model.get("offset");
+  const fontSize = model.get("font_size");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -43,7 +44,8 @@ async function render({ model, el }) {
     xLabel,
     yLabel,
     yMax,
-    Offset
+    Offset,
+    fontSize
   );
 }
 
@@ -65,7 +67,8 @@ function renderBarChart(
   xLabel,
   yLabel,
   yMax,
-  Offset
+  Offset,
+  fontSize
 ) {
   // Create SVG
   const svg = container
@@ -74,7 +77,7 @@ function renderBarChart(
     .attr("height", height);
 
   // Margins and inner dimensions
-  const margin = { top: 20, right: 20, bottom: 40, left: 40 };
+  const margin = { top: 20, right: 60, bottom: 40, left: 40 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
   // Create scales
@@ -197,7 +200,7 @@ function renderBarChart(
   function formatNumberWithCommas(number) {
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
-
+  const markerFornt = fontSize * 0.6666;
   chartGroup
     .selectAll(".marker-text")
     .data(Object.entries(markers))
@@ -208,7 +211,7 @@ function renderBarChart(
     .attr("fill", markerColor)
     .attr("text-anchor", "end")
     .style("font-family", "Tinos, serif")
-    .attr("font-size", "0.6em")
+    .attr("font-size", `${markerFornt}rem`)
     .attr("dominant-baseline", "ideographic")
     .text((d) => formatNumberWithCommas(d[1]));
 
@@ -222,6 +225,7 @@ function renderBarChart(
     .selectAll("text")
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
+    .style("font-size", `${fontSize * 0.8}rem`)
     .style("opacity", 0.8);
 
   x_axis.selectAll("path").style("opacity", 0.8);
@@ -236,6 +240,7 @@ function renderBarChart(
   y_axis_ticks
     .call(y_axis)
     .style("font-family", "Tinos, serif")
+    .style("font-size", `${fontSize * 0.8}rem`)
     .style("opacity", 0.6); // Add padding to y-axis ticks
   y_axis_ticks.selectAll("path").style("opacity", 0);
 
@@ -249,7 +254,7 @@ function renderBarChart(
       .attr("x", "0")
       .attr("opacity", 0.6)
       .style("font-family", "Tinos, serif")
-      .attr("font-size", "0.8em")
+      .attr("font-size", `${fontSize}rem`)
       .text(yLabel);
   }
   // Add x label
@@ -262,7 +267,7 @@ function renderBarChart(
       .attr("x", innerWidth / 2)
       .attr("opacity", 0.6)
       .style("font-family", "Tinos, serif")
-      .attr("font-size", "0.8em")
+      .attr("font-size", `${fontSize}rem`)
       .text(xLabel);
   }
 }

@@ -27,6 +27,7 @@ class BarChartWidget(anywidget.AnyWidget):
     x_label = tt.Unicode("").tag(sync=True)
     y_label = tt.Unicode("").tag(sync=True)
     offset = tt.Int(0).tag(sync=True)
+    font_size = tt.Float(0.8).tag(sync=True)
     _css = """
     .barchart {
         display: flex;
@@ -61,6 +62,8 @@ class StackedBarChartWidget(anywidget.AnyWidget):
     x_label = tt.Unicode("").tag(sync=True)
     y_label = tt.Unicode("").tag(sync=True)
     offset = tt.Int(0).tag(sync=True)
+    legend = tt.Bool(False).tag(sync=True)
+    font_size = tt.Float(0.8).tag(sync=True)
     _css = """
     .barchart {
         display: flex;

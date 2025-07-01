@@ -142,6 +142,7 @@ def _(BarChartWidget, mo, pl):
         y_ticks=[2000, 4000, 6000, 8000],
         y_label="Power (MW)",
         offset=36,
+        font_size=1.1
     )
     cap_wg = mo.ui.anywidget(capacities_plot)
     cap_table = mo.ui.table(
@@ -365,7 +366,7 @@ def _(List, Path, Tuple, glob, mo):
     snippet = "\n".join(vkg_evse.split("\n")[13:22])
     mo.md(f"""## Graph is expanded using OTTR templates
 
-    For example, with this graph we expand an EVSE from a tabular source
+    The original sources are converted to a common tabular model which is expanded to a graph. For example, with this template we expand the data from a EVSE.
     ```
     {snippet}
     ```
@@ -392,7 +393,7 @@ def _(
             or ("irve" in path.lower())
         ):
 
-        
+
             if country == "NO":
                 country_filter = ["NO", "SE", "IS"] 
             if country == "AT":
@@ -429,6 +430,18 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
     The charging ontology is in GitHub and it is hosted as a static site
     <p style="justify-content: space-evenly; display: flex;"><a href="https://github.com/dlr-ve-esy/charging-ontology" rel="noopener" target="_blank"><img alt="dlr-ve-esy/charging-ontology - GitHub" src="https://gh-card.dev/repos/dlr-ve-esy/charging-ontology.svg"></a><img src="public/qr-code.png" width="100"/></p>""")
     return (TEST_GRAPH,)
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        """
+    ## Visual summary of ontological commitments
+
+    <p style="justify-content: space-evenly; display: flex;"><img src="public/mereology-summary.png"/></p>
+    """
+    )
+    return
 
 
 @app.cell
@@ -587,7 +600,8 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         y_max=10000,
         y_ticks=[2000, 4000, 6000, 8000],
         y_label="Power (MW)",
-        offset=36,
+        offset=60,
+        font_size = 1.18
     )
 
     results_plot
@@ -646,6 +660,7 @@ def _(StackedBarChartWidget, total_evses_per_power_df):
         height=202 * 2,
         y_label="counts",
         offset=36,
+        legend = False
     )
 
     stacked_chart
@@ -695,7 +710,8 @@ def _(StackedBarChartWidget, cat_colors, power_counts_tracker):
         width=539 * 2,
         height=202 * 2,
         y_label="counts",
-        offset=36,
+        offset=31,
+        legend = True
     )
 
     stacked_chart_2
