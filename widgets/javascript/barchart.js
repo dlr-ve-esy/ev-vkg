@@ -6,6 +6,7 @@ async function render({ model, el }) {
   const markers = model.get("markers");
   const width = model.get("width");
   const height = model.get("height");
+  const margin = model.get("margin");
   const barColor = model.get("bar_color");
   const markerColor = model.get("marker_color");
   const shadowColor = model.get("shadow_color");
@@ -36,6 +37,7 @@ async function render({ model, el }) {
     body,
     width,
     height,
+    margin,
     barColor,
     markerColor,
     shadowColor,
@@ -62,6 +64,7 @@ function renderBarChart(
   container,
   width = 500,
   height = 300,
+  margin,
   barColor = "steelblue",
   markerColor = "indianred",
   shadowColor = "black",
@@ -86,7 +89,6 @@ function renderBarChart(
     .attr("height", height);
 
   // Margins and inner dimensions
-  const margin = { top: 20, right: 60, bottom: 40, left: 50 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
   // Create scales
@@ -259,9 +261,9 @@ function renderBarChart(
       .append("text")
       .attr("class", "label")
       .attr("text-anchor", "start")
-      .attr("y", "-0.5rem")
+      .attr("y", -5)
       .attr("x", "0")
-      .attr("opacity", 0.6)
+      .attr("opacity", 1)
       .style("font-family", "Tinos, serif")
       .attr("font-size", `${fontSize}rem`)
       .text(yLabel);
@@ -332,7 +334,7 @@ function renderBarChart(
           .attr("dominant-baseline", "middle")
           .style("font-family", "Tinos, serif")
           .attr("font-size", `${fontSize * 0.8}rem`)
-          .style("opacity", 0.8);
+          .style("opacity", 1);
       });
   }
 }

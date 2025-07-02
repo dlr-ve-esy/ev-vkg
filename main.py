@@ -138,14 +138,15 @@ def _(BarChartWidget, mo, pl):
         bar_radius=4,
         bar_color="#de8f05",
         marker_color="#353839 ",
-        width=539,
-        height=101,
+        width=539* 2,# 539 for paper
+        height=101 , # 101 for paper
         y_ticks=[2000, 4000, 6000, 8000],
         y_grid = [2000, 4000, 6000, 8000],
         y_label="Power (MW)",
         y_max=8000,
         offset=36,
         font_size=0.9,
+        margin={"top": 14, "right": 10, "bottom": 20, "left": 34} # right 0 for paper
     )
 
     capacities_plot_b = BarChartWidget(
@@ -154,14 +155,15 @@ def _(BarChartWidget, mo, pl):
         bar_radius=4,
         bar_color="#de8f05",
         marker_color="#353839 ",
-        width=539,
-        height=101,
+        width=539 * 2, # 539 for paper
+        height=101 , # 101 for paper
         y_ticks=[100, 200, 300, 400],
         y_grid = [100, 200, 300, 400],
         y_label="",
         y_max=400,
         offset=36,
         font_size=0.9,
+        margin={"top": 8, "right": 10, "bottom": 18, "left": 34}
     )
     cap_wg_a = mo.ui.anywidget(capacities_plot_a)
     cap_wg_b = mo.ui.anywidget(capacities_plot_b)
@@ -346,7 +348,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         input=total_data,
         bar_radius=4,
         bar_color="#9d6b92",
-        width=539 * 2,
+        width=539 * 2, # 549 for paper figure
         height=202,
         y_max=12,
         y_ticks=[3, 6, 9],
@@ -636,17 +638,18 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         bar_color="#0173b2",
         marker_color="#353839",
         shadow_color="#d55e00",
-        width=539 * 2,  # 397  for elsevier size
+        width=539 * 2,  # 539  for elsevier size
         height=202 * 2,  # 202 for elsevier size
-        y_max=10000,
-        y_ticks=[2000, 4000, 6000, 8000],
+        y_max=8000,
+        # y_ticks=[2000, 4000, 6000, 8000],
         # y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
-        font_size=1.2,
+        font_size=1.1,
         main_label = "NAP Estimation",
         shadow_label = "EAFO Reported",
-        marker_label = "AFIR Target"
+        marker_label = "AFIR Target",
+        margin={"top": 17, "right": 0, "bottom": 39, "left": 45} # left 33 for paper 
     )
 
     results_plot
@@ -789,11 +792,12 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
         y_label="Counts per capacity",
         x1_label= "European Alternative Fuels Observatory, Juny 2025",
         x2_label= "Estimation using available data from the National Access Points",
-        offset=40,
+        offset=38,
         # y_grid = [20000, 90000, 180000], # Uncoment for journal print
         # y_ticks = [20000, 90000, 180000], # Uncoment for journal print
         y_max=180000,
-        font_size=1.0, # 0.9 for elsevier size
+        font_size=0.9, # 0.9 for elsevier size
+        margin={"top": 15, "right": 0, "bottom": 48, "left": 46}
     )
 
     stacked_chart_3

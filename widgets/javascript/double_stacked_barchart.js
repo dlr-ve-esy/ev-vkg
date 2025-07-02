@@ -16,6 +16,7 @@ async function render({ model, el }) {
   const yLabel = model.get("y_label");
   const Offset = model.get("offset");
   const fontSize = model.get("font_size");
+  const margin = model.get("margin");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -28,7 +29,12 @@ async function render({ model, el }) {
   const innerH = height * 0.475;
   const sep = height * 0.025;
 
-  const marginTop = { top: 20, right: 0, bottom: Offset / 2 + 20, left: 70 };
+  const marginTop = {
+    top: margin.top,
+    right: margin.right,
+    bottom: Offset / 2 + 20,
+    left: margin.left,
+  };
   renderBarChartDouble(
     inputA,
     xKey,
@@ -50,7 +56,12 @@ async function render({ model, el }) {
     marginTop
   );
 
-  const marginBottom = { top: 0, right: 0, bottom: Offset + 10, left: 70 };
+  const marginBottom = {
+    top: 0,
+    right: margin.right,
+    bottom: margin.bottom,
+    left: margin.left,
+  };
   renderBarChartDouble(
     inputB,
     xKey,
@@ -211,7 +222,7 @@ function renderBarChartDouble(
       .append("text")
       .attr("class", "label")
       .attr("text-anchor", "start")
-      .attr("y", "-0.5em")
+      .attr("y", -5)
       .attr("x", "0")
       .attr("opacity", 1)
       .style("font-family", "Tinos, serif")
