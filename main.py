@@ -12,7 +12,7 @@ app = marimo.App(
 def _():
     import json
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
-    from widgets.barchart import BarChartWidget, StackedBarChartWidget
+    from widgets.barchart import BarChartWidget, StackedBarChartWidget, DoubleStackedBarChartWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -26,6 +26,7 @@ def _():
 
     return (
         BarChartWidget,
+        DoubleStackedBarChartWidget,
         FAIRCartogramWidget,
         List,
         Mapping,
@@ -142,7 +143,7 @@ def _(BarChartWidget, mo, pl):
         y_ticks=[2000, 4000, 6000, 8000],
         y_label="Power (MW)",
         offset=36,
-        font_size=1.1
+        font_size=1.1,
     )
     cap_wg = mo.ui.anywidget(capacities_plot)
     cap_table = mo.ui.table(
@@ -246,7 +247,7 @@ def _(INDENT, colored_square, mo):
 
 @app.cell
 def _(BarChartWidget, datetime, mo, pl, sources_per_country):
-    sources_nap = pl.read_csv("sources/metadata.csv")
+    sources_nap = pl.read_csv("sources/metadata.csv", encoding="utf-8")
     sources_nap = sources_nap.with_columns(
         pl.col("actionable").replace_strict({"NO": False, "YES": True}),
         pl.col("identifier").replace_strict({"NO": False, "YES": True}),
@@ -385,6 +386,7 @@ def _(
     vkg_evse,
 ):
     m = Mapping([vkg_common, vkg_evse])
+    GERMANY_BNETZA = False
     for name, path in mappings:
         country: str = name.split("-")[0]
         if (
@@ -392,16 +394,23 @@ def _(
             or ("datexii" in path.lower())
             or ("irve" in path.lower())
         ):
-
-
             if country == "NO":
-                country_filter = ["NO", "SE", "IS"] 
+                country_filter = ["NO", "SE", "IS"]
             if country == "AT":
-                country_filter = ["AT"] 
+                country_filter = ["AT"]
             else:
-                country_filter = []    
-            expand_relational_csv("graph", path, m, challenge=False, country=country, country_filter=country_filter)
-        if "bnetza" in name.lower():
+                country_filter = []
+            if country == "DE" and GERMANY_BNETZA:
+                continue
+            expand_relational_csv(
+                "graph",
+                path,
+                m,
+                challenge=False,
+                country=country,
+                country_filter=country_filter,
+            )
+        if "bnetza" in name.lower() and GERMANY_BNETZA:
             expand_bnezta("graph", path, m, challenge=False, country=country)
     return (m,)
 
@@ -600,8 +609,10 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         y_max=10000,
         y_ticks=[2000, 4000, 6000, 8000],
         y_label="Power (MW)",
-        offset=60,
-        font_size = 1.18
+        offset=25,
+        font_size=1.1,
+        main_label = "NAPs",
+        shadow_label = "EAFO"
     )
 
     results_plot
@@ -623,7 +634,9 @@ def _(mo):
 @app.cell
 def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
     total_evses_per_power_df = m.query(total_evses_per_power, graph=TEST_GRAPH)
-    total_evses_per_power_df = total_evses_per_power_df.pivot("power_bin", index="code", values="evse_count").select(
+    total_evses_per_power_df = (
+        total_evses_per_power_df.pivot("power_bin", index="code", values="evse_count")
+        .select(
             [
                 "code",
                 "0-7,4 kW",
@@ -633,7 +646,10 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
                 "150-350 kW",
                 "350+ kW",
             ]
-        ).filter(pl.col("code").is_in(study_filter)).sort(by="code")
+        )
+        .filter(pl.col("code").is_in(study_filter))
+        .sort(by="code")
+    )
     total_evses_per_power_df
     return (total_evses_per_power_df,)
 
@@ -658,30 +674,39 @@ def _(StackedBarChartWidget, total_evses_per_power_df):
         cat_colors=cat_colors,
         width=539 * 2,
         height=202 * 2,
-        y_label="counts",
+        y_label="Charger counts",
         offset=36,
-        legend = False
+        legend=False,
     )
-
-    stacked_chart
-    return (cat_colors,)
+    return cat_colors, chart_input
 
 
 @app.cell
 def _(country_codes, pl, study_filter):
     power_counts_tracker = (
-        pl.read_csv("viz_data/17.06.2025-eafo-counts.csv")
+        pl.read_csv("viz_data/02.07.2025-eafo-counts.csv")
         .join(country_codes, left_on="Category", right_on="Country", how="left")
         .with_columns(
             pl.col("Code").alias("code"),
-            pl.col("Slow AC recharging point, single-phase (P < 7.4kW)").alias("0-7,4 kW"),
-            pl.col("Medium-speed AC recharging point, triple-phase (7.4kW ≤ P ≤ 22kW)").alias("7,4-22 kW"),
-            pl.sum_horizontal("Fast AC recharging point, triple-phase (P > 22kW)", "Slow DC recharging point (P < 50kW)").alias("22-50 kW"),
+            pl.col("Slow AC recharging point, single-phase (P < 7.4kW)").alias(
+                "0-7,4 kW"
+            ),
+            pl.col(
+                "Medium-speed AC recharging point, triple-phase (7.4kW ≤ P ≤ 22kW)"
+            ).alias("7,4-22 kW"),
+            pl.sum_horizontal(
+                "Fast AC recharging point, triple-phase (P > 22kW)",
+                "Slow DC recharging point (P < 50kW)",
+            ).alias("22-50 kW"),
             pl.col("Fast DC recharging point (50kW ≤ P < 150kW)").alias("50-150 kW"),
-            pl.col("Level 1 - Ultra-fast DC recharging point (150kW ≤ P < 350kW)").alias("150-350 kW"),
-            pl.col("Level 2 - Ultra-fast DC recharging point (P ≥ 350kW)").alias("350+ kW"),
-
-        ).select(
+            pl.col(
+                "Level 1 - Ultra-fast DC recharging point (150kW ≤ P < 350kW)"
+            ).alias("150-350 kW"),
+            pl.col("Level 2 - Ultra-fast DC recharging point (P ≥ 350kW)").alias(
+                "350+ kW"
+            ),
+        )
+        .select(
             [
                 "code",
                 "0-7,4 kW",
@@ -691,9 +716,10 @@ def _(country_codes, pl, study_filter):
                 "150-350 kW",
                 "350+ kW",
             ]
-        ).filter(pl.col("code").is_in(study_filter)).sort(by="code")
+        )
+        .filter(pl.col("code").is_in(study_filter))
+        .sort(by="code")
     )
-    power_counts_tracker
 
     return (power_counts_tracker,)
 
@@ -709,12 +735,32 @@ def _(StackedBarChartWidget, cat_colors, power_counts_tracker):
         cat_colors=cat_colors,
         width=539 * 2,
         height=202 * 2,
-        y_label="counts",
+        y_label="",
         offset=31,
-        legend = True
+        legend=True,
+    )
+    return (chart_input_2,)
+
+
+@app.cell
+def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
+    stacked_chart_3 = DoubleStackedBarChartWidget(
+        input_a=chart_input_2,
+        input_b=chart_input,
+        x_key="code",
+        bar_radius=4,
+        cat_colors=cat_colors,
+        width=539 * 2,
+        height=202 * 2,
+        y_label="Counts per capacity",
+        x1_label= "European Alternative Fuels Observatory, Juny 2025",
+        x2_label= "Estimation using available data from the National Access Points",
+        offset=50,
+        y_max=180000,
+        font_size=1.0,
     )
 
-    stacked_chart_2
+    stacked_chart_3
     return
 
 

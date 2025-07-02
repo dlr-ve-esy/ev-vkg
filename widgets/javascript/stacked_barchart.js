@@ -157,6 +157,7 @@ function renderBarChart(
     .selectAll("text")
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
+    .style("font-size", `${fontSize * 0.8}rem`)
     .style("opacity", 0.8);
 
   x_axis.selectAll("path").style("opacity", 0.8);
@@ -171,6 +172,7 @@ function renderBarChart(
   y_axis_ticks
     .call(y_axis)
     .style("font-family", "Tinos, serif")
+    .style("font-size", `${fontSize * 0.8}rem`)
     .style("opacity", 0.6); // Add padding to y-axis ticks
   y_axis_ticks.selectAll("path").style("opacity", 0);
 
@@ -183,8 +185,8 @@ function renderBarChart(
       .attr("y", "-0.5em")
       .attr("x", "0")
       .attr("opacity", 0.6)
-      .style("font-family", "Tinos, serif")
-      .attr("font-size", "0.8em")
+      .attr("font-family", "Tinos, serif")
+      .attr("font-size", `${fontSize}rem`)
       .text(yLabel);
   }
   // Add x label
@@ -197,7 +199,7 @@ function renderBarChart(
       .attr("x", innerWidth / 2)
       .attr("opacity", 0.6)
       .style("font-family", "Tinos, serif")
-      .attr("font-size", "0.8em")
+      .attr("font-size", `${fontSize}rem`)
       .text(xLabel);
   }
 
@@ -212,9 +214,9 @@ function renderBarChart(
         `translate(${margin.left}, ${height - margin.bottom + Offset})`
       );
 
-    const legendSpacing = 10; // Spacing between legend items
-    const legendItemWidth = 100; // Width of each legend item
-    const legendSquareSize = 10; // Size of the color square
+    const legendSpacing = convertRemToPixels(fontSize);
+    const legendItemWidth = 10 * convertRemToPixels(fontSize);
+    const legendSquareSize = convertRemToPixels(fontSize);
 
     legendGroup
       .selectAll(".legend-item")
@@ -243,13 +245,15 @@ function renderBarChart(
           .append("text")
           .text(d[0]) // Use the key as the label
           .attr("x", legendSquareSize + legendSpacing)
-          .attr("y", 0)
+          .attr("y", legendSquareSize / 7)
           .attr("dominant-baseline", "middle")
           .style("font-family", "Tinos, serif")
-          .style("font-size", "0.8em")
+          .style("font-size", `${fontSize}rem`)
           .style("opacity", 0.8);
       });
   }
 }
-
+function convertRemToPixels(rem) {
+  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
 export default { render };

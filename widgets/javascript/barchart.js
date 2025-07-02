@@ -18,6 +18,8 @@ async function render({ model, el }) {
   const yLabel = model.get("y_label");
   const Offset = model.get("offset");
   const fontSize = model.get("font_size");
+  const mainLabel = model.get("main_label");
+  const shadowLabel = model.get("shadow_label");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -45,7 +47,9 @@ async function render({ model, el }) {
     yLabel,
     yMax,
     Offset,
-    fontSize
+    fontSize,
+    mainLabel,
+    shadowLabel
   );
 }
 
@@ -68,7 +72,9 @@ function renderBarChart(
   yLabel,
   yMax,
   Offset,
-  fontSize
+  fontSize,
+  mainLabel = "",
+  shadowLabel = ""
 ) {
   // Create SVG
   const svg = container
@@ -270,6 +276,55 @@ function renderBarChart(
       .attr("font-size", `${fontSize}rem`)
       .text(xLabel);
   }
+
+  if (mainLabel.length > 0 || shadowLabel.length > 0) {
+    const legendGroup = svg
+      .append("g")
+      .attr("class", "legend")
+      .attr(
+        "transform",
+        `translate(${margin.left}, ${height - margin.bottom + Offset * 1.2})`
+      );
+    const legendSpacing = convertRemToPixels(fontSize);
+    const legendItemWidth = 10 * convertRemToPixels(fontSize);
+    const legendSquareSize = convertRemToPixels(fontSize);
+
+    legendGroup
+      .selectAll(".legend-item")
+      .data([
+        [mainLabel, barColor, 1],
+        [shadowLabel, shadowColor, 0.6],
+      ])
+      .join("g")
+      .attr("class", "legend-item")
+      .attr("transform", (d, i) => `translate(${i * legendItemWidth}, 0)`)
+      .each(function (d) {
+        const legendItem = d3.select(this);
+
+        legendItem
+          .append("rect")
+          .attr("width", legendSquareSize)
+          .attr("height", legendSquareSize)
+          .attr("rx", barRadius / 2)
+          .attr("ry", barRadius / 2)
+          .attr("fill", d[1])
+          .attr("y", -legendSquareSize / 2)
+          .attr("opacity", d[2]);
+
+        legendItem
+          .append("text")
+          .text(d[0])
+          .attr("x", legendSquareSize + legendSpacing)
+          .attr("y", legendSquareSize / 7)
+          .attr("dominant-baseline", "middle")
+          .style("font-family", "Tinos, serif")
+          .attr("font-size", `${fontSize}rem`)
+          .style("opacity", 0.8);
+      });
+  }
 }
 
+function convertRemToPixels(rem) {
+  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
+}
 export default { render };
