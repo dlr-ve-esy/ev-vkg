@@ -20,6 +20,7 @@ async function render({ model, el }) {
   const fontSize = model.get("font_size");
   const mainLabel = model.get("main_label");
   const shadowLabel = model.get("shadow_label");
+  const markerLabel = model.get("marker_label");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -49,7 +50,8 @@ async function render({ model, el }) {
     Offset,
     fontSize,
     mainLabel,
-    shadowLabel
+    shadowLabel,
+    markerLabel
   );
 }
 
@@ -74,7 +76,8 @@ function renderBarChart(
   Offset,
   fontSize,
   mainLabel = "",
-  shadowLabel = ""
+  shadowLabel = "",
+  markerLabel = ""
 ) {
   // Create SVG
   const svg = container
@@ -83,7 +86,7 @@ function renderBarChart(
     .attr("height", height);
 
   // Margins and inner dimensions
-  const margin = { top: 20, right: 60, bottom: 40, left: 40 };
+  const margin = { top: 20, right: 60, bottom: 40, left: 50 };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
   // Create scales
@@ -232,7 +235,7 @@ function renderBarChart(
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.8);
+    .style("opacity", 1);
 
   x_axis.selectAll("path").style("opacity", 0.8);
 
@@ -247,7 +250,7 @@ function renderBarChart(
     .call(y_axis)
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.6); // Add padding to y-axis ticks
+    .style("opacity", 1); // Add padding to y-axis ticks
   y_axis_ticks.selectAll("path").style("opacity", 0);
 
   // Add y label
@@ -256,7 +259,7 @@ function renderBarChart(
       .append("text")
       .attr("class", "label")
       .attr("text-anchor", "start")
-      .attr("y", "-0.5em")
+      .attr("y", "-0.5rem")
       .attr("x", "0")
       .attr("opacity", 0.6)
       .style("font-family", "Tinos, serif")
@@ -278,6 +281,19 @@ function renderBarChart(
   }
 
   if (mainLabel.length > 0 || shadowLabel.length > 0) {
+    var legendArray = [];
+
+    if (mainLabel.length > 0) {
+      legendArray.push([mainLabel, barColor, 1]);
+    }
+
+    if (shadowLabel.length > 0) {
+      legendArray.push([shadowLabel, shadowColor, 0.6]);
+    }
+
+    if (markerLabel.length > 0) {
+      legendArray.push([markerLabel, markerColor, 1]);
+    }
     const legendGroup = svg
       .append("g")
       .attr("class", "legend")
@@ -285,16 +301,13 @@ function renderBarChart(
         "transform",
         `translate(${margin.left}, ${height - margin.bottom + Offset * 1.2})`
       );
-    const legendSpacing = convertRemToPixels(fontSize);
-    const legendItemWidth = 10 * convertRemToPixels(fontSize);
-    const legendSquareSize = convertRemToPixels(fontSize);
+    const legendSpacing = convertRemToPixels(fontSize * 0.8) * 0.5;
+    const legendItemWidth = 10 * convertRemToPixels(fontSize * 0.8);
+    const legendSquareSize = convertRemToPixels(fontSize * 0.8);
 
     legendGroup
       .selectAll(".legend-item")
-      .data([
-        [mainLabel, barColor, 1],
-        [shadowLabel, shadowColor, 0.6],
-      ])
+      .data(legendArray)
       .join("g")
       .attr("class", "legend-item")
       .attr("transform", (d, i) => `translate(${i * legendItemWidth}, 0)`)
@@ -315,10 +328,10 @@ function renderBarChart(
           .append("text")
           .text(d[0])
           .attr("x", legendSquareSize + legendSpacing)
-          .attr("y", legendSquareSize / 7)
+          .attr("y", legendSquareSize / 8)
           .attr("dominant-baseline", "middle")
           .style("font-family", "Tinos, serif")
-          .attr("font-size", `${fontSize}rem`)
+          .attr("font-size", `${fontSize * 0.8}rem`)
           .style("opacity", 0.8);
       });
   }

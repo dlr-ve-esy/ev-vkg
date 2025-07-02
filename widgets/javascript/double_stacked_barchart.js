@@ -28,7 +28,7 @@ async function render({ model, el }) {
   const innerH = height * 0.475;
   const sep = height * 0.025;
 
-  const marginTop = { top: 20, right: 0, bottom: Offset / 2 + 20, left: 50 };
+  const marginTop = { top: 20, right: 0, bottom: Offset / 2 + 20, left: 70 };
   renderBarChartDouble(
     inputA,
     xKey,
@@ -50,7 +50,7 @@ async function render({ model, el }) {
     marginTop
   );
 
-  const marginBottom = { top: 0, right: 0, bottom: Offset + 10, left: 50 };
+  const marginBottom = { top: 0, right: 0, bottom: Offset + 10, left: 70 };
   renderBarChartDouble(
     inputB,
     xKey,
@@ -91,7 +91,7 @@ function renderBarChartDouble(
   legend,
   fontSize,
   offsetY = 0,
-  margin = { top: 0, right: 20, bottom: 20, left: 50 }
+  margin = { top: 0, right: 20, bottom: 20, left: 70 }
 ) {
   console.log(data);
   const keys = Object.keys(data[0]).filter((k) => k !== xKey);
@@ -187,7 +187,7 @@ function renderBarChartDouble(
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.8);
+    .style("opacity", 1);
 
   x_axis.selectAll("path").style("opacity", 0.8);
 
@@ -202,7 +202,7 @@ function renderBarChartDouble(
     .call(y_axis)
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.6);
+    .style("opacity", 1);
   y_axis_ticks.selectAll("path").style("opacity", 0);
 
   // Add y label
@@ -213,7 +213,7 @@ function renderBarChartDouble(
       .attr("text-anchor", "start")
       .attr("y", "-0.5em")
       .attr("x", "0")
-      .attr("opacity", 0.6)
+      .attr("opacity", 1)
       .style("font-family", "Tinos, serif")
       .attr("font-size", `${fontSize}rem`)
       .text(yLabel);
@@ -227,7 +227,7 @@ function renderBarChartDouble(
       .attr("text-anchor", "middle")
       .attr("y", innerHeight + Offset * 0.8)
       .attr("x", innerWidth / 2)
-      .attr("opacity", 0.6)
+      .attr("opacity", 1)
       .style("font-family", "Tinos, serif")
       .attr("font-size", `${fontSize}rem`)
       .text(xLabel);
@@ -245,7 +245,7 @@ function renderBarChartDouble(
         })`
       );
 
-    const legendSpacing = convertRemToPixels(fontSize);
+    const legendSpacing = convertRemToPixels(fontSize) * 0.5;
     const legendItemWidth = 10 * convertRemToPixels(fontSize);
     const legendSquareSize = convertRemToPixels(fontSize);
 
@@ -271,11 +271,11 @@ function renderBarChartDouble(
           .append("text")
           .text(d[0])
           .attr("x", legendSquareSize + legendSpacing)
-          .attr("y", legendSquareSize / 7)
+          .attr("y", legendSquareSize / 8)
           .attr("dominant-baseline", "middle")
           .style("font-family", "Tinos, serif")
           .attr("font-size", `${fontSize}rem`)
-          .style("opacity", 0.8);
+          .style("opacity", 1);
       });
   }
 }

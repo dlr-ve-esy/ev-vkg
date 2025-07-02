@@ -30,7 +30,7 @@ class BarChartWidget(anywidget.AnyWidget):
     font_size = tt.Float(0.8).tag(sync=True)
     main_label = tt.Unicode("").tag(sync=True)
     shadow_label = tt.Unicode("").tag(sync=True)
-
+    marker_label = tt.Unicode("").tag(sync=True)
     _css = """
     .barchart {
         display: flex;

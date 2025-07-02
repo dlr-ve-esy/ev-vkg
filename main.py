@@ -132,20 +132,39 @@ def _(BarChartWidget, mo, pl):
         """
         return dict(df.select(key_col, value_col).iter_rows())
 
-    capacities_plot = BarChartWidget(
-        input=df_to_dict(target_tracker, key_col="Code", value_col="total_mw"),
-        markers=df_to_dict(target_tracker, key_col="Code", value_col="target_mw"),
+    capacities_plot_a = BarChartWidget(
+        input=df_to_dict(target_tracker.filter(pl.col("total_mw") > 400), key_col="Code", value_col="total_mw"),
+        markers=df_to_dict(target_tracker.filter(pl.col("total_mw") > 400), key_col="Code", value_col="target_mw"),
         bar_radius=4,
         bar_color="#de8f05",
         marker_color="#353839 ",
-        width=539 * 2,
-        height=202,
+        width=539,
+        height=101,
         y_ticks=[2000, 4000, 6000, 8000],
+        y_grid = [2000, 4000, 6000, 8000],
         y_label="Power (MW)",
+        y_max=8000,
         offset=36,
-        font_size=1.1,
+        font_size=0.9,
     )
-    cap_wg = mo.ui.anywidget(capacities_plot)
+
+    capacities_plot_b = BarChartWidget(
+        input=df_to_dict(target_tracker.filter(pl.col("total_mw") <=  400), key_col="Code", value_col="total_mw"),
+        markers=df_to_dict(target_tracker.filter(pl.col("total_mw") <= 400), key_col="Code", value_col="target_mw"),
+        bar_radius=4,
+        bar_color="#de8f05",
+        marker_color="#353839 ",
+        width=539,
+        height=101,
+        y_ticks=[100, 200, 300, 400],
+        y_grid = [100, 200, 300, 400],
+        y_label="",
+        y_max=400,
+        offset=36,
+        font_size=0.9,
+    )
+    cap_wg_a = mo.ui.anywidget(capacities_plot_a)
+    cap_wg_b = mo.ui.anywidget(capacities_plot_b)
     cap_table = mo.ui.table(
         data=target_tracker.select("Code", "Target kW", "Total power (kW) output"),
         show_column_summaries=False,
@@ -157,12 +176,18 @@ def _(BarChartWidget, mo, pl):
 
     Can the performance indicator reports provided by the EAFO be reproduced with the data published openly in context of the AFIR?
 
-    {cap_wg}
+    {cap_wg_a}
+    {cap_wg_b}
     <p style="text-align: center;">According to the EAFOs criteria, all EU27 states reached the charging capacity targets.</p>
     {cap_table}
     """
     )
     return country_codes, df_to_dict, target_tracker
+
+
+@app.cell
+def _():
+    return
 
 
 @app.cell
@@ -246,6 +271,12 @@ def _(INDENT, colored_square, mo):
 
 
 @app.cell
+def _(sources_nap):
+    sources_nap
+    return
+
+
+@app.cell
 def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     sources_nap = pl.read_csv("sources/metadata.csv", encoding="utf-8")
     sources_nap = sources_nap.with_columns(
@@ -316,10 +347,11 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         bar_radius=4,
         bar_color="#9d6b92",
         width=539 * 2,
-        height=202 * 2,
+        height=202,
         y_max=12,
         y_ticks=[3, 6, 9],
         y_label="Score",
+        font_size=1.2,
         offset=36,
     )
     wg = mo.ui.anywidget(total_widget)
@@ -604,15 +636,17 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         bar_color="#0173b2",
         marker_color="#353839",
         shadow_color="#d55e00",
-        width=539 * 2,
-        height=202 * 2,
+        width=539 * 2,  # 397  for elsevier size
+        height=202 * 2,  # 202 for elsevier size
         y_max=10000,
         y_ticks=[2000, 4000, 6000, 8000],
+        # y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
-        font_size=1.1,
-        main_label = "NAPs",
-        shadow_label = "EAFO"
+        font_size=1.2,
+        main_label = "NAP Estimation",
+        shadow_label = "EAFO Reported",
+        marker_label = "AFIR Target"
     )
 
     results_plot
@@ -750,14 +784,16 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
         x_key="code",
         bar_radius=4,
         cat_colors=cat_colors,
-        width=539 * 2,
-        height=202 * 2,
+        width=539 * 2,  # 539 for elsevier size
+        height=202 * 2,  # 202 for elsevier size
         y_label="Counts per capacity",
         x1_label= "European Alternative Fuels Observatory, Juny 2025",
         x2_label= "Estimation using available data from the National Access Points",
-        offset=50,
+        offset=40,
+        # y_grid = [20000, 90000, 180000], # Uncoment for journal print
+        # y_ticks = [20000, 90000, 180000], # Uncoment for journal print
         y_max=180000,
-        font_size=1.0,
+        font_size=1.0, # 0.9 for elsevier size
     )
 
     stacked_chart_3

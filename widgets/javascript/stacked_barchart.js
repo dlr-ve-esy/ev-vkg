@@ -158,7 +158,7 @@ function renderBarChart(
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.8);
+    .style("opacity", 1);
 
   x_axis.selectAll("path").style("opacity", 0.8);
 
@@ -173,7 +173,7 @@ function renderBarChart(
     .call(y_axis)
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * 0.8}rem`)
-    .style("opacity", 0.6); // Add padding to y-axis ticks
+    .style("opacity", 1); // Add padding to y-axis ticks
   y_axis_ticks.selectAll("path").style("opacity", 0);
 
   // Add y label
@@ -184,7 +184,7 @@ function renderBarChart(
       .attr("text-anchor", "start")
       .attr("y", "-0.5em")
       .attr("x", "0")
-      .attr("opacity", 0.6)
+      .attr("opacity", 1)
       .attr("font-family", "Tinos, serif")
       .attr("font-size", `${fontSize}rem`)
       .text(yLabel);
@@ -197,7 +197,7 @@ function renderBarChart(
       .attr("text-anchor", "middle")
       .attr("y", innerHeight + Offset)
       .attr("x", innerWidth / 2)
-      .attr("opacity", 0.6)
+      .attr("opacity", 1)
       .style("font-family", "Tinos, serif")
       .attr("font-size", `${fontSize}rem`)
       .text(xLabel);
@@ -214,7 +214,7 @@ function renderBarChart(
         `translate(${margin.left}, ${height - margin.bottom + Offset})`
       );
 
-    const legendSpacing = convertRemToPixels(fontSize);
+    const legendSpacing = convertRemToPixels(fontSize) * 0.5;
     const legendItemWidth = 10 * convertRemToPixels(fontSize);
     const legendSquareSize = convertRemToPixels(fontSize);
 
@@ -245,11 +245,11 @@ function renderBarChart(
           .append("text")
           .text(d[0]) // Use the key as the label
           .attr("x", legendSquareSize + legendSpacing)
-          .attr("y", legendSquareSize / 7)
+          .attr("y", legendSquareSize / 8)
           .attr("dominant-baseline", "middle")
           .style("font-family", "Tinos, serif")
           .style("font-size", `${fontSize}rem`)
-          .style("opacity", 0.8);
+          .style("opacity", 1);
       });
   }
 }
