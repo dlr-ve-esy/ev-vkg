@@ -12,7 +12,11 @@ app = marimo.App(
 def _():
     import json
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
-    from widgets.barchart import BarChartWidget, StackedBarChartWidget, DoubleStackedBarChartWidget
+    from widgets.barchart import (
+        BarChartWidget,
+        StackedBarChartWidget,
+        DoubleStackedBarChartWidget,
+    )
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -23,7 +27,9 @@ def _():
     import requests
     from datetime import datetime
     import pyqrcode
+    import altair as alt
 
+    PRESENTATION_MODE = False
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
@@ -32,8 +38,8 @@ def _():
         Mapping,
         Path,
         SourcesCartogramWidget,
-        StackedBarChartWidget,
         Tuple,
+        alt,
         datetime,
         expand_bnezta,
         expand_relational_csv,
@@ -133,37 +139,53 @@ def _(BarChartWidget, mo, pl):
         return dict(df.select(key_col, value_col).iter_rows())
 
     capacities_plot_a = BarChartWidget(
-        input=df_to_dict(target_tracker.filter(pl.col("total_mw") > 400), key_col="Code", value_col="total_mw"),
-        markers=df_to_dict(target_tracker.filter(pl.col("total_mw") > 400), key_col="Code", value_col="target_mw"),
+        input=df_to_dict(
+            target_tracker.filter(pl.col("total_mw") > 400),
+            key_col="Code",
+            value_col="total_mw",
+        ),
+        markers=df_to_dict(
+            target_tracker.filter(pl.col("total_mw") > 400),
+            key_col="Code",
+            value_col="target_mw",
+        ),
         bar_radius=4,
         bar_color="#de8f05",
         marker_color="#353839 ",
-        width=539* 2,# 539 for paper
-        height=101 , # 101 for paper
+        width=397 * 2,  # 539 for paper
+        height=101,  # 101 for paper
         y_ticks=[2000, 4000, 6000, 8000],
-        y_grid = [2000, 4000, 6000, 8000],
+        y_grid=[2000, 4000, 6000, 8000],
         y_label="Power (MW)",
         y_max=8000,
         offset=36,
         font_size=0.9,
-        margin={"top": 14, "right": 10, "bottom": 20, "left": 34} # right 0 for paper
+        margin={"top": 14, "right": 10, "bottom": 20, "left": 34},  # right 0 for paper
     )
 
     capacities_plot_b = BarChartWidget(
-        input=df_to_dict(target_tracker.filter(pl.col("total_mw") <=  400), key_col="Code", value_col="total_mw"),
-        markers=df_to_dict(target_tracker.filter(pl.col("total_mw") <= 400), key_col="Code", value_col="target_mw"),
+        input=df_to_dict(
+            target_tracker.filter(pl.col("total_mw") <= 400),
+            key_col="Code",
+            value_col="total_mw",
+        ),
+        markers=df_to_dict(
+            target_tracker.filter(pl.col("total_mw") <= 400),
+            key_col="Code",
+            value_col="target_mw",
+        ),
         bar_radius=4,
         bar_color="#de8f05",
         marker_color="#353839 ",
-        width=539 * 2, # 539 for paper
-        height=101 , # 101 for paper
+        width=397 * 2,  # 539 for paper
+        height=101,  # 101 for paper
         y_ticks=[100, 200, 300, 400],
-        y_grid = [100, 200, 300, 400],
+        y_grid=[100, 200, 300, 400],
         y_label="",
         y_max=400,
         offset=36,
         font_size=0.9,
-        margin={"top": 8, "right": 10, "bottom": 18, "left": 34}
+        margin={"top": 8, "right": 10, "bottom": 18, "left": 34},
     )
     cap_wg_a = mo.ui.anywidget(capacities_plot_a)
     cap_wg_b = mo.ui.anywidget(capacities_plot_b)
@@ -348,13 +370,15 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         input=total_data,
         bar_radius=4,
         bar_color="#9d6b92",
-        width=539 * 2, # 549 for paper figure
-        height=202,
+        width=397 * 2,  # 549 for paper figure
+        height=101 * 2,
         y_max=12,
-        y_ticks=[3, 6, 9],
-        y_label="Score",
+        y_ticks=[3, 6, 9, 12],
+        y_grid=[3, 6, 9, 12],
+        y_label="Total Score",
         font_size=1.2,
         offset=36,
+        margin={"top": 17, "right": 0, "bottom": 20, "left": 22},  # For paper use top 6
     )
     wg = mo.ui.anywidget(total_widget)
 
@@ -420,7 +444,7 @@ def _(
     vkg_evse,
 ):
     m = Mapping([vkg_common, vkg_evse])
-    GERMANY_BNETZA = False
+    GERMANY_BNETZA = True
     for name, path in mappings:
         country: str = name.split("-")[0]
         if (
@@ -646,10 +670,15 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         y_label="Power (MW)",
         offset=25,
         font_size=1.1,
-        main_label = "NAP Estimation",
-        shadow_label = "EAFO Reported",
-        marker_label = "AFIR Target",
-        margin={"top": 17, "right": 0, "bottom": 39, "left": 45} # left 33 for paper 
+        main_label="NAP Estimation",
+        shadow_label="EAFO Reported",
+        marker_label="AFIR Target",
+        margin={
+            "top": 17,
+            "right": 0,
+            "bottom": 39,
+            "left": 45,
+        },  # left 33, right 0 for paper
     )
 
     results_plot
@@ -692,7 +721,7 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
 
 
 @app.cell
-def _(StackedBarChartWidget, total_evses_per_power_df):
+def _(total_evses_per_power_df):
     cat_colors = {
         "0-7,4 kW": "#9dc291",
         "7,4-22 kW": "#73a861",
@@ -703,18 +732,6 @@ def _(StackedBarChartWidget, total_evses_per_power_df):
     }
 
     chart_input = total_evses_per_power_df.to_dicts()
-
-    stacked_chart = StackedBarChartWidget(
-        input=chart_input,
-        x_key="code",
-        bar_radius=4,
-        cat_colors=cat_colors,
-        width=539 * 2,
-        height=202 * 2,
-        y_label="Charger counts",
-        offset=36,
-        legend=False,
-    )
     return cat_colors, chart_input
 
 
@@ -757,26 +774,8 @@ def _(country_codes, pl, study_filter):
         .filter(pl.col("code").is_in(study_filter))
         .sort(by="code")
     )
-
-    return (power_counts_tracker,)
-
-
-@app.cell
-def _(StackedBarChartWidget, cat_colors, power_counts_tracker):
     chart_input_2 = power_counts_tracker.to_dicts()
-
-    stacked_chart_2 = StackedBarChartWidget(
-        input=chart_input_2,
-        x_key="code",
-        bar_radius=4,
-        cat_colors=cat_colors,
-        width=539 * 2,
-        height=202 * 2,
-        y_label="",
-        offset=31,
-        legend=True,
-    )
-    return (chart_input_2,)
+    return chart_input_2, power_counts_tracker
 
 
 @app.cell
@@ -790,17 +789,60 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
         width=539 * 2,  # 539 for elsevier size
         height=202 * 2,  # 202 for elsevier size
         y_label="Counts per capacity",
-        x1_label= "European Alternative Fuels Observatory, Juny 2025",
-        x2_label= "Estimation using available data from the National Access Points",
+        x1_label="European Alternative Fuels Observatory, Juny 2025",
+        x2_label="Estimation using available data from the National Access Points",
         offset=38,
         # y_grid = [20000, 90000, 180000], # Uncoment for journal print
         # y_ticks = [20000, 90000, 180000], # Uncoment for journal print
         y_max=180000,
-        font_size=0.9, # 0.9 for elsevier size
-        margin={"top": 15, "right": 0, "bottom": 48, "left": 46}
+        font_size=0.9,  # 0.9 for elsevier size
+        margin={"top": 15, "right": 0, "bottom": 48, "left": 46},
     )
 
     stacked_chart_3
+    return
+
+
+@app.cell
+def _(alt, mo, pl, power_counts_tracker, total_evses_per_power_df):
+    value_cols = [
+        "0-7,4 kW",
+        "7,4-22 kW",
+        "22-50 kW",
+        "50-150 kW",
+        "150-350 kW",
+        "350+ kW",
+    ]
+    total_cols = pl.sum_horizontal(*value_cols).alias("Total").cast(int)
+    absolute_error = (
+        pl.concat(
+            [
+                total_evses_per_power_df.with_columns(
+                    [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
+                ),
+                power_counts_tracker.with_columns(
+                    [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
+                ),
+            ],
+            how="diagonal",
+        )
+        .group_by("code", maintain_order=True)
+        .sum()
+    )
+
+    relative_error = (
+        absolute_error.join(power_counts_tracker.with_columns(total_cols), on="code")
+        .select(
+            ["code"]
+            + [(pl.col(x) / pl.col(f"{x}_right")).abs()for x in value_cols + ["Total"]]
+        )
+        .unpivot(index="code", variable_name="range", value_name="error")
+    )
+    mo.ui.altair_chart(
+        alt.Chart(relative_error.with_columns(pl.when(pl.col("error") > 1.0).then(pl.lit(1.0)).otherwise(pl.col("error")).alias("error_corrected")))
+        .mark_rect()
+        .encode(x="code", y="range", color=alt.Color('error_corrected').scale(scheme="lightgreyred"))
+    )
     return
 
 
