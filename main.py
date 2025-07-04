@@ -17,6 +17,7 @@ def _():
         StackedBarChartWidget,
         DoubleStackedBarChartWidget,
     )
+    from widgets.heatmap import HeatMapWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -34,12 +35,12 @@ def _():
         BarChartWidget,
         DoubleStackedBarChartWidget,
         FAIRCartogramWidget,
+        HeatMapWidget,
         List,
         Mapping,
         Path,
         SourcesCartogramWidget,
         Tuple,
-        alt,
         datetime,
         expand_bnezta,
         expand_relational_csv,
@@ -447,6 +448,7 @@ def _(
     GERMANY_BNETZA = True
     for name, path in mappings:
         country: str = name.split("-")[0]
+        # if country in ["NO", "AT", "ES"]:
         if (
             ("nobil" in name.lower())
             or ("datexii" in path.lower())
@@ -653,7 +655,7 @@ def _(
 
 
 @app.cell
-def _(BarChartWidget, df_to_dict, filtered_markers, results):
+def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
     results_plot = BarChartWidget(
         input=df_to_dict(results, key_col="Code", value_col="total_accounted_power"),
         shadow=df_to_dict(results, key_col="Code", value_col="total_mw"),
@@ -681,7 +683,11 @@ def _(BarChartWidget, df_to_dict, filtered_markers, results):
         },  # left 33, right 0 for paper
     )
 
-    results_plot
+
+    power_plot_widget = mo.ui.anywidget(results_plot)
+    mo.md(f"""### Total power accounting minimum EVSE potential 
+
+    {power_plot_widget}""")
     return
 
 
@@ -716,7 +722,6 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
         .filter(pl.col("code").is_in(study_filter))
         .sort(by="code")
     )
-    total_evses_per_power_df
     return (total_evses_per_power_df,)
 
 
@@ -779,7 +784,7 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
+def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,
@@ -799,12 +804,17 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2):
         margin={"top": 15, "right": 0, "bottom": 48, "left": 46},
     )
 
-    stacked_chart_3
+    stacked_chart_widget = mo.ui.anywidget(stacked_chart_3)
+
+    mo.md(f"""### Count of EVSES based on max nominal capacity
+
+    {stacked_chart_widget}""")
+
     return
 
 
 @app.cell
-def _(alt, mo, pl, power_counts_tracker, total_evses_per_power_df):
+def _(pl, power_counts_tracker, results, total_evses_per_power_df):
     value_cols = [
         "0-7,4 kW",
         "7,4-22 kW",
@@ -813,16 +823,21 @@ def _(alt, mo, pl, power_counts_tracker, total_evses_per_power_df):
         "150-350 kW",
         "350+ kW",
     ]
-    total_cols = pl.sum_horizontal(*value_cols).alias("Total").cast(int)
+
+    total_cols = pl.sum_horizontal(*value_cols).alias("Total EVSE").cast(int)
+
+    error_heatmap_reference = power_counts_tracker.with_columns(
+                    [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
+                ).join(results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)), left_on="code", right_on="Code", how="left").rename({"total_accounted_power": "Max Power MW"})
+    error_heatmap_calculated = total_evses_per_power_df.with_columns(
+                    [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
+                ).join(results.select(pl.col("Code"), pl.col("total_mw").cast(int).mul(-1)), left_on="code", right_on="Code", how="left").rename({"total_mw": "Max Power MW"})
+
     absolute_error = (
         pl.concat(
             [
-                total_evses_per_power_df.with_columns(
-                    [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
-                ),
-                power_counts_tracker.with_columns(
-                    [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
-                ),
+                error_heatmap_calculated,
+                error_heatmap_reference
             ],
             how="diagonal",
         )
@@ -831,18 +846,42 @@ def _(alt, mo, pl, power_counts_tracker, total_evses_per_power_df):
     )
 
     relative_error = (
-        absolute_error.join(power_counts_tracker.with_columns(total_cols), on="code")
+        absolute_error.join(error_heatmap_reference.with_columns(total_cols), on="code")
         .select(
             ["code"]
-            + [(pl.col(x) / pl.col(f"{x}_right")).abs()for x in value_cols + ["Total"]]
+            + [(pl.col(x) / pl.col(f"{x}_right")).abs() for x in value_cols + ["Total EVSE", "Max Power MW"]]
+        ).with_columns(
+            [pl.when(pl.col(x) > 1.0).then(pl.lit(1.0)).otherwise(pl.col(x)).alias(x) for x in value_cols + ["Total EVSE", "Max Power MW"]]
+        ).with_columns(
+            pl.mean_horizontal(value_cols + ["Total EVSE", "Max Power MW"], ignore_nulls=True).alias("Overall Fidelity")
         )
         .unpivot(index="code", variable_name="range", value_name="error")
     )
-    mo.ui.altair_chart(
-        alt.Chart(relative_error.with_columns(pl.when(pl.col("error") > 1.0).then(pl.lit(1.0)).otherwise(pl.col("error")).alias("error_corrected")))
-        .mark_rect()
-        .encode(x="code", y="range", color=alt.Color('error_corrected').scale(scheme="lightgreyred"))
-    )
+    return (relative_error,)
+
+
+@app.cell
+def _(HeatMapWidget, mo, relative_error):
+    hm_colors = {
+        "0-7,4 kW": "#6181ab",
+        "7,4-22 kW": "#73a861",
+        "22-50 kW": "#6181ab",
+        "50-150 kW": "#73a861",
+        "150-350 kW": "#6181ab",
+        "350+ kW": "#73a861", 
+        "Max Power MW": "#c1a2bb",
+        "Total EVSE": "#e0ba2f",
+        "Overall Fidelity": "#c8433e"
+
+    }
+
+    hm_widget = mo.ui.anywidget(HeatMapWidget(input=relative_error.to_dicts(), x_axis="code", y_axis="range", c_axis="error", colors=hm_colors, cell_size = 30, x_padding=0.0, base_color="#F5F5F5", width=539, height=404,margin={"top": 10, "right": 0, "bottom": 48, "left": 115},font_size=1.0))
+
+    mo.md(f"""### Quantifying Fidelity
+
+    {hm_widget}
+    We estimated the relative error from our estimation against the EAFO reports and inverted it. The lower the error, the higher the fidelity.
+    """)
     return
 
 
