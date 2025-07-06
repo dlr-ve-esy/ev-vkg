@@ -19,6 +19,7 @@ async function render({ model, el }) {
   const xPadding = model.get("x_padding");
   const yPadding = model.get("y_padding");
   const fontSize = model.get("font_size");
+  const invertC = model.get("invert_c");
 
   let continer = document.createElement("div");
   continer.classList.add("heatmap");
@@ -39,6 +40,7 @@ async function render({ model, el }) {
     cMin,
     baseColor,
     colors,
+    invertC,
     cellSize,
     radius,
     xPadding,
@@ -62,6 +64,7 @@ function renderHeatMap(
   cMin,
   baseColor,
   colors,
+  invertC,
   cellSize,
   radius,
   xPadding,
@@ -106,22 +109,34 @@ function renderHeatMap(
     cMin = d3.min(cValues);
   }
   var colorMaps = {};
+  var cDomain;
   yKeys.forEach((key) => {
     const innercValues = input
       .filter((d) => d[yAxis] == key)
       .map((i) => i[cAxis]);
     if (colors[key]) {
+      
+      if (invertC) {
+        cDomain = [colors[key], baseColor]
+      } else {
+        cDomain = [baseColor, colors[key]]
+      }
       colorMaps[key] = d3
         .scaleLinear()
         .domain([d3.min(innercValues), d3.max(innercValues)])
-        .range([colors[key], baseColor])
+        .range(cDomain)
         .interpolate(d3.interpolateLab);
     } else {
       // Default to black if the key is not in colors
+      if (invertC) {
+        cDomain = ["black", baseColor]
+      } else {
+        cDomain = [baseColor, "black"]
+      }
       colorMaps[key] = d3
         .scaleLinear()
         .domain([d3.min(innercValues), d3.max(innercValues)])
-        .range(["black", baseColor])
+        .range(cDomain)
         .interpolate(d3.interpolateLab);
     }
   });

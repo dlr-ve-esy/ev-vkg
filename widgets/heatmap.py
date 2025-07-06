@@ -26,6 +26,7 @@ class HeatMapWidget(anywidget.AnyWidget):
     x_label = tt.Unicode("").tag(sync=True)
     y_label = tt.Unicode("").tag(sync=True)
     font_size = tt.Float(0.8).tag(sync=True)
+    invert_c = tt.Bool(False).tag(sync=True)
     _css = """
     .heatmap {
         display: flex;

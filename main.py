@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.9"
+__generated_with = "0.13.15"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -386,7 +386,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     mo.md(f"""## Total FAIR Scores assigned by our methodology
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>""")
-    return fair_scores, sources_nap
+    return fair_scores, sources_nap, total_data
 
 
 @app.cell
@@ -743,7 +743,7 @@ def _(total_evses_per_power_df):
 @app.cell
 def _(country_codes, pl, study_filter):
     power_counts_tracker = (
-        pl.read_csv("viz_data/02.07.2025-eafo-counts.csv")
+        pl.read_csv("viz_data/17.06.2025-eafo-power-counts.csv")
         .join(country_codes, left_on="Category", right_on="Country", how="left")
         .with_columns(
             pl.col("Code").alias("code"),
@@ -856,7 +856,7 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
             pl.mean_horizontal(value_cols + ["Total EVSE", "Max Power MW"], ignore_nulls=True).alias("Overall Fidelity")
         )
         .unpivot(index="code", variable_name="range", value_name="error")
-    )
+    ).with_columns(pl.col("error").cut(breaks=[0.0, 0.2, 0.4, 0.6,0.8,1.0], left_closed=True, labels=['6', '5', '4', '3', '2', '1', '0']).alias('cat'))
     return (relative_error,)
 
 
@@ -875,13 +875,20 @@ def _(HeatMapWidget, mo, relative_error):
 
     }
 
-    hm_widget = mo.ui.anywidget(HeatMapWidget(input=relative_error.to_dicts(), x_axis="code", y_axis="range", c_axis="error", colors=hm_colors, cell_size = 30, x_padding=0.0, base_color="#F5F5F5", width=539, height=404,margin={"top": 10, "right": 0, "bottom": 48, "left": 115},font_size=1.0))
+    hm_widget = mo.ui.anywidget(HeatMapWidget(input=relative_error.to_dicts(), x_axis="code", y_axis="range", c_axis="cat", colors=hm_colors, cell_size = 30, x_padding=0.0, base_color="#F5F5F5", width=539, height=404,margin={"top": 10, "right": 0, "bottom": 48, "left": 115},font_size=1.0, invert_c=False))
 
     mo.md(f"""### Quantifying Fidelity
 
     {hm_widget}
     We estimated the relative error from our estimation against the EAFO reports and inverted it. The lower the error, the higher the fidelity.
     """)
+    return
+
+
+@app.cell
+def _(pl, relative_error, total_data):
+    scatter_df = relative_error.filter(pl.col('range') == 'Overall Fidelity').join(pl.DataFrame([{'code': k, 'score': v} for k,v in total_data.items()]), how='left', on='code')
+    scatter_df
     return
 
 
