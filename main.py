@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.14.9"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -18,6 +18,7 @@ def _():
         DoubleStackedBarChartWidget,
     )
     from widgets.heatmap import HeatMapWidget
+    from widgets.grid_scatter import GridScatterWidget
     import marimo as mo
     from graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -29,12 +30,14 @@ def _():
     from datetime import datetime
     import pyqrcode
     import altair as alt
+    import numpy as np
 
     PRESENTATION_MODE = False
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
         FAIRCartogramWidget,
+        GridScatterWidget,
         HeatMapWidget,
         List,
         Mapping,
@@ -292,12 +295,6 @@ def _(INDENT, colored_square, mo):
     {INDENT}{colored_square("#527a44")} If the resource properly uses  the EU framework as source it gets an additional point.
     """
     )
-    return
-
-
-@app.cell
-def _(sources_nap):
-    sources_nap
     return
 
 
@@ -664,14 +661,14 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
         bar_color="#0173b2",
         marker_color="#353839",
         shadow_color="#d55e00",
-        width=539 * 2,  # 539  for elsevier size
+        width=539 * 2,  # 539   for elsevier size
         height=202 * 2,  # 202 for elsevier size
-        y_max=8000,
+        y_max=10000,
         # y_ticks=[2000, 4000, 6000, 8000],
         # y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
-        font_size=1.1,
+        font_size=1.0,
         main_label="NAP Estimation",
         shadow_label="EAFO Reported",
         marker_label="AFIR Target",
@@ -683,7 +680,6 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
         },  # left 33, right 0 for paper
     )
 
-
     power_plot_widget = mo.ui.anywidget(results_plot)
     mo.md(f"""### Total power accounting minimum EVSE potential 
 
@@ -692,14 +688,14 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
 
 
 @app.cell
-def _(mo):
+def _():
     with open("queries/total_evses_per_power.sparql", "r") as input_f:
         total_evses_per_power = input_f.read()
-    mo.md(f"""### Count of EVSES based on max nominal capacity
+    # mo.md(f"""### Count of EVSES based on max nominal capacity
 
-    ```sparql
-    {total_evses_per_power}
-    ```""")
+    # ```sparql
+    # {total_evses_per_power}
+    # ```""")
     return (total_evses_per_power,)
 
 
@@ -797,6 +793,7 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
         x1_label="European Alternative Fuels Observatory, Juny 2025",
         x2_label="Estimation using available data from the National Access Points",
         offset=38,
+        legend_item_width=6.5,
         # y_grid = [20000, 90000, 180000], # Uncoment for journal print
         # y_ticks = [20000, 90000, 180000], # Uncoment for journal print
         y_max=180000,
@@ -826,19 +823,34 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
 
     total_cols = pl.sum_horizontal(*value_cols).alias("Total EVSE").cast(int)
 
-    error_heatmap_reference = power_counts_tracker.with_columns(
-                    [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
-                ).join(results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)), left_on="code", right_on="Code", how="left").rename({"total_accounted_power": "Max Power MW"})
-    error_heatmap_calculated = total_evses_per_power_df.with_columns(
-                    [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
-                ).join(results.select(pl.col("Code"), pl.col("total_mw").cast(int).mul(-1)), left_on="code", right_on="Code", how="left").rename({"total_mw": "Max Power MW"})
+    error_heatmap_reference = (
+        power_counts_tracker.with_columns(
+            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
+        )
+        .join(
+            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
+            left_on="code",
+            right_on="Code",
+            how="left",
+        )
+        .rename({"total_accounted_power": "Max Power MW"})
+    )
+    error_heatmap_calculated = (
+        total_evses_per_power_df.with_columns(
+            [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
+        )
+        .join(
+            results.select(pl.col("Code"), pl.col("total_mw").cast(int).mul(-1)),
+            left_on="code",
+            right_on="Code",
+            how="left",
+        )
+        .rename({"total_mw": "Max Power MW"})
+    )
 
     absolute_error = (
         pl.concat(
-            [
-                error_heatmap_calculated,
-                error_heatmap_reference
-            ],
+            [error_heatmap_calculated, error_heatmap_reference],
             how="diagonal",
         )
         .group_by("code", maintain_order=True)
@@ -849,14 +861,32 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
         absolute_error.join(error_heatmap_reference.with_columns(total_cols), on="code")
         .select(
             ["code"]
-            + [(pl.col(x) / pl.col(f"{x}_right")).abs() for x in value_cols + ["Total EVSE", "Max Power MW"]]
-        ).with_columns(
-            [pl.when(pl.col(x) > 1.0).then(pl.lit(1.0)).otherwise(pl.col(x)).alias(x) for x in value_cols + ["Total EVSE", "Max Power MW"]]
-        ).with_columns(
-            pl.mean_horizontal(value_cols + ["Total EVSE", "Max Power MW"], ignore_nulls=True).alias("Overall Fidelity")
+            + [
+                (pl.col(x) / pl.col(f"{x}_right")).abs()
+                for x in value_cols + ["Total EVSE", "Max Power MW"]
+            ]
+        )
+        .with_columns(
+            [
+                pl.when(pl.col(x) > 1.0).then(pl.lit(1.0)).otherwise(pl.col(x)).alias(x)
+                for x in value_cols + ["Total EVSE", "Max Power MW"]
+            ]
+        )
+        .with_columns(
+            pl.mean_horizontal(
+                value_cols + ["Total EVSE", "Max Power MW"], ignore_nulls=True
+            ).alias("Overall Fidelity")
         )
         .unpivot(index="code", variable_name="range", value_name="error")
-    ).with_columns(pl.col("error").cut(breaks=[0.0, 0.2, 0.4, 0.6,0.8,1.0], left_closed=True, labels=['6', '5', '4', '3', '2', '1', '0']).alias('cat'))
+    ).with_columns(
+        pl.col("error")
+        .cut(
+            breaks=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
+            left_closed=True,
+            labels=["6", "5", "4", "3", "2", "1", "0"],
+        )
+        .alias("cat")
+    )
     return (relative_error,)
 
 
@@ -868,14 +898,30 @@ def _(HeatMapWidget, mo, relative_error):
         "22-50 kW": "#6181ab",
         "50-150 kW": "#73a861",
         "150-350 kW": "#6181ab",
-        "350+ kW": "#73a861", 
+        "350+ kW": "#73a861",
         "Max Power MW": "#c1a2bb",
         "Total EVSE": "#e0ba2f",
-        "Overall Fidelity": "#c8433e"
-
+        "Overall Fidelity": "#c8433e",
     }
 
-    hm_widget = mo.ui.anywidget(HeatMapWidget(input=relative_error.to_dicts(), x_axis="code", y_axis="range", c_axis="cat", colors=hm_colors, cell_size = 30, x_padding=0.0, base_color="#F5F5F5", width=539, height=404,margin={"top": 10, "right": 0, "bottom": 48, "left": 115},font_size=1.0, invert_c=False))
+    hm_widget = mo.ui.anywidget(
+        HeatMapWidget(
+            input=relative_error.to_dicts(),
+            x_axis="code",
+            y_axis="range",
+            c_axis="cat",
+            colors=hm_colors,
+            cell_size=30, # 11
+            x_padding=0.0,
+            base_color="#F5F5F5",
+            width=539, # 255
+            height=404, # 152
+            margin={"top": 10, "right": 0, "bottom": 48, "left": 115}, # {"top": 4, "right": 0, "bottom": 9, "left": 78},
+            font_size=1.0,
+            invert_c=False,
+            radius=5, # 2
+        )
+    )
 
     mo.md(f"""### Quantifying Fidelity
 
@@ -887,8 +933,124 @@ def _(HeatMapWidget, mo, relative_error):
 
 @app.cell
 def _(pl, relative_error, total_data):
-    scatter_df = relative_error.filter(pl.col('range') == 'Overall Fidelity').join(pl.DataFrame([{'code': k, 'score': v} for k,v in total_data.items()]), how='left', on='code')
-    scatter_df
+    scatter_df = (
+        relative_error.filter(pl.col("range") == "Overall Fidelity")
+        .join(
+            pl.DataFrame([{"code": k, "score": v} for k, v in total_data.items()]),
+            how="left",
+            on="code",
+        )
+        .with_columns(pl.col("score").fill_null(0))
+    )
+    return (scatter_df,)
+
+
+@app.cell
+def _(pl, scatter_df):
+    def assign_points_to_grid(points, n, m, resolve_by="x"):
+        x_min, x_max = min(p[0] for p in points), max(p[0] for p in points)
+        y_min, y_max = min(p[1] for p in points), max(p[1] for p in points)
+
+        cell_width = (x_max - x_min) / m
+        cell_height = (y_max - y_min) / n
+
+        grid = [[None for _ in range(m)] for _ in range(n)]
+
+        for x, y, c in points:
+            col = int((x - x_min) / cell_width)
+            row = int((y - y_min) / cell_height)
+            col = min(col, m - 1)
+            row = min(row, n - 1)
+            if grid[row][col] is None:
+                grid[row][col] = (x, y, c, col, row)
+            else:
+                existing_point = grid[row][col]
+                if x > existing_point[0]:
+                    grid[row][col + 1] = (x, y, c, +1, row)
+                    continue
+                if y > existing_point[1]:
+                    grid[row + 1][col] = (x, y, c, col, row + 1)
+                    continue
+
+        return grid
+
+    points = [
+        (k["error"], k["score"], k["code"])
+        for k in scatter_df.with_columns(
+            -pl.col("error"), pl.col("score").fill_null(0)
+        ).to_dicts()
+    ]
+    nn = 7
+    mm = 7
+
+    grid = assign_points_to_grid(points, nn, mm, resolve_by="x")
+    grid_info = []
+    for row in grid:
+        for col in row:
+            if col is not None:
+                grid_info.append(
+                    {
+                        "x": col[4],
+                        "y": col[3],
+                        "code": col[2],
+                    }
+                )
+    return grid_info, mm, nn
+
+
+@app.cell
+def _(GridScatterWidget, grid_info, mm, mo, nn):
+    level_colors = [
+        "#d97c78",
+        "#e9cf6f",
+        "#9dc291",
+    ]
+
+    x_vals = [g["x"] for g in grid_info]
+    x_domain = list(range(min(x_vals), max(x_vals) + 1, 1))
+    y_vals = [g["y"] for g in grid_info]
+    y_domain = list(range(min(y_vals), max(y_vals) + 1, 1))
+
+    total_scores = {i["code"]: i["x"] + i["y"] for i in grid_info}
+
+    bin_number = 3
+    max_score = nn + mm - 2
+    bin_size = (max_score + 1) // bin_number
+    top = max_score % bin_size
+    region_level = {}
+
+    for r, s in total_scores.items():
+        for i, vv in enumerate(range(bin_size, max_score, bin_size)):
+            if s <= vv:
+                region_level[r] = level_colors[i]
+                break
+            region_level[r] = level_colors[-1]
+    general_widget = mo.ui.anywidget(
+        GridScatterWidget(
+            input=grid_info,
+            x_domain=x_domain,
+            y_domain=y_domain,
+            x_axis="x",
+            y_axis="y",
+            color_col="code",
+            y_label="Quantity fidelity",
+            x_label="FAIR alignment",
+            cell_size=32,
+            x_padding=0.0,
+            base_color="grey",
+            width=397,
+            height=397,
+            margin={"top": 20, "right": 0, "bottom": 25, "left": 0},
+            font_size=1.0,
+            cell_ycorrection=2,
+            colors=region_level,
+        )
+    )
+    # For paper version use the search function in VSCode and replace the rem with absolute values.
+    mo.md(f"""### Ordering European states based on performance
+
+    {general_widget}
+    """)
     return
 
 

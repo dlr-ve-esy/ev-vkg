@@ -24,7 +24,7 @@ async function render({ model, el }) {
   let continer = document.createElement("div");
   continer.classList.add("heatmap");
   const body = d3.select(continer);
-  console.log(input);
+
   el.appendChild(continer);
 
   renderHeatMap(

@@ -17,6 +17,7 @@ async function render({ model, el }) {
   const Offset = model.get("offset");
   const fontSize = model.get("font_size");
   const margin = model.get("margin");
+  const legendItemWidth = model.get("legend_item_width");
   var yMax = model.get("y_max");
 
   let continer = document.createElement("div");
@@ -53,6 +54,7 @@ async function render({ model, el }) {
     false,
     fontSize,
     0,
+    legendItemWidth,
     marginTop
   );
 
@@ -80,6 +82,7 @@ async function render({ model, el }) {
     true,
     fontSize,
     innerH + sep,
+    legendItemWidth,
     marginBottom
   );
 }
@@ -102,6 +105,7 @@ function renderBarChartDouble(
   legend,
   fontSize,
   offsetY = 0,
+  legendItemWidth = 10,
   margin = { top: 0, right: 20, bottom: 20, left: 70 }
 ) {
   console.log(data);
@@ -256,8 +260,8 @@ function renderBarChartDouble(
         })`
       );
 
-    const legendSpacing = convertRemToPixels(fontSize) * 0.5;
-    const legendItemWidth = 10 * convertRemToPixels(fontSize);
+    const legendSpacing = convertRemToPixels(fontSize) * 0.2;
+    const ItemWidth = legendItemWidth * convertRemToPixels(fontSize);
     const legendSquareSize = convertRemToPixels(fontSize);
 
     legendGroup
@@ -265,7 +269,7 @@ function renderBarChartDouble(
       .data(Object.entries(catColors))
       .join("g")
       .attr("class", "legend-item")
-      .attr("transform", (d, i) => `translate(${i * legendItemWidth}, 0)`)
+      .attr("transform", (d, i) => `translate(${i * ItemWidth}, 0)`)
       .each(function (d) {
         const legendItem = d3.select(this);
 

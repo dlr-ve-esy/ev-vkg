@@ -106,6 +106,7 @@ class DoubleStackedBarChartWidget(anywidget.AnyWidget):
     y_label = tt.Unicode("").tag(sync=True)
     offset = tt.Int(0).tag(sync=True)
     font_size = tt.Float(0.8).tag(sync=True)
+    legend_item_width = tt.Float(10.0).tag(sync=True)
 
     _css = """
     .barchart-double {
