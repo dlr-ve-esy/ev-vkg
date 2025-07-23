@@ -1,11 +1,23 @@
 import marimo
 
-__generated_with = "0.14.9"
+__generated_with = "0.14.12"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
     css_file="styles/custom.css",
 )
+
+
+@app.cell
+def _(mo):
+    mo.md(
+        r"""
+    # FAIR Electric Vehicle Charging Infrastructure Data
+    ## Enabling digital preservation of policy performance analyses
+    ### Arellano Ruiz et al.
+    """
+    )
+    return
 
 
 @app.cell
@@ -31,6 +43,7 @@ def _():
     import pyqrcode
     import altair as alt
     import numpy as np
+    from great_tables import GT, md, html
 
     PRESENTATION_MODE = False
     return (
@@ -214,11 +227,6 @@ def _(BarChartWidget, mo, pl):
 
 
 @app.cell
-def _():
-    return
-
-
-@app.cell
 def _(mo, pl, sources_nap):
     considered_sources = sources_nap.with_columns(
         pl.col("id").str.split("-").list[0].alias("country")
@@ -241,7 +249,7 @@ def _(mo, pl, sources_nap):
     {sources_table}
     """
     )
-    return
+    return (considered_sources,)
 
 
 @app.cell
@@ -304,11 +312,14 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     sources_nap = sources_nap.with_columns(
         pl.col("actionable").replace_strict({"NO": False, "YES": True}),
         pl.col("identifier").replace_strict({"NO": False, "YES": True}),
-    )
+    ).sort(by="publication_date", descending=False)
 
     countries = list(sources_per_country.keys())
 
-    fair_scores = {c: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0} for c in countries}
+    fair_scores = {
+        sc: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0}
+        for sc in sources_nap["id"].unique()
+    }
     accesible = [
         "OPEN",
         "REGISTERED_USERS",
@@ -316,10 +327,8 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     ]
     optimal_access_media = ["ARCHIVE", "API"]
     interoperable_formats = ["OCPI", "OICP", "DATEXII"]
-    for ct in countries:
-        records = sources_nap.filter(
-            pl.col("id").str.slice(0, 2).str.contains(ct)
-        ).to_dicts()
+    for sn in sources_nap["id"].unique():
+        records = sources_nap.filter(pl.col("id").str.contains(sn)).to_dicts()
         if len(records) == 0:
             continue
         dates = [datetime.strptime(r["publication_date"], "%m/%d/%Y") for r in records]
@@ -330,34 +339,68 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             latest_record["access_url"] is not None
         ):
             if latest_record["medium"] in optimal_access_media:
-                fair_scores[ct]["F"] = 1
+                fair_scores[sn]["F"] = 1
         elif latest_record["metadata_url"] is not None:
-            fair_scores[ct]["F"] = 2
+            fair_scores[sn]["F"] = 2
             if latest_record["actionable"]:
-                fair_scores[ct]["F"] = 3
+                fair_scores[sn]["F"] = 3
         # ACCESIBILITY
         if latest_record["access"] in accesible:
-            fair_scores[ct]["A"] += 1
+            fair_scores[sn]["A"] += 1
             if latest_record["metadata_url"] is not None:
-                fair_scores[ct]["A"] += 1
+                fair_scores[sn]["A"] += 1
                 if latest_record["medium"] in optimal_access_media:
-                    fair_scores[ct]["A"] += 1
+                    fair_scores[sn]["A"] += 1
         # INTEROPERABILITY
         if latest_record["standard"] == "DOCUMENTED":
-            fair_scores[ct]["I"] += 1
+            fair_scores[sn]["I"] += 1
         if latest_record["standard"] in interoperable_formats:
-            fair_scores[ct]["I"] += 3
+            fair_scores[sn]["I"] += 3
         # REUSABILITY
         if latest_record["license"] is not None:
-            fair_scores[ct]["R"] += 1
+            fair_scores[sn]["R"] += 1
             if latest_record["provenance"] == "TEXTUAL":
-                fair_scores[ct]["R"] += 1
-            elif latest_record["provenance"] == "EU":
-                fair_scores[ct]["R"] += 2
-        fair_scores[ct]["TOTAL"] = sum(list(fair_scores[ct].values()))
+                fair_scores[sn]["R"] += 1
+            elif latest_record["provenance"] in ["EU", "LSV"]:
+                fair_scores[sn]["R"] += 2
+        fair_scores[sn]["TOTAL"] = sum(list(fair_scores[sn].values()))
 
-    totals = {k: s["TOTAL"] for k, s in fair_scores.items()}
+    flattened_scoures = [
+        {"source": source, "principle": principle, "value": inner_value}
+        for source, scores in fair_scores.items()
+        for principle, inner_value in scores.items()
+    ]
+    scores_df = (
+        pl.DataFrame(flattened_scoures)
+        .pivot(index="source", on="principle", values="value")
+        .with_columns(pl.col("source").str.slice(0, 2).alias("country"))
+        .join(
+            sources_nap.select("id", "publication_date"),
+            left_on="source",
+            right_on="id",
+            how="left",
+        )
+        .sort(by=["country", "publication_date"], descending=False)
+        .drop("publication_date")
+    )
 
+    country_df = scores_df.group_by("country", maintain_order=True).first()
+
+    fair_scores_country = {
+        c: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0} for c in countries
+    }
+    totals = {}
+    for c in country_df["country"].unique():
+        fair_scores_country[c] = (
+            country_df.filter(pl.col("country") == c)
+            .select(["F", "A", "I", "R", "TOTAL"])
+            .to_dicts()[0]
+        )
+        totals[c] = country_df.filter(pl.col("country") == c)["TOTAL"][0]
+
+    fair_scores_country = {
+        k: v for k, v in fair_scores_country.items() if k in countries
+    }
     total_data = {
         k: v
         for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True)
@@ -383,20 +426,128 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     mo.md(f"""## Total FAIR Scores assigned by our methodology
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>""")
-    return fair_scores, sources_nap, total_data
+    return fair_scores_country, sources_nap, total_data
 
 
 @app.cell
-def _(FAIRCartogramWidget, country_grid, fair_scores, mo, spectrum_colors):
+def _(sources_nap):
+    sources_nap
+    return
+
+
+@app.cell
+def _(
+    FAIRCartogramWidget,
+    country_grid,
+    fair_scores_country,
+    mo,
+    spectrum_colors,
+):
     fair_widget = mo.ui.anywidget(
         FAIRCartogramWidget(
-            fair_scores=fair_scores,
+            fair_scores=fair_scores_country,
             source_colors=spectrum_colors,
             country_grid=country_grid,
         )
     )
     mo.md(f"""## FAIR Scores by principle
     {fair_widget}""")
+    return
+
+
+@app.cell
+def _(considered_sources, pl):
+    metadata_name_map = {
+        "own-standard": "Own standard",
+        "mobility-dcat-ap": "Mobility DCAT-AP",
+    }
+    access_map = {
+        "OPEN": "Open access",
+        "REGISTERED_USERS": "Registration needed",
+        "PER_REQUEST": "Per request",
+        "CLOSED": "Closed",
+        "UNAVAILABLE": "Unavailable",
+        "NONDOCUMENTED": "Unavailable",
+    }
+
+    standard_map = {
+        "DATEXII": "DATEX II",
+        "OCPI": "OCPI",
+        "OICP": "OICP",
+        "DOCUMENTED": "Documented",
+        "UNDOCUMENTED": "Not documented",
+    }
+
+    medium_map = {
+        "API": "API",
+        "DUMP": "Download",
+        "DASHBOARD": "Dashboard",
+        "ARCHIVE": "Archive",
+    }
+
+    provenance_map = {
+        "EU": "AFIR",
+        "NONE": "Not documented",
+        "LSV": "German Charging station regulation (LSV)",
+        "TEXTUAL": "Textually documented",
+    }
+    latex_output = considered_sources.select(
+        pl.col("country").alias("Country"),
+        pl.col("source").alias("Source"),
+        pl.col("provider").alias("Provider"),
+        pl.col("publication_date")
+        .str.to_date("%m/%d/%Y")
+        .dt.to_string("%d %b, %Y")
+        .alias("Publication Date"),
+        pl.when(pl.col("metadata_url").is_null())
+        .then(pl.lit("No"))
+        .otherwise(pl.lit("Yes"))
+        .alias("Metadata"),
+        pl.when(pl.col("metadata_standard").is_null())
+        .then(pl.lit("Not actionable"))
+        .otherwise(pl.col("metadata_standard").replace(metadata_name_map))
+        .alias("Metadata standard"),
+        pl.when(pl.col("actionable"))
+        .then(pl.lit("Yes"))
+        .otherwise(pl.lit("No"))
+        .alias("Actionable"),
+        pl.when(pl.col("access").is_null())
+        .then(pl.lit("Unavailable"))
+        .otherwise(pl.col("access").replace(access_map))
+        .alias("Access"),
+        pl.when(pl.col("medium").is_null())
+        .then(pl.lit("Unavailable"))
+        .otherwise(pl.col("medium").replace(medium_map))
+        .alias("Media"),
+        pl.when(pl.col("standard").is_null())
+        .then(pl.lit("Not documented"))
+        .otherwise(pl.col("standard").replace(standard_map))
+        .alias("Data model"),
+        pl.when(pl.col("license").is_null())
+        .then(pl.lit("Not documented"))
+        .when(pl.col("license").str.contains("http"))
+        .then(pl.lit("Custom"))
+        .otherwise(pl.col("license").replace(standard_map))
+        .alias("License"),
+    )
+    general_information = latex_output.select(
+        pl.col("Country"),
+        pl.col("Source"),
+        pl.col("Provider"),
+        pl.col("Publication Date"),
+    )
+
+    findability_criteria = latex_output.select(
+        pl.col("Source"),
+        pl.col("Provider"),
+        pl.col("Metadata"),
+        pl.col("Media"),
+        pl.col("Actionable"),
+    )
+    # GT(latex_output)
+    # print(GT(findability_criteria).as_latex())
+    # considered_sources
+    findability_criteria
     return
 
 
@@ -603,17 +754,13 @@ def _(mo):
 
 @app.cell
 def _(mo):
-    mo.md(r"""## Perform queries""")
-    return
-
-
-@app.cell
-def _(mo):
     with open(
         "queries/total_aggregated_power_per_country_lower.sparql", "r"
     ) as input_e:
         total_aggregated_power_per_country_lower = input_e.read()
-    mo.md(f"""### Total power accounting minimum EVSE potential 
+    mo.md(f"""## Perform queries
+
+    ### Total power accounting minimum EVSE potential 
 
     ```sparql
     {total_aggregated_power_per_country_lower}
@@ -911,15 +1058,20 @@ def _(HeatMapWidget, mo, relative_error):
             y_axis="range",
             c_axis="cat",
             colors=hm_colors,
-            cell_size=30, # 11
+            cell_size=30,  # 11
             x_padding=0.0,
             base_color="#F5F5F5",
-            width=539, # 255
-            height=404, # 152
-            margin={"top": 10, "right": 0, "bottom": 48, "left": 115}, # {"top": 4, "right": 0, "bottom": 9, "left": 78},
+            width=539,  # 255
+            height=404,  # 152
+            margin={
+                "top": 10,
+                "right": 0,
+                "bottom": 48,
+                "left": 115,
+            },  # {"top": 4, "right": 0, "bottom": 9, "left": 78},
             font_size=1.0,
             invert_c=False,
-            radius=5, # 2
+            radius=5,  # 2
         )
     )
 
