@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.12"
+__generated_with = "0.13.15"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -504,7 +504,7 @@ def _(considered_sources, pl):
         .otherwise(pl.lit("Yes"))
         .alias("Metadata"),
         pl.when(pl.col("metadata_standard").is_null())
-        .then(pl.lit("Not actionable"))
+        .then(pl.lit("No standard"))
         .otherwise(pl.col("metadata_standard").replace(metadata_name_map))
         .alias("Metadata standard"),
         pl.when(pl.col("actionable"))
@@ -530,7 +530,19 @@ def _(considered_sources, pl):
         .otherwise(pl.col("license").replace(standard_map))
         .alias("License"),
     )
+
+    latex_output = latex_output.with_columns(
+        pl.concat_str(
+            [
+                pl.col("Country").str.to_lowercase(),
+                (pl.col("Country").cum_count().over("Country")).alias("idx_b"),
+            ],
+            separator=".",
+        ).alias("Identifier")
+    )
+
     general_information = latex_output.select(
+        pl.col("Identifier"),
         pl.col("Country"),
         pl.col("Source"),
         pl.col("Provider"),
@@ -538,16 +550,19 @@ def _(considered_sources, pl):
     )
 
     findability_criteria = latex_output.select(
-        pl.col("Source"),
-        pl.col("Provider"),
+        pl.col("Identifier"),
         pl.col("Metadata"),
-        pl.col("Media"),
         pl.col("Actionable"),
+        pl.col("Metadata standard"),
+    )
+
+    accessibility_criteria = latex_output.select(
+        pl.col("Identifier"), pl.col("Access"), pl.col("Media")
     )
     # GT(latex_output)
     # print(GT(findability_criteria).as_latex())
     # considered_sources
-    findability_criteria
+    accessibility_criteria
     return
 
 
