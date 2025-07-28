@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.13.15"
+__generated_with = "0.14.12"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -279,7 +279,7 @@ def _(INDENT, colored_square, mo):
     ### Accesibility
 
     {INDENT}{colored_square("#e9cf6f")} If the metadata reports clear paths of accesibility we add a point to the score.  
-    {INDENT}{colored_square("#e0ba2f")} If the repository allows persisting archived versions of the data we assign a point.  
+    {INDENT}{colored_square("#e0ba2f")} If the access endpoint is shared we assign one point.  
     {INDENT}{colored_square("#aa8b1a")} If the access media is either an API or an archive we assign a point.
     """
     )
@@ -327,6 +327,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     ]
     optimal_access_media = ["ARCHIVE", "API"]
     interoperable_formats = ["OCPI", "OICP", "DATEXII"]
+    partial_formats = ["DATEXII_P"]
     for sn in sources_nap["id"].unique():
         records = sources_nap.filter(pl.col("id").str.contains(sn)).to_dicts()
         if len(records) == 0:
@@ -347,15 +348,17 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         # ACCESIBILITY
         if latest_record["access"] in accesible:
             fair_scores[sn]["A"] += 1
-            if latest_record["metadata_url"] is not None:
+            if latest_record["medium"] in optimal_access_media:
                 fair_scores[sn]["A"] += 1
-                if latest_record["medium"] in optimal_access_media:
+                if latest_record["access_url"] is not None:
                     fair_scores[sn]["A"] += 1
         # INTEROPERABILITY
         if latest_record["standard"] == "DOCUMENTED":
             fair_scores[sn]["I"] += 1
         if latest_record["standard"] in interoperable_formats:
             fair_scores[sn]["I"] += 3
+        if latest_record["standard"] in partial_formats:
+            fair_scores[sn]["I"] += 2
         # REUSABILITY
         if latest_record["license"] is not None:
             fair_scores[sn]["R"] += 1
@@ -472,6 +475,7 @@ def _(considered_sources, pl):
 
     standard_map = {
         "DATEXII": "DATEX II",
+        "DATEXII_P": "DATEX II modified",
         "OCPI": "OCPI",
         "OICP": "OICP",
         "DOCUMENTED": "Documented",
@@ -503,6 +507,10 @@ def _(considered_sources, pl):
         .then(pl.lit("No"))
         .otherwise(pl.lit("Yes"))
         .alias("Metadata"),
+        pl.when(pl.col("access_url").is_null())
+        .then(pl.lit("No"))
+        .otherwise(pl.lit("Yes"))
+        .alias("Endpoint"),
         pl.when(pl.col("metadata_standard").is_null())
         .then(pl.lit("No standard"))
         .otherwise(pl.col("metadata_standard").replace(metadata_name_map))
@@ -523,6 +531,10 @@ def _(considered_sources, pl):
         .then(pl.lit("Not documented"))
         .otherwise(pl.col("standard").replace(standard_map))
         .alias("Data model"),
+        pl.when(pl.col("provenance").is_null())
+        .then(pl.lit("Not documented"))
+        .otherwise(pl.col("provenance").replace(provenance_map))
+        .alias("Provenance"),
         pl.when(pl.col("license").is_null())
         .then(pl.lit("Not documented"))
         .when(pl.col("license").str.contains("http"))
@@ -557,12 +569,18 @@ def _(considered_sources, pl):
     )
 
     accessibility_criteria = latex_output.select(
-        pl.col("Identifier"), pl.col("Access"), pl.col("Media")
+        pl.col("Identifier"), pl.col("Access"), pl.col("Endpoint"), pl.col("Media")
+    )
+    inter_reusability_criteria = latex_output.select(
+        pl.col("Identifier"),
+        pl.col("Data model"),
+        pl.col("License"),
+        pl.col("Provenance"),
     )
     # GT(latex_output)
     # print(GT(findability_criteria).as_latex())
     # considered_sources
-    accessibility_criteria
+    inter_reusability_criteria
     return
 
 
