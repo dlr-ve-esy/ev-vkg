@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.12"
+__generated_with = "0.14.13"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -50,6 +50,7 @@ def _():
         BarChartWidget,
         DoubleStackedBarChartWidget,
         FAIRCartogramWidget,
+        GT,
         GridScatterWidget,
         HeatMapWidget,
         List,
@@ -828,7 +829,7 @@ def _(
         for k, v in df_to_dict(results, key_col="Code", value_col="target_mw").items()
         if k in result_codes
     }
-    return filtered_markers, results, study_filter
+    return aggregated_power_df, filtered_markers, results, study_filter
 
 
 @app.cell
@@ -967,15 +968,15 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
         x_key="code",
         bar_radius=4,
         cat_colors=cat_colors,
-        width=539 * 2,  # 539 for elsevier size
-        height=202 * 2,  # 202 for elsevier size
+        width=539,  # * 2,  # 539 for elsevier size
+        height=202,  #  * 2,  # 202 for elsevier size
         y_label="Counts per capacity",
         x1_label="European Alternative Fuels Observatory, Juny 2025",
         x2_label="Estimation using available data from the National Access Points",
         offset=38,
         legend_item_width=6.5,
-        # y_grid = [20000, 90000, 180000], # Uncoment for journal print
-        # y_ticks = [20000, 90000, 180000], # Uncoment for journal print
+        y_grid=[20000, 90000, 180000],  # Uncoment for journal print
+        y_ticks=[20000, 90000, 180000],  # Uncoment for journal print
         y_max=180000,
         font_size=0.9,  # 0.9 for elsevier size
         margin={"top": 15, "right": 0, "bottom": 48, "left": 46},
@@ -1001,6 +1002,7 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
         "350+ kW",
     ]
 
+    summary_cols = ["Total EVSE", "Max Power MW"]
     total_cols = pl.sum_horizontal(*value_cols).alias("Total EVSE").cast(int)
 
     error_heatmap_reference = (
@@ -1043,19 +1045,19 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
             ["code"]
             + [
                 (pl.col(x) / pl.col(f"{x}_right")).abs()
-                for x in value_cols + ["Total EVSE", "Max Power MW"]
+                for x in value_cols + summary_cols
             ]
         )
         .with_columns(
             [
                 pl.when(pl.col(x) > 1.0).then(pl.lit(1.0)).otherwise(pl.col(x)).alias(x)
-                for x in value_cols + ["Total EVSE", "Max Power MW"]
+                for x in value_cols + summary_cols
             ]
         )
         .with_columns(
-            pl.mean_horizontal(
-                value_cols + ["Total EVSE", "Max Power MW"], ignore_nulls=True
-            ).alias("Overall Fidelity")
+            pl.mean_horizontal(value_cols + summary_cols, ignore_nulls=True).alias(
+                "Overall Fidelity"
+            )
         )
         .unpivot(index="code", variable_name="range", value_name="error")
     ).with_columns(
@@ -1067,21 +1069,123 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
         )
         .alias("cat")
     )
-    return (relative_error,)
+    return relative_error, summary_cols, total_cols, value_cols
+
+
+@app.cell
+def _(
+    GT,
+    pl,
+    power_counts_tracker,
+    results,
+    total_cols,
+    total_evses_per_power_df,
+    value_cols,
+):
+    reference_df = (
+        power_counts_tracker.with_columns(
+            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
+        )
+        .join(
+            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
+            left_on="code",
+            right_on="Code",
+            how="left",
+        )
+        .rename({"total_accounted_power": "Max Power MW"})
+    )
+
+    calculated_df = (
+        total_evses_per_power_df.with_columns(
+            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
+        )
+        .join(
+            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
+            left_on="code",
+            right_on="Code",
+            how="left",
+        )
+        .rename({"total_mw": "Max Power MW"})
+    ).join(reference_df, on="code", how="left")
+    table_caps = GT(
+        calculated_df.select(
+            ["code"] + value_cols + [f"{vcc}_right" for vcc in value_cols]
+        )
+    )
+    col_labels = {"code": "Country"}
+
+    for vct in value_cols:
+        table_caps = table_caps.tab_spanner(label=vct, columns=[vct, f"{vct}_right"])
+        col_labels[vct] = "Calc."
+        col_labels[f"{vct}_right"] = "Ref."
+
+    table_caps = table_caps.cols_label(col_labels)
+    print(table_caps.as_latex())
+    return (calculated_df,)
+
+
+@app.cell
+def _(
+    GT,
+    aggregated_power_df,
+    calculated_df,
+    pl,
+    summary_cols,
+    target_tracker,
+):
+    reference_values = target_tracker.join(
+        aggregated_power_df, left_on="Code", right_on="code", how="left"
+    ).with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000))
+
+    quantities_df = (
+        calculated_df.select(
+            ["code"] + summary_cols + [f"{sc}_right" for sc in summary_cols]
+        )
+        .join(
+            reference_values.select("Code", "Target kW"),
+            left_on="code",
+            right_on="Code",
+            how="left",
+        )
+        .with_columns(pl.col("Target kW").mul(0.001).cast(int).alias("Target MW"))
+        .drop("Target kW")
+    )
+
+    table_qs = GT(quantities_df)
+    col_labelssc = {"code": "Country"}
+
+    for scs in summary_cols:
+        colscss = [scs, f"{scs}_right"]
+        if scs == "Max Power MW":
+            colscss.append("Target MW")
+            col_labelssc["Target MW"] = "Target"
+        table_qs = table_qs.tab_spanner(label=scs, columns=colscss)
+        col_labelssc[scs] = "Calc."
+        col_labelssc[f"{scs}_right"] = "Ref."
+
+    table_qs = table_qs.cols_label(col_labelssc)
+    print(table_qs.as_latex())
+    return
+
+
+@app.cell
+def _(results):
+    results
+    return
 
 
 @app.cell
 def _(HeatMapWidget, mo, relative_error):
     hm_colors = {
         "0-7,4 kW": "#6181ab",
-        "7,4-22 kW": "#73a861",
+        "7,4-22 kW": "#6181ab",
         "22-50 kW": "#6181ab",
-        "50-150 kW": "#73a861",
+        "50-150 kW": "#6181ab",
         "150-350 kW": "#6181ab",
-        "350+ kW": "#73a861",
+        "350+ kW": "#6181ab",
         "Max Power MW": "#c1a2bb",
         "Total EVSE": "#e0ba2f",
-        "Overall Fidelity": "#c8433e",
+        "Overall Fidelity": "#73a861",
     }
 
     hm_widget = mo.ui.anywidget(
@@ -1091,20 +1195,26 @@ def _(HeatMapWidget, mo, relative_error):
             y_axis="range",
             c_axis="cat",
             colors=hm_colors,
-            cell_size=30,  # 11
+            cell_size=11,  # 30
             x_padding=0.0,
             base_color="#F5F5F5",
-            width=539,  # 255
-            height=404,  # 152
+            width=255,  # 539
+            height=152,  # 404
             margin={
-                "top": 10,
+                "top": 4,
                 "right": 0,
-                "bottom": 48,
-                "left": 115,
-            },  # {"top": 4, "right": 0, "bottom": 9, "left": 78},
-            font_size=1.0,
+                "bottom": 9,
+                "left": 78,
+            },
+            # margin={
+            #     "top": 10,
+            #     "right": 0,
+            #     "bottom": 48,
+            #     "left": 115,
+            # },
+            font_size=0.9,
             invert_c=False,
-            radius=5,  # 2
+            radius=2,  # 5
         )
     )
 
@@ -1220,11 +1330,11 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
             color_col="code",
             y_label="Quantity fidelity",
             x_label="FAIR alignment",
-            cell_size=32,
+            cell_size=25,
             x_padding=0.0,
             base_color="grey",
-            width=397,
-            height=397,
+            width=255,  # 255
+            height=int(255 * 0.9),  # 152
             margin={"top": 20, "right": 0, "bottom": 25, "left": 0},
             font_size=1.0,
             cell_ycorrection=2,
