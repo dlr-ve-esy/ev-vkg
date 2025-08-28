@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.13"
+__generated_with = "0.14.17"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -26,7 +26,6 @@ def _():
     from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
     from widgets.barchart import (
         BarChartWidget,
-        StackedBarChartWidget,
         DoubleStackedBarChartWidget,
     )
     from widgets.heatmap import HeatMapWidget
@@ -41,11 +40,8 @@ def _():
     import requests
     from datetime import datetime
     import pyqrcode
-    import altair as alt
-    import numpy as np
-    from great_tables import GT, md, html
+    from great_tables import GT
 
-    PRESENTATION_MODE = False
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
@@ -430,12 +426,12 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     mo.md(f"""## Total FAIR Scores assigned by our methodology
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>""")
-    return fair_scores_country, sources_nap, total_data
+    return fair_scores_country, scores_df, sources_nap, total_data
 
 
 @app.cell
-def _(sources_nap):
-    sources_nap
+def _(scores_df):
+    scores_df.group_by("country", maintain_order=True).first()
     return
 
 
