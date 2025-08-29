@@ -21,3 +21,12 @@ dependencies = [
     "requests>=2.32.3",
     "types-requests>=2.32.0.20250328",
 ]
+
+[tool.uv.workspace]
+members = [
+    "nobil",
+    "bnetza",
+]
+
+[tool.uv.sources]
+fair-charging-station-data = { workspace = true }
