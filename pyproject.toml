@@ -6,10 +6,12 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anywidget>=0.9.18",
+    "fair-charging-station-data",
     "frictionless>=5.18.1",
     "great-tables>=0.18.0",
     "maplib>=0.15.11",
     "marimo>=0.13.6",
+    "nobil-parser",
     "openpyxl>=3.1.5",
     "pandas>=2.2.3",
     "pillow>=11.2.1",
@@ -30,3 +32,4 @@ members = [
 
 [tool.uv.sources]
 fair-charging-station-data = { workspace = true }
+nobil-parser = { workspace = true }
