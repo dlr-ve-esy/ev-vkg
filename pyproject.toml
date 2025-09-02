@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "anywidget>=0.9.18",
-    "fair-charging-station-data",
+    "bnetza-parser",
     "frictionless>=5.18.1",
     "great-tables>=0.18.0",
     "maplib>=0.15.11",
@@ -26,10 +26,10 @@ dependencies = [
 
 [tool.uv.workspace]
 members = [
-    "nobil",
     "bnetza",
+    "nobil",
 ]
 
 [tool.uv.sources]
-fair-charging-station-data = { workspace = true }
+bnetza-parser = { workspace = true }
 nobil-parser = { workspace = true }
