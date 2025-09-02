@@ -208,7 +208,7 @@ def expand_relational_csv(
         challenge_identifier = "facility_id"
         evse_fk = (VKG + pl.col("facility_id").cast(str)).alias("facility")
         evse_expansion_template = "vkg-evse:EVSEColumn"
-    if (p := Path(f"{path}/evses.csv")).exists():
+    if (p := Path(f"{path}/evse.csv")).exists():
         evse: pl.DataFrame = pl.read_csv(p)
         evse = evse.filter(pl.col(challenge_identifier).is_in(challenge_ids))
         evse_ids = evse["id"].unique()

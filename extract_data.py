@@ -1,11 +1,15 @@
+from pathlib import Path
 from nobil.parser.extract import nobil_extract_data
 from nobil.parser.annotate import write_annotated_nobil_csv
 from bnetza.parser.rename import get_renamed_bnetza
+from irve.extract import irve_extract_csv
 
 # from bnetza.rename import get_renamed_bnetza
 import polars as pl
 
 output_folder = "operational"
+
+Path(output_folder).mkdir(exist_ok=True)
 
 sources = (
     pl.read_csv("sources/metadata.csv").select(pl.col("id"), pl.col("local")).rows()
