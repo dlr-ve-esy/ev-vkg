@@ -18,6 +18,7 @@ dependencies = [
     "polars>=1.26.0",
     "py4j>=0.10.9.9",
     "pyarrow>=19.0.1",
+    "pydantic[email]>=2.11.7",
     "pypng>=0.20220715.0",
     "pyqrcode>=1.2.1",
     "requests>=2.32.3",
