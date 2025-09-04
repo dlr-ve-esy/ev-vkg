@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.14.17"
+__generated_with = "0.15.2"
 app = marimo.App(
     width="medium",
     layout_file="layouts/main.slides.json",
@@ -41,7 +41,6 @@ def _():
     from datetime import datetime
     import pyqrcode
     from great_tables import GT
-
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
@@ -983,7 +982,6 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
     mo.md(f"""### Count of EVSES based on max nominal capacity
 
     {stacked_chart_widget}""")
-
     return
 
 
@@ -1268,7 +1266,7 @@ def _(pl, scatter_df):
     points = [
         (k["error"], k["score"], k["code"])
         for k in scatter_df.with_columns(
-            -pl.col("error"), pl.col("score").fill_null(0)
+            pl.col("error"), pl.col("score").fill_null(0)
         ).to_dicts()
     ]
     nn = 7
