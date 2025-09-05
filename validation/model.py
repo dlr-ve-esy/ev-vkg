@@ -710,15 +710,3 @@ class Model(BaseModel):
         description="Object. The “_comment”-section is used as a self-description of the final metadata-file. It is text, intended for humans and can include a link to the metadata documentation(s), required value formats and similar remarks. The comment section has no fix structure or mandatory values, but a useful self-description, similar to the one depicted here, is encouraged.",
         title="_comment",
     )
-
-
-if __name__ == "__main__":
-    import json
-
-    with open("operational/NO-20250120-NOBIL-NOBIL/datapackage.json", "r") as f:
-        d = json.load(f)
-
-    try:
-        Model.model_validate(d)
-    except ValidationError as e:
-        print(e)

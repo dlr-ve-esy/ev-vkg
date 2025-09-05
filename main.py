@@ -1,11 +1,7 @@
 import marimo
 
 __generated_with = "0.15.2"
-app = marimo.App(
-    width="medium",
-    layout_file="layouts/main.slides.json",
-    css_file="styles/custom.css",
-)
+app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
@@ -41,6 +37,8 @@ def _():
     from datetime import datetime
     import pyqrcode
     from great_tables import GT
+
+    data_folder = "operational"
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
@@ -53,6 +51,7 @@ def _():
         Path,
         SourcesCartogramWidget,
         Tuple,
+        data_folder,
         datetime,
         expand_bnezta,
         expand_relational_csv,
@@ -587,11 +586,11 @@ def _(mo):
 
 
 @app.cell
-def _(List, Path, Tuple, glob, mo):
+def _(List, Path, Tuple, data_folder, glob, mo):
     __CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
     VKG = "https://gitlab.dlr.de/vkg#"
 
-    paths: List[Path] = [Path(f) for f in glob("operational/*")]
+    paths: List[Path] = [Path(f) for f in glob(f"{data_folder}/*")]
     mappings: List[Tuple[str, str]] = [(m.name, m.as_posix()) for m in paths]
 
     # load ottr templates for expansion
