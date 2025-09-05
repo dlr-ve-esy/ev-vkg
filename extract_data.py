@@ -25,17 +25,19 @@ output_folder = "parsed"
 
 Path(output_folder).mkdir(exist_ok=True)
 
-sources = (
-    pl.read_csv("sources/metadata.csv").select(pl.col("id"), pl.col("local")).rows()
-)
+other_sources = sources.select(pl.col("id"), pl.col("local")).rows()
 
-nobil_data = [s for s in sources if (s[1] is not None) and ("nobil" in s[1].lower())]
+nobil_data = [
+    s for s in other_sources if (s[1] is not None) and ("nobil" in s[1].lower())
+]
 
 source_nobil = nobil_data[0][1]  # "20-01-2025-NOBIL-dump.json"
 name_nobil = nobil_data[0][0]
 
 
-irve_data = [s for s in sources if (s[1] is not None) and ("irve" in s[1].lower())]
+irve_data = [
+    s for s in other_sources if (s[1] is not None) and ("irve" in s[1].lower())
+]
 
 source_irve = irve_data[0][1]
 name_irve = irve_data[0][0]
