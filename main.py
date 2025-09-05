@@ -27,7 +27,7 @@ def _():
     from widgets.heatmap import HeatMapWidget
     from widgets.grid_scatter import GridScatterWidget
     import marimo as mo
-    from graph_expansions import expand_relational_csv, expand_bnezta
+    from graph.graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
     from pathlib import Path
     from typing import List, Tuple
