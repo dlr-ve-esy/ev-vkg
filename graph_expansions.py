@@ -51,7 +51,15 @@ def map_plug_standards(text: str) -> str:
         # AC Patterns
         case "iec62196t1" | "type1" | "type_1" | "iec_62196_t1":
             out = f"{CHIO}CHIO_00000025"
-        case "iec62196t2" | "type2" | "type_2" | "iec_62196_t2" | "cee5" | "mennekes":
+        case (
+            "iec62196t2"
+            | "type2"
+            | "type_2"
+            | "iec_62196_t2"
+            | "cee5"
+            | "mennekes"
+            | "teslaConnectorEurope"
+        ):
             out = f"{CHIO}CHIO_00000026"
         # DC Patterns
         case "iec62196t1combo" | "iec_62196_t1_combo":
