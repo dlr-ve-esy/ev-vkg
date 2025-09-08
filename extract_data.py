@@ -5,14 +5,10 @@ from irve.extract import irve_extract_csv, write_annotated_irve_csv
 from datex2.parser.parse_xml import parse_datex2_xml
 from datex2.parser.restructure import restructure_datex2
 from datex2.annotation.annotate import annotate_datex2
-from typing import List
-from glob import glob
 from pathlib import Path
 import polars as pl
 import json
 import yaml
-
-paths: List[Path] = [Path(f) for f in glob("sources/XML/*")]
 
 output_path = "parsed"
 sources = pl.read_csv("sources/metadata.csv")
