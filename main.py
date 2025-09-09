@@ -38,7 +38,7 @@ def _():
     import pyqrcode
     from great_tables import GT
 
-    data_folder = "operational"
+    data_folder = "parsed"
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
@@ -612,17 +612,37 @@ def _(List, Path, Tuple, data_folder, glob, mo):
 
 
 @app.cell
+def _(mappings: "List[Tuple[str, str]]", mo):
+    def short_name(label):
+        splitted = label.split("-")
+        return splitted[0] + "-" + splitted[-1]
+    checkbox =[(l, mo.ui.checkbox(label=f"{short_name(l[0])}")) for l in mappings]
+    return (checkbox,)
+
+
+@app.cell
+def _(checkbox, mo):
+    mo.vstack([c[1] for c in checkbox])
+    return
+
+
+@app.cell
+def _(checkbox):
+    selected_sources = [c[0] for c in checkbox if c[1].value]
+    return (selected_sources,)
+
+
+@app.cell
 def _(
     Mapping,
     expand_bnezta,
     expand_relational_csv,
-    mappings: "List[Tuple[str, str]]",
+    selected_sources,
     vkg_common,
     vkg_evse,
 ):
     m = Mapping([vkg_common, vkg_evse])
-    GERMANY_BNETZA = True
-    for name, path in mappings:
+    for name, path in selected_sources:
         country: str = name.split("-")[0]
         # if country in ["NO", "AT", "ES"]:
         if (
@@ -636,17 +656,14 @@ def _(
                 country_filter = ["AT"]
             else:
                 country_filter = []
-            if country == "DE" and GERMANY_BNETZA:
-                continue
             expand_relational_csv(
                 "graph",
                 path,
                 m,
                 challenge=False,
                 country=country,
-                country_filter=country_filter,
-            )
-        if "bnetza" in name.lower() and GERMANY_BNETZA:
+                country_filter=country_filter,)
+        if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
     return (m,)
 
