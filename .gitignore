@@ -19,6 +19,8 @@ wheels/
 *.jar
 uv.lock
 .python-version
+temp/
+
 
 # Do not commit ontology files
 *.ttl
