@@ -4,14 +4,34 @@ This repository is the code suppoting the publication "Actionable Electric Vehic
 
 ## Usage
 
-To work with this repository you need to acquire the data from [placeholder](https://zenodo.org/). 
+To work with this repository you need to acquire the data from [placeholder](https://zenodo.org/). The script `get_data.py` can be used to download it automatically and saved in the right folder. 
 
-Once the data is in the main folder you need to install the dependencies. I recommend using [uv](https://github.com/astral-sh/uv).
+Once the data is in the main folder you need to install the dependencies. I recommend using [uv](https://github.com/astral-sh/uv). But any python package management should work. Using uv you can run:
 
+```bash
+uv install
+```
+
+Otherwise using your favorite python environment management tool you can activate your env and install:
+
+```bash
+pip install -e .
+```
+To get the archived version of the data you can run the `get_data.py` script.
+
+```bash
+python get_data.py
+```
 
 
 The knowledge graph can be built and explored using the marimo notebook `main.py`, calling:
 
 ```bash
 uv run marimo edit main.py
+```
+
+Or using the pip installation of marimo, calling:
+
+```bash
+marimo edit main.py
 ```

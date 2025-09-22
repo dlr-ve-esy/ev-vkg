@@ -1,7 +1,7 @@
 [project]
 name = "vkg"
 version = "0.1.0"
-description = "Add your description here"
+description = "Virtual knowledge graph for evaluating ev charging station reports."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
