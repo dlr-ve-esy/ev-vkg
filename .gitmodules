@@ -4,6 +4,3 @@
 [submodule "bnetza"]
 	path = bnetza
 	url = https://github.com/areleu/fair-charging-station-data.git
-[submodule "irve"]
-	path = irve
-	url = git@gitlab.dlr.de:ensym/lod/fair-charging-infrastructure/extractors/irve.git
