@@ -1,9 +1,6 @@
 [submodule "datex2"]
 	path = datex2
 	url = git@gitlab.dlr.de:ensym/lod/fair-charging-infrastructure/extractors/datex2.git
-[submodule "nobil"]
-	path = nobil
-	url = git@gitlab.dlr.de:ensym/lod/fair-charging-infrastructure/extractors/nobil.git
 [submodule "bnetza"]
 	path = bnetza
 	url = https://github.com/areleu/fair-charging-station-data.git
