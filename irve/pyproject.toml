@@ -1,0 +1,14 @@
+[project]
+name = "irve-normaliser"
+version = "0.1.0"
+description = "Normalise charging infrastructure data from IRVE"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "polars>=1.32.3",
+]
+
+
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"

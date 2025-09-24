@@ -1,0 +1,31 @@
+name: irve_charging_stations
+title: Tabular IRVE Charging Station data
+id: nobil_charging_stations
+description: Tabular version of the charging infrastructure dataset published by data.gouv.fr
+language:
+  - "en-GB"
+subject:
+  - "name": "vehicle charging station"
+    "path": "http://openenergy-platform.org/ontology/oeo/OEO_00320040"
+keywords:
+  - "electric vehicles"
+  - "charging stations"
+  - "mobility"
+spatial:
+  location: France
+  extent: France
+  resolution: point
+sources:
+  - title: Base nationale des IRVE
+    description: Base nationale des IRVE
+    path: https://transport.data.gouv.fr/api/datasets/5448d3e0c751df01f85d0572
+    licenses:
+      - name: Licence Ouverte
+        title: LICENCE OUVERTE 2.0
+        path: https://www.etalab.gouv.fr/licence-ouverte-open-licence/
+licenses:
+  - name: CC BY 4.0
+    title: Attribution 4.0 International
+    path: https://creativecommons.org/licenses/by/4.0
+    attribution: Copyright (c) 2025 German Aerospace Center (DLR)
+    instruction: You are free to copy and redistribute the material in any medium or format. You are free to remix, transform, and build upon the material for any purpose, even commercially.
