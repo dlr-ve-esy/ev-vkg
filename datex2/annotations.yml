@@ -1,0 +1,363 @@
+resources:
+-   encoding: utf-8
+    format: csv
+    name: addresses
+    path: addresses.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: street
+            type: string
+            description: The name of a passage or way through from one location to another.
+            isAbout:
+              - name: thoroughfare
+                path: http://www.w3.org/ns/locn#thoroughfare"
+        -   name: locator_designator
+            type: string
+            description: A number or sequence of characters that uniquely identifies the locator within the relevant scope.
+            isAbout:
+              - name: locator designator
+                path: http://www.w3.org/ns/locn#locatorDesignator
+        -   name: supplement
+            type: string
+            description: Supplemental address information
+            isAbout:
+              - name: supplemental address component
+                path: https://spec.edmcouncil.org/fibo/ontology/FND/Places/Addresses/SupplementalAddressComponent
+        -   name: postal_name
+            type: string
+            description: A name created and maintained for postal purposes to identify a subdivision of addresses and postal delivery points.
+            isAbout:
+              - name: postal name
+                path: http://www.w3.org/ns/locn#postName
+        -   name: zip_code
+            type: string
+            description: The code created and maintained for postal purposes to identify a subdivision of addresses and postal delivery points.
+            isAbout:
+              - name: postal code
+                path: http://www.w3.org/ns/locn#postCode
+        -   name: state
+            type: string
+            description: Federal state.
+            isAbout:
+              - name: administrative unit level 2
+                path: http://www.w3.org/ns/locn#adminUnitL2
+        -   name: country
+            type: string
+            description: Country identifier
+            isAbout:
+              - name: administrative unit level 1
+                path: http://www.w3.org/ns/locn#adminUnitL2
+        -   name: time_zone
+            type: string
+            description: Time zone of the address.
+        -   name: last_update
+            type: string
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: connections
+    path: connections.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: evse_id
+            description: Unique identifier of the EVSE the connector is part of.
+            isAbout:
+              - name: charging point
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000016
+        -   name: source_id
+            description: Unique identifier of the Source of this record.
+            isAbout:
+              - name: described by
+                path: https://www.commoncoreontologies.org/ont00001917
+        -   name: connector_id
+            type: integer
+            description: Unique identifier of the connector type.
+            isAbout:
+              - name: connector
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000012
+        foreignKeys:
+        -   fields:
+            - evse_id
+            reference:
+                fields:
+                - id
+                resource: evse
+        -   fields:
+            - connector_id
+            reference:
+                fields:
+                - id
+                resource: connectors
+-   encoding: utf-8
+    format: csv
+    name: connectors
+    path: connectors.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier of the connector type.
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: max_power
+            type: string
+            description: Max power estimated for the connector.
+            isAbout:
+              - name: power rating
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000092
+        -   name: standard
+            type: string
+            description: Connector pattern.
+            isAbout:
+              - name: connection pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000015
+            valueReference:
+              - value: iec62196T1COMBO
+                name: combo 1 pattern
+                path: http://dlr-ve-esy.github.io/charging-ontology/CHIO_00000027
+              - value: iec62196t2combo
+                name: combo 2 pattern
+                path: http://dlr-ve-esy.github.io/charging-ontology/CHIO_00000028
+              - value: teslaConnectorEurope
+                name: combo 2 pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000028
+              - value: domesticF
+                name: domestic F pattern
+                path: http://dlr-ve-esy.github.io/charging-ontology/CHIO_00000076
+              - value: iec62196T1
+                name: Type 1 pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000025
+              - value: iec62196T2
+                name: Type 2 pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000026
+              - value: iec60309x2single16
+                name: IEC 60309-2 single phase 16A pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000062
+              - value: iec60309x2three16
+                name: IEC 60309-2 three phase 16A pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000063
+              - value: other
+                name: connection pattern
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000015
+        -   name: coupling
+            type: string
+            description: Coupling variant of the connector.
+            isAbout:
+              - name: connector
+                path: http://openenergy-platform.org/ontology/chio/CHIO_00000012
+            valueReference:
+              - value: cable
+                name: plug
+                path: http://openenergy-platform.org/ontology/chio/CHIO_00000013
+              - value: socket
+                name: outlet
+                path: http://openenergy-platform.org/ontology/chio/CHIO_00000014
+        -   name: max_voltage
+            type: string
+            description: Rated voltage of the connector.
+            isAbout:
+              - name: rated voltage
+                path: https://dlr-ve-esy.github.io/charging-ontology/CHIO_00000091
+        -   name: max_amperage
+            type: string
+            description: Rated current capacity of the connector
+            isAbout:
+              - name: current capacity
+                path: http://openenergy-platform.org/ontology/chio/CHIO_00000093
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: spatial
+    path: spatial.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+        -   name: latitude
+            type: number
+            description: Latitude in the WSG84 reference system.
+            isAbout:
+              - name: latitude
+                path: https://www.w3.org/2003/01/geo/wgs84_pos#latitude
+        -   name: longitude
+            type: number
+            description: Longitude in the WSG84 reference system.
+            isAbout:
+              - name: longitude
+                path: https://www.w3.org/2003/01/geo/wgs84_pos#longitude
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: facilities
+    path: facilities.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: source_id
+            description: Source identifier.
+            isAbout:
+              - name: described by
+                path: https://www.commoncoreontologies.org/ont00001917
+        -   name: operator_id
+            description: Operator identifier
+            isAbout:
+              - name: is used by
+                path: https://www.commoncoreontologies.org/ont00001925
+        -   name: geolocation_id
+            description: Unique identifier of the geolocation.
+            isAbout:
+              - name: located in
+                path: http://purl.obolibrary.org/obo/BFO_0000171
+        -   name: name
+            type: string
+            description: Name of the facility.
+            isAbout:
+              - name: Designative name
+                path: https://www.commoncoreontologies.org/ont00000003
+        -   name: last_updated
+            type: string
+        -   name: time_zone
+            type: string
+        foreignKeys:
+        -   fields:
+            - operator_id
+            reference:
+                fields:
+                - id
+                resource: operators
+        -   fields:
+            - geolocation_id
+            reference:
+                fields:
+                - id
+                resource: geolocations
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: operators
+    path: operators.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: name
+            type: string
+            description: Name of the operator
+            isAbout:
+              - name: Designative name
+                path: https://www.commoncoreontologies.org/ont00000003
+        -   name: type
+            type: string
+            description: Type of agent (For polymorphic databases)
+            isAbout:
+              - name: agent
+                path: https://www.commoncoreontologies.org/ont00001017
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: evse
+    path: evse.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: source_id
+            description: Source identifier.
+            isAbout:
+              - name: described by
+                path: https://www.commoncoreontologies.org/ont00001917
+        -   name: facility_id
+            description: Unique identifier of the facility the evse is located in.
+            isAbout:
+              - name: located in
+                path: http://purl.obolibrary.org/obo/BFO_0000171
+        -   name: geolocation_id
+            description: Unique identifier of the geolocation the evse is located in.
+            isAbout:
+              - name: located in
+                path: http://purl.obolibrary.org/obo/BFO_0000171
+        -   name: evseid
+            description: eMI3 EVSE id
+        -   name: last_updated
+            type: string
+        foreignKeys:
+        -   fields:
+            - facility_id
+            reference:
+                fields:
+                - id
+                resource: facilities
+        -   fields:
+            - geolocation_id
+            reference:
+                fields:
+                - id
+                resource: geolocations
+        primaryKey:
+        - id
+-   encoding: utf-8
+    format: csv
+    name: geolocations
+    path: geolocations.csv
+    profile: tabular-data-resource
+    schema:
+        fields:
+        -   name: id
+            description: Unique identifier
+            isAbout:
+              - name: identifier
+                path: http://purl.org/dc/elements/1.1/identifier
+        -   name: spatial_id
+            type: integer
+            description: id if the spatial designator of this geolocation
+            isAbout:
+              - name: designated by
+                path: https://www.commoncoreontologies.org/ont00001879
+        -   name: address_id
+            type: integer
+            description: id of the address designator of this geolocation.
+            isAbout:
+              - name: designated by
+                path: https://www.commoncoreontologies.org/ont00001879
+        foreignKeys:
+        -   fields:
+            - spatial_id
+            reference:
+                fields:
+                - id
+                resource: spatial
+        -   fields:
+            - address_id
+            reference:
+                fields:
+                - id
+                resource: addresses
+        primaryKey:
+        - id

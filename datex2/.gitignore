@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.python-version
+uv.lock
+
+# Virtual environments
+.venv
+
+# other
+datex2profile/*
+sources/*
+tabular/*
+operational/*
+
+.DS_Store
