@@ -23,7 +23,6 @@ To get the archived version of the data you can run the `get_data.py` script.
 python get_data.py
 ```
 
-
 The knowledge graph can be built and explored using the marimo notebook `main.py`, calling:
 
 ```bash
