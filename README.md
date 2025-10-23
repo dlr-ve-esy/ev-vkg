@@ -5,7 +5,7 @@ This repository is the code suppoting the publication "Actionable Electric Vehic
 ## Usage
 
 To work with this repository you need to acquire the data from 
- [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17174842.svg)](https://doi.org/10.5281/zenodo.17174842). The script `get_data.py` can be used to download it automatically and saved in the right folder. 
+ [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17422740.svg)](https://doi.org/10.5281/zenodo.17422740). The script `get_data.py` can be used to download it automatically and saved in the right folder. 
 
 This repository depends on work from other context, the external repository can be imported by using the terminal to go to this folder after cloning and using git.
 

@@ -7,8 +7,9 @@ import re
 (TEMP := Path("temp")).mkdir(exist_ok=True)
 (PARSED := Path("parsed")).mkdir(exist_ok=True)
 (RAW := Path("sources")).mkdir(exist_ok=True)
+(VIZ := Path("viz_data")).mkdir(exist_ok=True)
 
-URL = "https://zenodo.org/api/records/17174842"
+URL = "https://zenodo.org/api/records/17422740"
 
 
 zip_filename = "data-ci-publication-transparency"
@@ -45,6 +46,18 @@ for file in z.namelist():
             pass
         else:
             file_name = RAW.joinpath(file.replace("sources/", ""))
+            file_name.parent.mkdir(exist_ok=True, parents=True)
+            if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
+                if not file_name.exists():
+                    with open(f"{file_name}", "wb") as f:
+                        f.write(z.read(file))
+                else:
+                    print(f"{file_name} already exists, skipping extraction!")
+    if file.startswith("viz/"):
+        if (sp := Path(file)).is_dir():
+            pass
+        else:
+            file_name = VIZ.joinpath(file.replace("sources/", ""))
             file_name.parent.mkdir(exist_ok=True, parents=True)
             if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
                 if not file_name.exists():
