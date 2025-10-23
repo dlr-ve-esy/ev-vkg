@@ -690,7 +690,7 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
     )
     ONTOLOGY_LOCAL = "ontology/chio-full.ttl"
     if not (p := Path(ONTOLOGY_LOCAL)).exists():
-        p.parent.mkdir(exists_ok=True)
+        p.parent.mkdir(exist_ok=True)
         response = requests.get(ONTOLOGY_IRI)
         if response.status_code == 200:
             with open(p, "wb") as onto_file:
