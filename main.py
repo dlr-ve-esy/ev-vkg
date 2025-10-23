@@ -31,7 +31,7 @@ def _():
     from glob import glob
     from pathlib import Path
     from typing import List, Tuple
-    from maplib import Mapping
+    from maplib import Model
     import polars as pl
     import requests
     from datetime import datetime
@@ -124,9 +124,11 @@ def _(
             legend_height=26,
         )
     )
-    mo.md(f"""## The EAFO data ecosystem
+    mo.md(
+        f"""## The EAFO data ecosystem
     {widget}
-    <p style="text-align: center;">Data providers disclosed as sources by the EAFO distribuited by state.</p>""")
+    <p style="text-align: center;">Data providers disclosed as sources by the EAFO distribuited by state.</p>"""
+    )
     return
 
 
@@ -254,10 +256,12 @@ def _(mo):
     def colored_square(color):
         return f'<span style="display: inline-block; width: 10px; height: 10px; background-color: {color}; border-radius: 2px;"></span>'
 
-    mo.md("""## Heuristics 
+    mo.md(
+        """## Heuristics 
 
     To address the FAIR alignment of the charging infrastructure data provided by EU+ states we rely on a simple set of heuristics.  
-    The final values of the assesment are summed to calculate the final score""")
+    The final values of the assesment are summed to calculate the final score"""
+    )
     return INDENT, colored_square
 
 
@@ -421,9 +425,11 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     )
     wg = mo.ui.anywidget(total_widget)
 
-    mo.md(f"""## Total FAIR Scores assigned by our methodology
+    mo.md(
+        f"""## Total FAIR Scores assigned by our methodology
     {wg}
-    <p style="text-align: center;">States with zero score were excluded.</p>""")
+    <p style="text-align: center;">States with zero score were excluded.</p>"""
+    )
     return fair_scores_country, scores_df, sources_nap, total_data
 
 
@@ -448,8 +454,10 @@ def _(
             country_grid=country_grid,
         )
     )
-    mo.md(f"""## FAIR Scores by principle
-    {fair_widget}""")
+    mo.md(
+        f"""## FAIR Scores by principle
+    {fair_widget}"""
+    )
     return
 
 
@@ -600,14 +608,16 @@ def _(List, Path, Tuple, data_folder, glob, mo):
         vkg_common = input_b.read()
 
     snippet = "\n".join(vkg_evse.split("\n")[13:22])
-    mo.md(f"""## Graph is expanded using OTTR templates
+    mo.md(
+        f"""## Graph is expanded using OTTR templates
 
     The original sources are converted to a common tabular model which is expanded to a graph. For example, with this template we expand the data from a EVSE.
     ```
     {snippet}
     ```
     Each comand expands to different patterns.
-    """)
+    """
+    )
     return VKG, mappings, vkg_common, vkg_evse
 
 
@@ -616,7 +626,8 @@ def _(mappings: "List[Tuple[str, str]]", mo):
     def short_name(label):
         splitted = label.split("-")
         return splitted[0] + "-" + splitted[-1]
-    checkbox =[(l, mo.ui.checkbox(label=f"{short_name(l[0])}")) for l in mappings]
+
+    checkbox = [(l, mo.ui.checkbox(label=f"{short_name(l[0])}")) for l in mappings]
     return (checkbox,)
 
 
@@ -662,7 +673,8 @@ def _(
                 m,
                 challenge=False,
                 country=country,
-                country_filter=country_filter,)
+                country_filter=country_filter,
+            )
         if "bnetza" in name.lower():
             expand_bnezta("graph", path, m, challenge=False, country=country)
     return (m,)
@@ -687,10 +699,12 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
     qr.png(img, scale=5)
 
     m.read_triples("ontology/chio-full.ttl", transient=False, graph=TEST_GRAPH)
-    mo.md("""## Load Ontology into graph and perform reasoning
+    mo.md(
+        """## Load Ontology into graph and perform reasoning
 
     The charging ontology is in GitHub and it is hosted as a static site
-    <p style="justify-content: space-evenly; display: flex;"><a href="https://github.com/dlr-ve-esy/charging-ontology" rel="noopener" target="_blank"><img alt="dlr-ve-esy/charging-ontology - GitHub" src="https://gh-card.dev/repos/dlr-ve-esy/charging-ontology.svg"></a><img src="public/qr-code.png" width="100"/></p>""")
+    <p style="justify-content: space-evenly; display: flex;"><a href="https://github.com/dlr-ve-esy/charging-ontology" rel="noopener" target="_blank"><img alt="dlr-ve-esy/charging-ontology - GitHub" src="https://gh-card.dev/repos/dlr-ve-esy/charging-ontology.svg"></a><img src="public/qr-code.png" width="100"/></p>"""
+    )
     return (TEST_GRAPH,)
 
 
@@ -712,7 +726,8 @@ def _(TEST_GRAPH, m, mo):
         charging_connector = input_c.read()
 
     m.insert(charging_connector, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""## Perform reasoning
+    mo.md(
+        f"""## Perform reasoning
 
     In theory, we could try to infer all the axioms of the graph, but doing so would consume a lot of memory. We only need a handful of inferences so we perform them individually.
 
@@ -721,7 +736,8 @@ def _(TEST_GRAPH, m, mo):
     We find everything that is being assigned to a subclass of connector and  assign it the connector class
     ```sparql
     {charging_connector}
-    ```""")
+    ```"""
+    )
     return
 
 
@@ -730,7 +746,8 @@ def _(TEST_GRAPH, m, mo):
     with open("reasoning/has_part.sparql", "r") as input_d:
         has_part = input_d.read()
     m.insert(has_part, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""### Mereology: "has part" is inverse of "part of"
+    mo.md(
+        f"""### Mereology: "has part" is inverse of "part of"
 
     When an object A is part of some object B means that that B has A as part. 
 
@@ -744,7 +761,8 @@ def _(TEST_GRAPH, m, mo):
     SPARQL query:
     ```sparql
     {has_part}
-    ```""")
+    ```"""
+    )
     return
 
 
@@ -753,7 +771,8 @@ def _(TEST_GRAPH, m, mo):
     with open("reasoning/part_of.sparql", "r") as input_g:
         part_of = input_g.read()
     m.insert(part_of, target_graph=TEST_GRAPH, source_graph=TEST_GRAPH)
-    mo.md(f"""### Mereology: "part of" is transitive
+    mo.md(
+        f"""### Mereology: "part of" is transitive
 
     If A is part of B and B is part of C then A is part of C.
 
@@ -771,7 +790,8 @@ def _(TEST_GRAPH, m, mo):
     {part_of}
     ```
     Note that the inverse relation, "has part" is not transitive
-    """)
+    """
+    )
     return
 
 
@@ -803,13 +823,15 @@ def _(mo):
         "queries/total_aggregated_power_per_country_lower.sparql", "r"
     ) as input_e:
         total_aggregated_power_per_country_lower = input_e.read()
-    mo.md(f"""## Perform queries
+    mo.md(
+        f"""## Perform queries
 
     ### Total power accounting minimum EVSE potential 
 
     ```sparql
     {total_aggregated_power_per_country_lower}
-    ```""")
+    ```"""
+    )
     return (total_aggregated_power_per_country_lower,)
 
 
@@ -873,9 +895,11 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
     )
 
     power_plot_widget = mo.ui.anywidget(results_plot)
-    mo.md(f"""### Total power accounting minimum EVSE potential 
+    mo.md(
+        f"""### Total power accounting minimum EVSE potential 
 
-    {power_plot_widget}""")
+    {power_plot_widget}"""
+    )
     return
 
 
@@ -995,9 +1019,11 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
 
     stacked_chart_widget = mo.ui.anywidget(stacked_chart_3)
 
-    mo.md(f"""### Count of EVSES based on max nominal capacity
+    mo.md(
+        f"""### Count of EVSES based on max nominal capacity
 
-    {stacked_chart_widget}""")
+    {stacked_chart_widget}"""
+    )
     return
 
 
@@ -1228,11 +1254,13 @@ def _(HeatMapWidget, mo, relative_error):
         )
     )
 
-    mo.md(f"""### Quantifying Fidelity
+    mo.md(
+        f"""### Quantifying Fidelity
 
     {hm_widget}
     We estimated the relative error from our estimation against the EAFO reports and inverted it. The lower the error, the higher the fidelity.
-    """)
+    """
+    )
     return
 
 
@@ -1352,10 +1380,12 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
         )
     )
     # For paper version use the search function in VSCode and replace the rem with absolute values.
-    mo.md(f"""### Ordering European states based on performance
+    mo.md(
+        f"""### Ordering European states based on performance
 
     {general_widget}
-    """)
+    """
+    )
     return
 
 
