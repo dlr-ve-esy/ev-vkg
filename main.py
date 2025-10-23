@@ -627,7 +627,9 @@ def _(mappings: "List[Tuple[str, str]]", mo):
         splitted = label.split("-")
         return splitted[0] + "-" + splitted[-1]
 
-    checkbox = [(l, mo.ui.checkbox(label=f"{short_name(l[0])}", value=True)) for l in mappings]
+    checkbox = [
+        (l, mo.ui.checkbox(label=f"{short_name(l[0])}", value=True)) for l in mappings
+    ]
     return (checkbox,)
 
 
@@ -688,6 +690,7 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
     )
     ONTOLOGY_LOCAL = "ontology/chio-full.ttl"
     if not (p := Path(ONTOLOGY_LOCAL)).exists():
+        p.parent.mkdir(exists_ok=True)
         response = requests.get(ONTOLOGY_IRI)
         if response.status_code == 200:
             with open(p, "wb") as onto_file:
