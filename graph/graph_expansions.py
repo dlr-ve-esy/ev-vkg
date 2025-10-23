@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 import polars as pl
-from maplib import Model
+from maplib import Mapping
 import re
 import datetime
 
@@ -93,7 +93,7 @@ def map_coupling_method(text: str) -> str:
 def expand_relational_csv(
     name: str,
     path: str,
-    mapping: Optional[Model] = None,
+    mapping: Optional[Mapping] = None,
     challenge: bool = False,
     country: Optional[str] = None,
     country_filter=[],
@@ -103,7 +103,7 @@ def expand_relational_csv(
             vkg_evse = d.read()
         with open("templates/common.stottr", "r") as d:
             vkg_common = d.read()
-        m = Model([vkg_common, vkg_evse])
+        m = Mapping([vkg_common, vkg_evse])
     else:
         m = mapping
     pl.Config.set_fmt_str_lengths(150)
@@ -269,7 +269,7 @@ def expand_relational_csv(
 def expand_bnezta(
     name: str,
     path: str,
-    mapping: Optional[Model] = None,
+    mapping: Optional[Mapping] = None,
     challenge: bool = False,
     country: Optional[str] = None,
 ):
@@ -278,7 +278,7 @@ def expand_bnezta(
             vkg_evse = d.read()
         with open("templates/common.stottr", "r") as d:
             vkg_common = d.read()
-        m = Model([vkg_common, vkg_evse])
+        m = Mapping([vkg_common, vkg_evse])
     else:
         m = mapping
     pl.Config.set_fmt_str_lengths(150)

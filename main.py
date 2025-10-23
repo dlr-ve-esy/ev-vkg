@@ -1,6 +1,6 @@
 import marimo
 
-__generated_with = "0.15.2"
+__generated_with = "0.17.0"
 app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
@@ -31,7 +31,7 @@ def _():
     from glob import glob
     from pathlib import Path
     from typing import List, Tuple
-    from maplib import Model
+    from maplib import Mapping
     import polars as pl
     import requests
     from datetime import datetime
@@ -627,7 +627,7 @@ def _(mappings: "List[Tuple[str, str]]", mo):
         splitted = label.split("-")
         return splitted[0] + "-" + splitted[-1]
 
-    checkbox = [(l, mo.ui.checkbox(label=f"{short_name(l[0])}")) for l in mappings]
+    checkbox = [(l, mo.ui.checkbox(label=f"{short_name(l[0])}", value=True)) for l in mappings]
     return (checkbox,)
 
 

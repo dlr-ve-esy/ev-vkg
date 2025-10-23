@@ -9,7 +9,7 @@ dependencies = [
     "bnetza-parser",
     "frictionless>=5.18.1",
     "great-tables>=0.18.0",
-    "maplib>=0.15.11",
+    "maplib==0.15.33",
     "marimo>=0.13.6",
     "nobil-parser",
     "openpyxl>=3.1.5",
