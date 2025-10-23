@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Optional
 import polars as pl
-from maplib import Mapping
+from maplib import Model
 import re
 import datetime
 
@@ -93,7 +93,7 @@ def map_coupling_method(text: str) -> str:
 def expand_relational_csv(
     name: str,
     path: str,
-    mapping: Optional[Mapping] = None,
+    mapping: Optional[Model] = None,
     challenge: bool = False,
     country: Optional[str] = None,
     country_filter=[],
@@ -103,7 +103,7 @@ def expand_relational_csv(
             vkg_evse = d.read()
         with open("templates/common.stottr", "r") as d:
             vkg_common = d.read()
-        m = Mapping([vkg_common, vkg_evse])
+        m = Model([vkg_common, vkg_evse])
     else:
         m = mapping
     pl.Config.set_fmt_str_lengths(150)
@@ -187,9 +187,11 @@ def expand_relational_csv(
             pl.col("id").cast(str).alias("ID"),
             pl.col("type")
             .map_elements(
-                lambda x: "https://www.commoncoreontologies.org/ont00001006"
-                if x == "operator"
-                else pl.Null,
+                lambda x: (
+                    "https://www.commoncoreontologies.org/ont00001006"
+                    if x == "operator"
+                    else pl.Null
+                ),
                 return_dtype=pl.String,
             )
             .alias("role"),
@@ -267,7 +269,7 @@ def expand_relational_csv(
 def expand_bnezta(
     name: str,
     path: str,
-    mapping: Optional[Mapping] = None,
+    mapping: Optional[Model] = None,
     challenge: bool = False,
     country: Optional[str] = None,
 ):
@@ -276,7 +278,7 @@ def expand_bnezta(
             vkg_evse = d.read()
         with open("templates/common.stottr", "r") as d:
             vkg_common = d.read()
-        m = Mapping([vkg_common, vkg_evse])
+        m = Model([vkg_common, vkg_evse])
     else:
         m = mapping
     pl.Config.set_fmt_str_lengths(150)
@@ -374,9 +376,11 @@ def expand_bnezta(
             pl.col("operator").cast(str).alias("label"),
             pl.col("type")
             .map_elements(
-                lambda x: "https://www.commoncoreontologies.org/ont00001006"
-                if x == "operator"
-                else pl.Null,
+                lambda x: (
+                    "https://www.commoncoreontologies.org/ont00001006"
+                    if x == "operator"
+                    else pl.Null
+                ),
                 return_dtype=pl.String,
             )
             .alias("role"),
