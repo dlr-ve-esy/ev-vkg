@@ -1,10 +1,11 @@
 # Public EV charging infrastructure virtual knowledge graph
 
-This repository is the code suppoting the publication "Actionable Electric Vehicle Charging Infrastructure Data: Enabling digital preservation of European policy performance analyses" [10.XXXX/placeholder](https://www.doi.org/)
+This repository is the code suppoting the publication "Actionable Electric Vehicle Charging Infrastructure Data: Enabling digital preservation of European policy performance analyses"
 
 ## Usage
 
-To work with this repository you need to acquire the data from [placeholder](https://zenodo.org/). The script `get_data.py` can be used to download it automatically and saved in the right folder. 
+To work with this repository you need to acquire the data from 
+ [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17174842.svg)](https://doi.org/10.5281/zenodo.17174842). The script `get_data.py` can be used to download it automatically and saved in the right folder. 
 
 Once the data is in the main folder you need to install the dependencies. I recommend using [uv](https://github.com/astral-sh/uv). But any python package management should work. Using uv you can run:
 
