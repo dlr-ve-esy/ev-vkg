@@ -32,7 +32,7 @@ for file in z.namelist():
         if Path(file).is_dir():
             pass
         else:
-            file_name = PARSED.joinpath(file.replace("parsed/", ""))
+            file_name = PARSED.joinpath(file.replace(f"{zip_filename}/parsed/", ""))
             file_name.parent.mkdir(exist_ok=True, parents=True)
             if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
                 if not file_name.exists():
@@ -45,7 +45,7 @@ for file in z.namelist():
         if (sp := Path(file)).is_dir():
             pass
         else:
-            file_name = RAW.joinpath(file.replace("sources/", ""))
+            file_name = RAW.joinpath(file.replace(f"{zip_filename}/sources/", ""))
             file_name.parent.mkdir(exist_ok=True, parents=True)
             if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
                 if not file_name.exists():
@@ -57,7 +57,7 @@ for file in z.namelist():
         if (sp := Path(file)).is_dir():
             pass
         else:
-            file_name = VIZ.joinpath(file.replace("viz/", ""))
+            file_name = VIZ.joinpath(file.replace(f"{zip_filename}/viz/", ""))
             file_name.parent.mkdir(exist_ok=True, parents=True)
             if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
                 if not file_name.exists():
