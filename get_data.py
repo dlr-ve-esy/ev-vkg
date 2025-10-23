@@ -28,7 +28,7 @@ else:
 z = zipfile.ZipFile(folder)
 
 for file in z.namelist():
-    if file.startswith("parsed/"):
+    if file.startswith(f"{zip_filename}/parsed/"):
         if Path(file).is_dir():
             pass
         else:
@@ -41,7 +41,7 @@ for file in z.namelist():
                 else:
                     print(f"{file_name} already exists, skipping extraction!")
 
-    if file.startswith("sources/"):
+    if file.startswith(f"{zip_filename}/sources/"):
         if (sp := Path(file)).is_dir():
             pass
         else:
@@ -53,7 +53,7 @@ for file in z.namelist():
                         f.write(z.read(file))
                 else:
                     print(f"{file_name} already exists, skipping extraction!")
-    if file.startswith("viz/"):
+    if file.startswith(f"{zip_filename}/viz/"):
         if (sp := Path(file)).is_dir():
             pass
         else:
