@@ -8,7 +8,7 @@ import re
 (PARSED := Path("parsed")).mkdir(exist_ok=True)
 (RAW := Path("sources")).mkdir(exist_ok=True)
 
-URL = "https://doi.org/10.5281/zenodo.17174842"
+URL = "https://zenodo.org/api/records/17174842"
 
 
 zip_filename = "data-ci-publication-transparency"
