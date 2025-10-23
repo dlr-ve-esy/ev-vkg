@@ -57,7 +57,7 @@ for file in z.namelist():
         if (sp := Path(file)).is_dir():
             pass
         else:
-            file_name = VIZ.joinpath(file.replace("sources/", ""))
+            file_name = VIZ.joinpath(file.replace("viz/", ""))
             file_name.parent.mkdir(exist_ok=True, parents=True)
             if re.match(r"^.*\.[^\\]+$", file_name.as_posix()) is not None:
                 if not file_name.exists():
