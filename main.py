@@ -273,15 +273,15 @@ def _(INDENT, colored_square, mo):
         f"""
     ### Findability
 
-    {INDENT}{colored_square("#c2cfdf")} If the resource can be accessed through a URL but has no metadata associated, we assign it one point.  
-    {INDENT}{colored_square("#6181ab")} If the resource has a persistent metadata descriptor we assign it two points.  
-    {INDENT}{colored_square("#435d7f")} If said metadata record is in a standarized actionable format (DCAT, OEMetadata) we assign it three points. 
+    {INDENT}{colored_square("#c0cddd")} If the resource can be accessed through a URL but has no metadata associated, we assign it one point.  
+    {INDENT}{colored_square("#7e9dc9")} If the resource has a persistent metadata descriptor we assign it two points.  
+    {INDENT}{colored_square("#556f92")} If said metadata record is in a standarized actionable format (DCAT, OEMetadata) we assign it three points. 
 
     ### Accesibility
 
-    {INDENT}{colored_square("#e9cf6f")} If the metadata reports clear paths of accesibility we add a point to the score.  
-    {INDENT}{colored_square("#e0ba2f")} If the access endpoint is shared we assign one point.  
-    {INDENT}{colored_square("#aa8b1a")} If the access media is either an API or an archive we assign a point.
+    {INDENT}{colored_square("#cab254")} If the metadata reports clear paths of accesibility we add a point to the score.  
+    {INDENT}{colored_square("#9f8100")} If the access endpoint is shared we assign one point.  
+    {INDENT}{colored_square("#6c5500")} If the access media is either an API or an archive we assign a point.
     """
     )
     return
@@ -293,15 +293,15 @@ def _(INDENT, colored_square, mo):
         f"""
     ### Interoperability
 
-    {INDENT}{colored_square("#d97c78")} If the resource has a non-standarized exchange format but has rich documentation it gets one point.  
-    {INDENT}{colored_square("#c8433e")} If the resource follows an standard format but such format can't be validated with an automatic tool it gets two points.  
-    {INDENT}{colored_square("#932d2a")} If the standard format can be validated with automatic tools it gets three points. 
+    {INDENT}{colored_square("#c46a66")} If the resource has a non-standarized exchange format but has rich documentation it gets one point.  
+    {INDENT}{colored_square("#a72326")} If the resource follows an standard format but such format can't be validated with an automatic tool it gets two points.  
+    {INDENT}{colored_square("#660000")} If the standard format can be validated with automatic tools it gets three points. 
 
     ### Reusability
 
-    {INDENT}{colored_square("#9dc291")} If the resource provides a clear license it gets one point.  
-    {INDENT}{colored_square("#73a861")} If the resource records provenance textually it gets a point.  
-    {INDENT}{colored_square("#527a44")} If the resource properly uses  the EU framework as source it gets an additional point.
+    {INDENT}{colored_square("#81a575")} If the resource provides a clear license it gets one point.  
+    {INDENT}{colored_square("#457936")} If the resource records provenance textually it gets a point.  
+    {INDENT}{colored_square("#244b19")} If the resource properly uses  the EU framework as source it gets an additional point.
     """
     )
     return
@@ -414,7 +414,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     total_widget = BarChartWidget(
         input=total_data,
         bar_radius=4,
-        bar_color="#9d6b92",
+        bar_color="#6f4065",
         width=397 * 2,  # 549 for paper figure
         height=101 * 2,
         y_max=12,
@@ -956,12 +956,12 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
 @app.cell
 def _(total_evses_per_power_df):
     cat_colors = {
-        "0-7,4 kW": "#9dc291",
-        "7,4-22 kW": "#73a861",
-        "22-50 kW": "#527a44",
-        "50-150 kW": "#e9cf6f",
-        "150-350 kW": "#e0ba2f",
-        "350+ kW": "#aa8b1a",
+        "0-7,4 kW": "#bce2af",
+        "7,4-22 kW": "#8ec47b",
+        "22-50 kW": "#78a168",
+        "50-150 kW": "#897617",
+        "150-350 kW": "#6e5700",
+        "350+ kW": "#4f3b00",
     }
 
     chart_input = total_evses_per_power_df.to_dicts()
@@ -1229,15 +1229,15 @@ def _(results):
 @app.cell
 def _(HeatMapWidget, mo, relative_error):
     hm_colors = {
-        "0-7,4 kW": "#6181ab",
-        "7,4-22 kW": "#6181ab",
-        "22-50 kW": "#6181ab",
-        "50-150 kW": "#6181ab",
-        "150-350 kW": "#6181ab",
-        "350+ kW": "#6181ab",
-        "Max Power MW": "#c1a2bb",
-        "Total EVSE": "#e0ba2f",
-        "Overall Fidelity": "#73a861",
+        "0-7,4 kW": "#4e6f98",
+        "7,4-22 kW": "#4e6f98",
+        "22-50 kW": "#4e6f98",
+        "50-150 kW": "#4e6f98",
+        "150-350 kW": "#4e6f98",
+        "350+ kW": "#4e6f98",
+        "Max Power MW": "#a0829b",
+        "Total EVSE": "#cca816",
+        "Overall Fidelity": "#275b1a",
     }
 
     hm_widget = mo.ui.anywidget(
@@ -1350,9 +1350,9 @@ def _(pl, scatter_df):
 @app.cell
 def _(GridScatterWidget, grid_info, mm, mo, nn):
     level_colors = [
-        "#d97c78",
-        "#e9cf6f",
-        "#9dc291",
+        "#7d2b2d",
+        "#8f7b1d",
+        "#96bb8a",
     ]
 
     x_vals = [g["x"] for g in grid_info]
@@ -1386,7 +1386,7 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
             x_label="FAIR alignment",
             cell_size=25,
             x_padding=0.0,
-            base_color="grey",
+            base_color="#ece4df",
             width=255,  # 255
             height=int(255 * 0.9),  # 152
             margin={"top": 20, "right": 0, "bottom": 25, "left": 0},

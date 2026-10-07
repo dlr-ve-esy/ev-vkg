@@ -69,11 +69,11 @@ class VkgSchematicWidget(anywidget.AnyWidget):
     colors = tt.Dict(
         {
             "ink": "#353839",
-            "source": "#0173B2",
-            "mapping": "#DE8F05",
-            "ontology": "#9D6B92",
-            "query": "#D55E00",
-            "graph": "#029E73",
+            "source": "#005a91",
+            "mapping": "#bf7600",
+            "ontology": "#8e5d84",
+            "query": "#fb7d2a",
+            "graph": "#53d1a2",
         }
     ).tag(sync=True)
     # Motif nodes in normalized panel coordinates ([-1, 1] on both axes),

@@ -18,7 +18,7 @@ class HeatMapWidget(anywidget.AnyWidget):
     height = tt.Int(300).tag(sync=True)
     margin = tt.Dict({"top": 20, "right": 0, "bottom": 40, "left": 50}).tag(sync=True)
     colors = tt.Dict({}).tag(sync=True)
-    base_color = tt.Unicode("#b8b0ac").tag(sync=True)
+    base_color = tt.Unicode("#ece4df").tag(sync=True)
     cell_size = tt.Int(20).tag(sync=True)
     radius = tt.Int(5).tag(sync=True)
     x_padding = tt.Float(0.2).tag(sync=True)
