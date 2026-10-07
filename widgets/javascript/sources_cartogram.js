@@ -313,7 +313,7 @@ const renderSub = (
         .attr("fill", (d) =>
           d.sources.map((s) => s[0]).includes(selection)
             ? color(selection)
-            : "#b8b0ac"
+            : "#ece4df"
         );
     });
 };
