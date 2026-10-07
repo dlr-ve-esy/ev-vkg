@@ -26,6 +26,7 @@ def _():
     )
     from widgets.heatmap import HeatMapWidget
     from widgets.grid_scatter import GridScatterWidget
+    from widgets.vkg_schematic import VkgSchematicWidget
     import marimo as mo
     from graph.graph_expansions import expand_relational_csv, expand_bnezta
     from glob import glob
@@ -51,6 +52,7 @@ def _():
         Path,
         SourcesCartogramWidget,
         Tuple,
+        VkgSchematicWidget,
         data_folder,
         datetime,
         expand_bnezta,
@@ -590,6 +592,17 @@ def _(considered_sources, pl):
 @app.cell
 def _(mo):
     mo.md(r"""# Knowledge Graph Analysis""")
+    return
+
+
+@app.cell
+def _(VkgSchematicWidget, mo):
+    vkg_schematic = mo.ui.anywidget(VkgSchematicWidget())
+    mo.md(
+        f"""## From heterogeneous sources to a virtual knowledge graph
+    {vkg_schematic}
+    <p style="text-align: center;">Sources are mapped to a shared ontology and queried through a single SPARQL interface.</p>"""
+    )
     return
 
 
