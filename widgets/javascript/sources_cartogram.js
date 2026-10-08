@@ -57,19 +57,18 @@ const renderFigure = (
     .domain(Object.keys(colors))
     .range(Object.values(colors));
 
-  const marginLeftRight = 0;
+  const marginLeftRight = size;
   const margin = {
-    top: 1,
-    right: marginLeftRight,
+    top: size - 3,
+    right: 0,
     bottom: 4,
     left: marginLeftRight,
   };
   const separator = width * 0.09;
-  const innerWidth = width * 0.69;
+  const innerWidth = width * 0.66;
   const innerHeight = innerWidth;
-  const widthSub = width * 0.22;
-
-  const midSeparator = (innerHeight - 3 * widthSub) / 2;
+  const midSeparator = width * 0.015;
+  const widthSub = (innerHeight - 2 * midSeparator) / 3;
 
   svg
     .append("defs")
@@ -95,7 +94,7 @@ const renderFigure = (
     legendArray,
     svg,
     width * 0.05,
-    innerHeight + 3,
+    innerHeight + margin.top,
     legendHeight,
     width - width * 0.1,
     legendSize

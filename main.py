@@ -1,18 +1,16 @@
 import marimo
 
-__generated_with = "0.17.0"
+__generated_with = "0.25.1"
 app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # FAIR Electric Vehicle Charging Infrastructure Data
     ## Enabling digital preservation of policy performance analyses
     ### Arellano Ruiz et al.
-    """
-    )
+    """)
     return
 
 
@@ -70,8 +68,7 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # Background
     ## Charging infrastructure data from the AFIR
 
@@ -79,8 +76,7 @@ def _(mo):
     - This regulation contains data provisions regarding the availability of charging infrastructure data.
     - The union reports the regulations performance through European Alternative Fuels Observatory (EAFO)
     - Some of the sources reported by the EAFO cannot be validated.
-    """
-    )
+    """)
     return
 
 
@@ -271,8 +267,7 @@ def _(mo):
 
 @app.cell
 def _(INDENT, colored_square, mo):
-    mo.md(
-        f"""
+    mo.md(f"""
     ### Findability
 
     {INDENT}{colored_square("#c2cfdf")} If the resource can be accessed through a URL but has no metadata associated, we assign it one point.  
@@ -284,15 +279,13 @@ def _(INDENT, colored_square, mo):
     {INDENT}{colored_square("#e9cf6f")} If the metadata reports clear paths of accesibility we add a point to the score.  
     {INDENT}{colored_square("#e0ba2f")} If the access endpoint is shared we assign one point.  
     {INDENT}{colored_square("#aa8b1a")} If the access media is either an API or an archive we assign a point.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(INDENT, colored_square, mo):
-    mo.md(
-        f"""
+    mo.md(f"""
     ### Interoperability
 
     {INDENT}{colored_square("#d97c78")} If the resource has a non-standarized exchange format but has rich documentation it gets one point.  
@@ -304,8 +297,7 @@ def _(INDENT, colored_square, mo):
     {INDENT}{colored_square("#9dc291")} If the resource provides a clear license it gets one point.  
     {INDENT}{colored_square("#73a861")} If the resource records provenance textually it gets a point.  
     {INDENT}{colored_square("#527a44")} If the resource properly uses  the EU framework as source it gets an additional point.
-    """
-    )
+    """)
     return
 
 
@@ -466,12 +458,7 @@ def _(
 
 
 @app.cell
-def _(
-    FAIRBarChartsWidget,
-    fair_scores_country,
-    mo,
-    spectrum_colors,
-):
+def _(FAIRBarChartsWidget, fair_scores_country, mo, spectrum_colors):
     fair_bars_widget = mo.ui.anywidget(
         FAIRBarChartsWidget(
             fair_scores=fair_scores_country,
@@ -613,7 +600,9 @@ def _(considered_sources, pl):
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Knowledge Graph Analysis""")
+    mo.md(r"""
+    # Knowledge Graph Analysis
+    """)
     return
 
 
@@ -765,13 +754,11 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md("""
     ## Visual summary of ontological commitments
 
     <p style="justify-content: space-evenly; display: flex;"><img src="public/mereology-summary.png"/></p>
-    """
-    )
+    """)
     return
 
 
@@ -852,8 +839,7 @@ def _(TEST_GRAPH, m, mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md("""
     ### Mereology: "part of" is reflexive
 
     Everything is a part of itself, in BFO "part of" is a primitive relation and has axioms to distinguish it from "proper part of" where reflixibility is excluded.
@@ -867,8 +853,7 @@ def _(mo):
     ```
 
     In this excercise we have no practical application for this property, so we do not infer it.
-    """
-    )
+    """)
     return
 
 
@@ -1472,6 +1457,47 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
     {general_widget}
     """
     )
+    return region_level, x_domain, y_domain
+
+
+@app.cell
+def _(
+    Path,
+    aggregated_power_df,
+    cat_colors,
+    chart_input,
+    chart_input_2,
+    filtered_markers,
+    grid_info,
+    json,
+    region_level,
+    relative_error,
+    results,
+    total_evses_per_power_df,
+    x_domain,
+    y_domain,
+):
+    dump_dir = Path("viz_data/query_results")
+    dump_dir.mkdir(parents=True, exist_ok=True)
+    dumps = {
+        "aggregated_power": aggregated_power_df,
+        "total_evses_per_power": total_evses_per_power_df,
+        "results": results,
+        "relative_error": relative_error,
+        "filtered_markers": filtered_markers,
+        "cat_colors": cat_colors,
+        "chart_input": chart_input,
+        "chart_input_2": chart_input_2,
+        "grid_info": grid_info,
+        "x_domain": x_domain,
+        "y_domain": y_domain,
+        "region_level": region_level,
+    }
+    for _name, _obj in dumps.items():
+        if hasattr(_obj, "to_dicts"):
+            _obj = _obj.to_dicts()
+        with open(dump_dir / f"{_name}.json", "w", encoding="utf-8") as _f:
+            json.dump(_obj, _f, ensure_ascii=False, indent=2)
     return
 
 
