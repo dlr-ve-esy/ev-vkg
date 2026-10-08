@@ -1,0 +1,92 @@
+[
+  {
+    "Category": "Austria",
+    "Code": "AT",
+    "Target kW": 360225,
+    "Total power (kW) output": 1182390,
+    "target_mw": 360,
+    "total_mw": 1182,
+    "total_accounted_power": 1765.889664
+  },
+  {
+    "Category": "Denmark",
+    "Code": "DK",
+    "Target kW": 625595,
+    "Total power (kW) output": 1660166,
+    "target_mw": 625,
+    "total_mw": 1660,
+    "total_accounted_power": 630.009728
+  },
+  {
+    "Category": "Finland",
+    "Code": "FI",
+    "Target kW": 302732,
+    "Total power (kW) output": 830188,
+    "target_mw": 302,
+    "total_mw": 830,
+    "total_accounted_power": 295.09580800000003
+  },
+  {
+    "Category": "France",
+    "Code": "FR",
+    "Target kW": 2431737,
+    "Total power (kW) output": 5640460,
+    "target_mw": 2431,
+    "total_mw": 5640,
+    "total_accounted_power": 6846.646272
+  },
+  {
+    "Category": "Germany",
+    "Code": "DE",
+    "Target kW": 3139186,
+    "Total power (kW) output": 7907975,
+    "target_mw": 3139,
+    "total_mw": 7907,
+    "total_accounted_power": 9729.170432
+  },
+  {
+    "Category": "Latvia",
+    "Code": "LV",
+    "Target kW": 10355,
+    "Total power (kW) output": 72046,
+    "target_mw": 10,
+    "total_mw": 72,
+    "total_accounted_power": 66.629848
+  },
+  {
+    "Category": "Portugal",
+    "Code": "PT",
+    "Target kW": 358727,
+    "Total power (kW) output": 471756,
+    "target_mw": 358,
+    "total_mw": 471,
+    "total_accounted_power": 567.613376
+  },
+  {
+    "Category": "Slovenia",
+    "Code": "SI",
+    "Target kW": 25784,
+    "Total power (kW) output": 90355,
+    "target_mw": 25,
+    "total_mw": 90,
+    "total_accounted_power": 46.993536
+  },
+  {
+    "Category": "Spain",
+    "Code": "ES",
+    "Target kW": 508845,
+    "Total power (kW) output": 1448755,
+    "target_mw": 508,
+    "total_mw": 1448,
+    "total_accounted_power": 630.78976
+  },
+  {
+    "Category": "Sweden",
+    "Code": "SE",
+    "Target kW": 752601,
+    "Total power (kW) output": 2465891,
+    "target_mw": 752,
+    "total_mw": 2465,
+    "total_accounted_power": 2127.276032
+  }
+]

@@ -1,0 +1,650 @@
+[
+  {
+    "code": "AT",
+    "range": "0-7,4 kW",
+    "error": 0.9845440494590417,
+    "cat": "1"
+  },
+  {
+    "code": "DE",
+    "range": "0-7,4 kW",
+    "error": 0.7414151925078044,
+    "cat": "2"
+  },
+  {
+    "code": "DK",
+    "range": "0-7,4 kW",
+    "error": 0.8,
+    "cat": "1"
+  },
+  {
+    "code": "ES",
+    "range": "0-7,4 kW",
+    "error": 0.3787602552415679,
+    "cat": "4"
+  },
+  {
+    "code": "FI",
+    "range": "0-7,4 kW",
+    "error": 0.02857142857142857,
+    "cat": "5"
+  },
+  {
+    "code": "FR",
+    "range": "0-7,4 kW",
+    "error": 0.4475631585746185,
+    "cat": "3"
+  },
+  {
+    "code": "IS",
+    "range": "0-7,4 kW",
+    "error": 0.6,
+    "cat": "2"
+  },
+  {
+    "code": "LV",
+    "range": "0-7,4 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "NO",
+    "range": "0-7,4 kW",
+    "error": 0.8137347130761995,
+    "cat": "1"
+  },
+  {
+    "code": "PT",
+    "range": "0-7,4 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "SE",
+    "range": "0-7,4 kW",
+    "error": 0.02281243112188671,
+    "cat": "5"
+  },
+  {
+    "code": "SI",
+    "range": "0-7,4 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "AT",
+    "range": "7,4-22 kW",
+    "error": 0.0929366541202851,
+    "cat": "5"
+  },
+  {
+    "code": "DE",
+    "range": "7,4-22 kW",
+    "error": 0.02412477211630566,
+    "cat": "5"
+  },
+  {
+    "code": "DK",
+    "range": "7,4-22 kW",
+    "error": 0.7415683962264151,
+    "cat": "2"
+  },
+  {
+    "code": "ES",
+    "range": "7,4-22 kW",
+    "error": 0.7353755564123234,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "7,4-22 kW",
+    "error": 0.6916074423061567,
+    "cat": "2"
+  },
+  {
+    "code": "FR",
+    "range": "7,4-22 kW",
+    "error": 0.266008991008991,
+    "cat": "4"
+  },
+  {
+    "code": "IS",
+    "range": "7,4-22 kW",
+    "error": 0.6295238095238095,
+    "cat": "2"
+  },
+  {
+    "code": "LV",
+    "range": "7,4-22 kW",
+    "error": 0.7332185886402753,
+    "cat": "2"
+  },
+  {
+    "code": "NO",
+    "range": "7,4-22 kW",
+    "error": 0.30179914949296693,
+    "cat": "4"
+  },
+  {
+    "code": "PT",
+    "range": "7,4-22 kW",
+    "error": 0.05452751048605971,
+    "cat": "5"
+  },
+  {
+    "code": "SE",
+    "range": "7,4-22 kW",
+    "error": 0.31406159209761764,
+    "cat": "4"
+  },
+  {
+    "code": "SI",
+    "range": "7,4-22 kW",
+    "error": 0.31803628601921025,
+    "cat": "4"
+  },
+  {
+    "code": "AT",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "DE",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "DK",
+    "range": "22-50 kW",
+    "error": 0.8570029382957884,
+    "cat": "1"
+  },
+  {
+    "code": "ES",
+    "range": "22-50 kW",
+    "error": 0.6091820987654321,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "FR",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "IS",
+    "range": "22-50 kW",
+    "error": 0.8823529411764706,
+    "cat": "1"
+  },
+  {
+    "code": "LV",
+    "range": "22-50 kW",
+    "error": 0.035175879396984924,
+    "cat": "5"
+  },
+  {
+    "code": "NO",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "PT",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "SE",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "SI",
+    "range": "22-50 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "AT",
+    "range": "50-150 kW",
+    "error": 0.3041084286319356,
+    "cat": "4"
+  },
+  {
+    "code": "DE",
+    "range": "50-150 kW",
+    "error": 0.5480377166156982,
+    "cat": "3"
+  },
+  {
+    "code": "DK",
+    "range": "50-150 kW",
+    "error": 0.7462326702833032,
+    "cat": "2"
+  },
+  {
+    "code": "ES",
+    "range": "50-150 kW",
+    "error": 0.7425337944042754,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "50-150 kW",
+    "error": 0.9282136894824707,
+    "cat": "1"
+  },
+  {
+    "code": "FR",
+    "range": "50-150 kW",
+    "error": 0.015491160925824676,
+    "cat": "5"
+  },
+  {
+    "code": "IS",
+    "range": "50-150 kW",
+    "error": 0.5517241379310345,
+    "cat": "3"
+  },
+  {
+    "code": "LV",
+    "range": "50-150 kW",
+    "error": 0.7801724137931034,
+    "cat": "2"
+  },
+  {
+    "code": "NO",
+    "range": "50-150 kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "PT",
+    "range": "50-150 kW",
+    "error": 0.27232796486090777,
+    "cat": "4"
+  },
+  {
+    "code": "SE",
+    "range": "50-150 kW",
+    "error": 0.6642913697545526,
+    "cat": "2"
+  },
+  {
+    "code": "SI",
+    "range": "50-150 kW",
+    "error": 0.839622641509434,
+    "cat": "1"
+  },
+  {
+    "code": "AT",
+    "range": "150-350 kW",
+    "error": 0.37239926257571765,
+    "cat": "4"
+  },
+  {
+    "code": "DE",
+    "range": "150-350 kW",
+    "error": 0.19950111993484015,
+    "cat": "5"
+  },
+  {
+    "code": "DK",
+    "range": "150-350 kW",
+    "error": 0.7881067961165048,
+    "cat": "2"
+  },
+  {
+    "code": "ES",
+    "range": "150-350 kW",
+    "error": 0.9123730725836781,
+    "cat": "1"
+  },
+  {
+    "code": "FI",
+    "range": "150-350 kW",
+    "error": 0.8611449451887941,
+    "cat": "1"
+  },
+  {
+    "code": "FR",
+    "range": "150-350 kW",
+    "error": 0.21922083512699095,
+    "cat": "4"
+  },
+  {
+    "code": "IS",
+    "range": "150-350 kW",
+    "error": 0.930835734870317,
+    "cat": "1"
+  },
+  {
+    "code": "LV",
+    "range": "150-350 kW",
+    "error": 0.8300653594771242,
+    "cat": "1"
+  },
+  {
+    "code": "NO",
+    "range": "150-350 kW",
+    "error": 0.3347469220246238,
+    "cat": "4"
+  },
+  {
+    "code": "PT",
+    "range": "150-350 kW",
+    "error": 0.5034106412005457,
+    "cat": "3"
+  },
+  {
+    "code": "SE",
+    "range": "150-350 kW",
+    "error": 0.5705950991831972,
+    "cat": "3"
+  },
+  {
+    "code": "SI",
+    "range": "150-350 kW",
+    "error": 0.5555555555555556,
+    "cat": "3"
+  },
+  {
+    "code": "AT",
+    "range": "350+ kW",
+    "error": 0.12749615975422426,
+    "cat": "5"
+  },
+  {
+    "code": "DE",
+    "range": "350+ kW",
+    "error": 0.7176964852956246,
+    "cat": "2"
+  },
+  {
+    "code": "DK",
+    "range": "350+ kW",
+    "error": 0.5301837270341208,
+    "cat": "3"
+  },
+  {
+    "code": "ES",
+    "range": "350+ kW",
+    "error": 0.6121673003802282,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "350+ kW",
+    "error": 0.6779279279279279,
+    "cat": "2"
+  },
+  {
+    "code": "FR",
+    "range": "350+ kW",
+    "error": 0.7876995200357183,
+    "cat": "2"
+  },
+  {
+    "code": "IS",
+    "range": "350+ kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "LV",
+    "range": "350+ kW",
+    "error": 0.75,
+    "cat": "2"
+  },
+  {
+    "code": "NO",
+    "range": "350+ kW",
+    "error": 0.11508220157255182,
+    "cat": "5"
+  },
+  {
+    "code": "PT",
+    "range": "350+ kW",
+    "error": 0.40476190476190477,
+    "cat": "3"
+  },
+  {
+    "code": "SE",
+    "range": "350+ kW",
+    "error": 0.0012277470841006752,
+    "cat": "5"
+  },
+  {
+    "code": "SI",
+    "range": "350+ kW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "AT",
+    "range": "Total EVSE",
+    "error": 0.012706365255183654,
+    "cat": "5"
+  },
+  {
+    "code": "DE",
+    "range": "Total EVSE",
+    "error": 0.017665332004499386,
+    "cat": "5"
+  },
+  {
+    "code": "DK",
+    "range": "Total EVSE",
+    "error": 0.7480971621875587,
+    "cat": "2"
+  },
+  {
+    "code": "ES",
+    "range": "Total EVSE",
+    "error": 0.6075727883538634,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "Total EVSE",
+    "error": 0.7207829925650557,
+    "cat": "2"
+  },
+  {
+    "code": "FR",
+    "range": "Total EVSE",
+    "error": 0.23762779736697556,
+    "cat": "4"
+  },
+  {
+    "code": "IS",
+    "range": "Total EVSE",
+    "error": 0.6720707442888725,
+    "cat": "2"
+  },
+  {
+    "code": "LV",
+    "range": "Total EVSE",
+    "error": 0.6445783132530121,
+    "cat": "2"
+  },
+  {
+    "code": "NO",
+    "range": "Total EVSE",
+    "error": 0.0617185155546664,
+    "cat": "5"
+  },
+  {
+    "code": "PT",
+    "range": "Total EVSE",
+    "error": 0.19302483581188193,
+    "cat": "5"
+  },
+  {
+    "code": "SE",
+    "range": "Total EVSE",
+    "error": 0.24562195040438473,
+    "cat": "4"
+  },
+  {
+    "code": "SI",
+    "range": "Total EVSE",
+    "error": 0.15628917676556622,
+    "cat": "5"
+  },
+  {
+    "code": "AT",
+    "range": "Total Power MW",
+    "error": 0.33031161473087817,
+    "cat": "4"
+  },
+  {
+    "code": "DE",
+    "range": "Total Power MW",
+    "error": 0.1872751567478672,
+    "cat": "5"
+  },
+  {
+    "code": "DK",
+    "range": "Total Power MW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "ES",
+    "range": "Total Power MW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "FI",
+    "range": "Total Power MW",
+    "error": 1.0,
+    "cat": "0"
+  },
+  {
+    "code": "FR",
+    "range": "Total Power MW",
+    "error": 0.1761612620508326,
+    "cat": "5"
+  },
+  {
+    "code": "IS",
+    "range": "Total Power MW",
+    "error": null,
+    "cat": null
+  },
+  {
+    "code": "LV",
+    "range": "Total Power MW",
+    "error": 0.09090909090909091,
+    "cat": "5"
+  },
+  {
+    "code": "NO",
+    "range": "Total Power MW",
+    "error": null,
+    "cat": null
+  },
+  {
+    "code": "PT",
+    "range": "Total Power MW",
+    "error": 0.1693121693121693,
+    "cat": "5"
+  },
+  {
+    "code": "SE",
+    "range": "Total Power MW",
+    "error": 0.15890926187118007,
+    "cat": "5"
+  },
+  {
+    "code": "SI",
+    "range": "Total Power MW",
+    "error": 0.9565217391304348,
+    "cat": "1"
+  },
+  {
+    "code": "AT",
+    "range": "Overall Fidelity",
+    "error": 0.4030628168159083,
+    "cat": "3"
+  },
+  {
+    "code": "DE",
+    "range": "Overall Fidelity",
+    "error": 0.42946447190282994,
+    "cat": "3"
+  },
+  {
+    "code": "DK",
+    "range": "Overall Fidelity",
+    "error": 0.7763989612679614,
+    "cat": "2"
+  },
+  {
+    "code": "ES",
+    "range": "Overall Fidelity",
+    "error": 0.699745608267671,
+    "cat": "2"
+  },
+  {
+    "code": "FI",
+    "range": "Overall Fidelity",
+    "error": 0.7385310532552292,
+    "cat": "2"
+  },
+  {
+    "code": "FR",
+    "range": "Overall Fidelity",
+    "error": 0.39372159063624396,
+    "cat": "4"
+  },
+  {
+    "code": "IS",
+    "range": "Overall Fidelity",
+    "error": 0.7523581953986435,
+    "cat": "2"
+  },
+  {
+    "code": "LV",
+    "range": "Overall Fidelity",
+    "error": 0.6080149556836989,
+    "cat": "2"
+  },
+  {
+    "code": "NO",
+    "range": "Overall Fidelity",
+    "error": 0.5181545002458583,
+    "cat": "3"
+  },
+  {
+    "code": "PT",
+    "range": "Overall Fidelity",
+    "error": 0.4496706283041836,
+    "cat": "3"
+  },
+  {
+    "code": "SE",
+    "range": "Overall Fidelity",
+    "error": 0.372189931439615,
+    "cat": "4"
+  },
+  {
+    "code": "SI",
+    "range": "Overall Fidelity",
+    "error": 0.7282531748725252,
+    "cat": "2"
+  }
+]
