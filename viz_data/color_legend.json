@@ -1,1 +1,10 @@
-{"Eco-Movement": "#029e73", "Tesla": "#de8f05", "Chargemap": "#cc78bc", "Openchargemap": "#0173b2", "Finnish Transport Agency": "#d55e00", "Governmental source": "#ca9161", "Greenway": "#fbafe4", "Other": "#56b4e9"}
+{
+  "Eco-Movement": "#262626",
+  "Tesla": "#454545",
+  "Chargemap": "#646464",
+  "Openchargemap": "#838383",
+  "Finnish Transport Agency": "#a1a1a1",
+  "Governmental source": "#bfbfbf",
+  "Greenway": "#dddddd",
+  "Other": "#f0f0f0"
+}

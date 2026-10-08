@@ -8,12 +8,21 @@ screenshotted with a headless Chromium-based browser (Edge by default).
 The widget dimensions follow the "for paper" comments in main.py
 (single-column Elsevier figures are ~539px wide at the notebook's scale).
 PNGs are captured with a device scale factor so the output is crisp in
-print: 539px * 3 = 1617px, roughly 216 DPI at Elsevier double-column
-width (190mm) and ~456 DPI at single-column width (90mm).
+print: 539px * 3 = 1617px, which is ~314 DPI at the manuscript's full
+text width (\\textwidth = 130.8 mm) and ~419 DPI at 0.75\\textwidth
+(98.1 mm) -- above the 300 DPI print target in both cases.
+
+Before rendering, the figure inputs in viz_data/ are asserted against
+the published manuscript tables (canonical_values.py); the export fails
+if any value deviates.
 
 Usage:
     uv run python export_widget_pngs.py [--output images] [--scale 3]
-        [--only fair_barcharts ...] [--browser PATH]
+        [--only fair_barcharts ...] [--browser PATH] [--no-paper]
+
+Paper figures land in <output>/paper/ under the manuscript's filenames
+(figure_1.png, figure_2.png, figure_4.png, figure_5.png, figure_6.png);
+pass --no-paper to skip that step.
 
 Requires internet access (the widget modules import d3 from esm.sh) and
 a Chromium-based browser. Widgets whose input data is computed by graph
@@ -23,16 +32,20 @@ notebook's dump cell writes and which is committed to the repo.
 
 import argparse
 import json
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
 
 import polars as pl
 
+import canonical_values as cv
 from widgets.barchart import (
     BarChartWidget,
     DoubleStackedBarChartWidget,
     FAIRBarChartsWidget,
+    FAIRDatasetScoresWidget,
+    GroupedBarChartWidget,
 )
 from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
 from widgets.grid_scatter import GridScatterWidget
@@ -89,6 +102,17 @@ html, body {{
     width: 100%;
 }}
 .fair-barcharts svg {{
+    max-width: 100%;
+    max-height: 100%;
+}}
+.fair-datasets {{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}}
+.fair-datasets svg {{
     max-width: 100%;
     max-height: 100%;
 }}
@@ -154,6 +178,40 @@ def load_json(name):
         return json.load(f)
 
 
+def assert_canonical_inputs() -> None:
+    """M-3 guard: figure inputs must reproduce the published tables.
+
+    This is the check that would have caught the stale Figure 5 and the
+    later re-run whose values diverged from the published analysis
+    state. Raises AssertionError on any deviation.
+    """
+    cv.assert_fair_country_scores(load_json("fair_scores.json"))
+    cv.assert_dataset_scores(load_json("fair_scores_datasets.json"))
+    cv.assert_results(load_json("query_results/results.json"))
+    cv.assert_band_counts(
+        load_json("query_results/chart_input.json"),
+        cv.PUBLISHED_CAPACITIES_CALC,
+        "query_results/chart_input.json",
+    )
+    cv.assert_band_counts(
+        load_json("query_results/chart_input_2.json"),
+        cv.PUBLISHED_CAPACITIES_REF,
+        "query_results/chart_input_2.json",
+    )
+    cv.assert_filtered_markers(load_json("query_results/filtered_markers.json"))
+
+
+# Manuscript float -> exported widget mapping (guide M-2). figure_3,
+# figure_8 and the VKG schematic are not products of this repository.
+PAPER_FIGURES = {
+    "figure_1.png": "sources_cartogram.png",  # fig:eafo-sources
+    "figure_2.png": "fair_dataset_scores.png",  # fig:fair-summary
+    "figure_4.png": "results_plot.png",  # fig:capacity-comparison
+    "figure_5.png": "capacities_merged.png",  # fig:power-capacity
+    "figure_6.png": "power_counts_stacked.png",  # fig:device-counts
+}
+
+
 def df_to_dict(df: pl.DataFrame, key_col: str, value_col: str) -> dict:
     """Get a Python dict from two columns of a DataFrame.
 
@@ -209,8 +267,8 @@ def build_specs() -> list:
         }
     )
 
-    # FAIR stacked + total bar charts, scaled from the 700px design width
-    # to the 539px paper width.
+    # FAIR principle grid (2x2) + total score chart, scaled from the 700px
+    # design width to the 539px paper width.
     specs.append(
         {
             "name": "fair_barcharts",
@@ -251,6 +309,20 @@ def build_specs() -> list:
                 font_size=1.2,
                 offset=36,
                 margin={"top": 24, "right": 10, "bottom": 30, "left": 30},
+            ),
+        }
+    )
+
+    # Dataset-level FAIR scores (fig:fair-summary, Table 8 unit): one
+    # stacked bar per dataset, greyscale-safe by construction.
+    specs.append(
+        {
+            "name": "fair_dataset_scores",
+            "module": WIDGETS_JS / "fair_dataset_scores.js",
+            "widget": FAIRDatasetScoresWidget(
+                input=load_json("fair_scores_datasets.json"),
+                width=539,
+                height=320,
             ),
         }
     )
@@ -316,21 +388,24 @@ def build_specs() -> list:
 
     results = query("results")
 
-    # Results plot: 539x202 elsevier size, margins adjusted to avoid clipping.
+    # Results plot (fig:capacity-comparison): grouped side-by-side
+    # bars, calculated vs EAFO reference, AFIR target markers retained.
+    # Twelve countries including IS/NO (no EAFO bar where no reference
+    # exists); greyscale-safe fills.
     specs.append(
         {
             "name": "results_plot",
-            "module": WIDGETS_JS / "barchart.js",
-            "widget": BarChartWidget(
+            "module": WIDGETS_JS / "grouped_barchart.js",
+            "widget": GroupedBarChartWidget(
                 input={
                     r["Code"]: r["total_accounted_power"] for r in results
                 },
                 shadow={r["Code"]: r["total_mw"] for r in results},
                 markers=query("filtered_markers"),
                 bar_radius=4,
-                bar_color="#0173b2",
-                marker_color="#353839",
-                shadow_color="#d55e00",
+                bar_color="#4d4d4d",
+                marker_color="#1a1a1a",
+                shadow_color="#c9c9c9",
                 width=539,
                 height=202,
                 y_max=10000,
@@ -339,15 +414,16 @@ def build_specs() -> list:
                 y_label="Power (MW)",
                 offset=25,
                 font_size=1.0,
-                main_label="NAP Estimation",
-                shadow_label="EAFO Reported",
-                marker_label="AFIR Target",
+                main_label="Calculated",
+                shadow_label="EAFO reference",
+                marker_label="AFIR target",
                 margin={"top": 22, "right": 10, "bottom": 39, "left": 50},
             ),
         }
     )
 
-    # Double stacked chart: 539x202 elsevier size.
+    # Double stacked chart (fig:device-counts): 539x202 elsevier size,
+    # greyscale band palette with hatching.
     specs.append(
         {
             "name": "power_counts_stacked",
@@ -358,10 +434,18 @@ def build_specs() -> list:
                 x_key="code",
                 bar_radius=4,
                 cat_colors=query("cat_colors"),
+                cat_hatches={
+                    "#262626": "none",
+                    "#525252": "diag",
+                    "#7f7f7f": "cross",
+                    "#a6a6a6": "dot",
+                    "#cccccc": "hline",
+                    "#efefef": "vline",
+                },
                 width=539,
                 height=202,
                 y_label="Counts per capacity",
-                x1_label="European Alternative Fuels Observatory, Juny 2025",
+                x1_label="European Alternative Fuels Observatory, June 2025",
                 x2_label="Estimation using available data from the National Access Points",
                 offset=38,
                 legend_item_width=5.4,
@@ -481,6 +565,40 @@ def export_widget(spec, browser: Path, output_dir: Path, scale: int) -> Path:
     return png_path
 
 
+def merge_capacities(output_dir: Path) -> Path:
+    """F-4: compose the two capacity exports into one figure file.
+
+    The manuscript float fig:power-capacity spans the >400 MW and the
+    <=400 MW panels; the submission package wants one file per figure.
+    """
+    from PIL import Image
+
+    above = Image.open(output_dir / "capacities_above_400mw.png")
+    below = Image.open(output_dir / "capacities_below_400mw.png")
+    if above.width != below.width:
+        raise RuntimeError(
+            f"capacity panels differ in width: {above.width} vs {below.width}"
+        )
+    merged = Image.new("RGB", (above.width, above.height + below.height), "white")
+    merged.paste(above, (0, 0))
+    merged.paste(below, (0, above.height))
+    merged_path = output_dir / "capacities_merged.png"
+    merged.save(merged_path)
+    return merged_path
+
+
+def export_paper_figures(output_dir: Path) -> None:
+    """M-2: copy the paper figures under the manuscript's filenames."""
+    paper_dir = output_dir / "paper"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    for figure_name, source_name in PAPER_FIGURES.items():
+        source = output_dir / source_name
+        if not source.exists():
+            raise RuntimeError(f"missing paper figure input: {source}")
+        shutil.copyfile(source, paper_dir / figure_name)
+        print(f"paper/{figure_name} <- {source_name}")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Export the figure widgets as PNGs for a journal paper."
@@ -509,7 +627,17 @@ def main():
         default=None,
         help="Export only the named widgets",
     )
+    parser.add_argument(
+        "--no-paper",
+        action="store_true",
+        help="Skip the manuscript-filename paper figures",
+    )
     args = parser.parse_args()
+
+    # M-3: refuse to render from inputs that deviate from the
+    # published tables.
+    assert_canonical_inputs()
+    print("canonical input assertions passed")
 
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -520,6 +648,16 @@ def main():
     for spec in specs:
         png = export_widget(spec, args.browser, args.output, args.scale)
         print(f"{spec['name']}: {png}")
+
+    if not args.only or {
+        "capacities_above_400mw",
+        "capacities_below_400mw",
+    }.issubset(set(args.only)):
+        merged = merge_capacities(args.output)
+        print(f"capacities_merged: {merged}")
+
+    if not args.no_paper:
+        export_paper_figures(args.output)
 
 
 if __name__ == "__main__":

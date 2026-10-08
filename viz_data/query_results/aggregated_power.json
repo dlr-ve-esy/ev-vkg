@@ -1,50 +1,50 @@
 [
   {
-    "code": "NO",
-    "total_accounted_power": 2634050.816
-  },
-  {
-    "code": "FI",
-    "total_accounted_power": 295095.808
-  },
-  {
-    "code": "FR",
-    "total_accounted_power": 6846646.272
-  },
-  {
-    "code": "ES",
-    "total_accounted_power": 630789.76
+    "code": "AT",
+    "total_accounted_power": 1196000
   },
   {
     "code": "DE",
-    "total_accounted_power": 9729170.432
+    "total_accounted_power": 9159000
   },
   {
     "code": "DK",
-    "total_accounted_power": 630009.728
+    "total_accounted_power": 629000
   },
   {
-    "code": "PT",
-    "total_accounted_power": 567613.376
+    "code": "ES",
+    "total_accounted_power": 630000
   },
   {
-    "code": "SI",
-    "total_accounted_power": 46993.536
+    "code": "FI",
+    "total_accounted_power": 295000
   },
   {
-    "code": "SE",
-    "total_accounted_power": 2127276.032
-  },
-  {
-    "code": "AT",
-    "total_accounted_power": 1765889.664
-  },
-  {
-    "code": "LV",
-    "total_accounted_power": 66629.848
+    "code": "FR",
+    "total_accounted_power": 6846000
   },
   {
     "code": "IS",
-    "total_accounted_power": 31485.100000000002
+    "total_accounted_power": 31000
+  },
+  {
+    "code": "LV",
+    "total_accounted_power": 66000
+  },
+  {
+    "code": "NO",
+    "total_accounted_power": 2634000
+  },
+  {
+    "code": "PT",
+    "total_accounted_power": 567000
+  },
+  {
+    "code": "SE",
+    "total_accounted_power": 2105000
+  },
+  {
+    "code": "SI",
+    "total_accounted_power": 46000
   }
 ]

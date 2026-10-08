@@ -22,6 +22,8 @@ def _():
         BarChartWidget,
         DoubleStackedBarChartWidget,
         FAIRBarChartsWidget,
+        FAIRDatasetScoresWidget,
+        GroupedBarChartWidget,
     )
     from widgets.heatmap import HeatMapWidget
     from widgets.grid_scatter import GridScatterWidget
@@ -44,7 +46,9 @@ def _():
         DoubleStackedBarChartWidget,
         FAIRBarChartsWidget,
         FAIRCartogramWidget,
+        FAIRDatasetScoresWidget,
         GT,
+        GroupedBarChartWidget,
         GridScatterWidget,
         HeatMapWidget,
         List,
@@ -468,6 +472,22 @@ def _(FAIRBarChartsWidget, fair_scores_country, mo, spectrum_colors):
     mo.md(
         f"""## FAIR Scores by principle and total
     {fair_bars_widget}"""
+    )
+    return
+
+
+@app.cell
+def _(FAIRDatasetScoresWidget, json, mo):
+    # Dataset-level FAIR scores (Table 8 unit): one stacked bar per
+    # dataset, so the two German datasets are both visible.
+    with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _f:
+        fair_scores_datasets = json.load(_f)
+    fair_dataset_widget = mo.ui.anywidget(
+        FAIRDatasetScoresWidget(input=fair_scores_datasets)
+    )
+    mo.md(
+        f"""## FAIR Scores per dataset
+    {fair_dataset_widget}"""
     )
     return
 
@@ -906,15 +926,18 @@ def _(
 
 
 @app.cell
-def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
-    results_plot = BarChartWidget(
+def _(GroupedBarChartWidget, df_to_dict, filtered_markers, mo, results):
+    # Grouped side-by-side bars (calculated vs EAFO reference) instead
+    # of the former overlapping front/shadow design; greyscale-safe
+    # fills, AFIR target markers retained.
+    results_plot = GroupedBarChartWidget(
         input=df_to_dict(results, key_col="Code", value_col="total_accounted_power"),
         shadow=df_to_dict(results, key_col="Code", value_col="total_mw"),
         markers=filtered_markers,
         bar_radius=4,
-        bar_color="#0173b2",
-        marker_color="#353839",
-        shadow_color="#d55e00",
+        bar_color="#4d4d4d",
+        marker_color="#1a1a1a",
+        shadow_color="#c9c9c9",
         width=539 * 2,  # 539   for elsevier size
         height=202 * 2,  # 202 for elsevier size
         y_max=10000,
@@ -923,9 +946,9 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
         y_label="Power (MW)",
         offset=25,
         font_size=1.0,
-        main_label="NAP Estimation",
-        shadow_label="EAFO Reported",
-        marker_label="AFIR Target",
+        main_label="Calculated",
+        shadow_label="EAFO reference",
+        marker_label="AFIR target",
         margin={
             "top": 17,
             "right": 0,
@@ -979,17 +1002,27 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
 
 @app.cell
 def _(total_evses_per_power_df):
+    # Luminance-ordered greys plus hatching so the bands stay
+    # distinguishable in black-and-white print.
     cat_colors = {
-        "0-7,4 kW": "#9dc291",
-        "7,4-22 kW": "#73a861",
-        "22-50 kW": "#527a44",
-        "50-150 kW": "#e9cf6f",
-        "150-350 kW": "#e0ba2f",
-        "350+ kW": "#aa8b1a",
+        "0-7,4 kW": "#262626",
+        "7,4-22 kW": "#525252",
+        "22-50 kW": "#7f7f7f",
+        "50-150 kW": "#a6a6a6",
+        "150-350 kW": "#cccccc",
+        "350+ kW": "#efefef",
+    }
+    cat_hatches = {
+        "#262626": "none",
+        "#525252": "diag",
+        "#7f7f7f": "cross",
+        "#a6a6a6": "dot",
+        "#cccccc": "hline",
+        "#efefef": "vline",
     }
 
     chart_input = total_evses_per_power_df.to_dicts()
-    return cat_colors, chart_input
+    return cat_colors, cat_hatches, chart_input
 
 
 @app.cell
@@ -1043,10 +1076,11 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
         x_key="code",
         bar_radius=4,
         cat_colors=cat_colors,
+        cat_hatches=cat_hatches,
         width=539,  # * 2,  # 539 for elsevier size
         height=202,  #  * 2,  # 202 for elsevier size
         y_label="Counts per capacity",
-        x1_label="European Alternative Fuels Observatory, Juny 2025",
+        x1_label="European Alternative Fuels Observatory, June 2025",
         x2_label="Estimation using available data from the National Access Points",
         offset=38,
         legend_item_width=6.5,

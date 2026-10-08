@@ -96,6 +96,8 @@ class DoubleStackedBarChartWidget(anywidget.AnyWidget):
     height = tt.Int(300).tag(sync=True)
     margin = tt.Dict({"top": 20, "right": 0, "bottom": 40, "left": 50}).tag(sync=True)
     cat_colors = tt.Dict({}).tag(sync=True)
+    # Hatch pattern per band colour for greyscale legibility.
+    cat_hatches = tt.Dict({}).tag(sync=True)
     bar_radius = tt.Int(5).tag(sync=True)
     y_max = tt.Int(0).tag(sync=True)
     y_ticks: List[Any] = tt.List([]).tag(sync=True)
@@ -146,6 +148,96 @@ class FAIRBarChartsWidget(anywidget.AnyWidget):
         }
 
     .fair-barcharts svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
+
+
+class FAIRDatasetScoresWidget(anywidget.AnyWidget):
+    """Stacked FAIR scores per dataset (Table 8 unit), greyscale-safe."""
+
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/fair_dataset_scores.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    input = tt.List([]).tag(sync=True)
+    width = tt.Int(539).tag(sync=True)
+    height = tt.Int(320).tag(sync=True)
+    margin = tt.Dict({"top": 20, "right": 10, "bottom": 80, "left": 40}).tag(sync=True)
+    bar_radius = tt.Int(4).tag(sync=True)
+    font_size = tt.Float(0.9).tag(sync=True)
+    y_max = tt.Int(12).tag(sync=True)
+    y_ticks = tt.List([3, 6, 9, 12]).tag(sync=True)
+    y_grid = tt.List([3, 6, 9, 12]).tag(sync=True)
+    y_label = tt.Unicode("FAIR score").tag(sync=True)
+    colors = tt.Dict(
+        {"F": "#404040", "A": "#7a7a7a", "I": "#adadad", "R": "#dfdfdf"}
+    ).tag(sync=True)
+    dimension_labels = tt.Dict(
+        {
+            "F": "Findability",
+            "A": "Accessibility",
+            "I": "Interoperability",
+            "R": "Reusability",
+        }
+    ).tag(sync=True)
+    legend_item_width = tt.Float(7.8).tag(sync=True)
+
+    _css = """
+    .fair-datasets {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        }
+
+    .fair-datasets svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
+
+
+class GroupedBarChartWidget(anywidget.AnyWidget):
+    """Grouped side-by-side bars (e.g. calculated vs EAFO reference)."""
+
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/grouped_barchart.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    input = tt.Dict({}).tag(sync=True)
+    shadow = tt.Dict({}).tag(sync=True)
+    markers = tt.Dict({}).tag(sync=True)
+    width = tt.Int(500).tag(sync=True)
+    height = tt.Int(300).tag(sync=True)
+    margin = tt.Dict({"top": 20, "right": 0, "bottom": 40, "left": 50}).tag(sync=True)
+    bar_color = tt.Unicode("#4d4d4d").tag(sync=True)
+    marker_color = tt.Unicode("#1a1a1a").tag(sync=True)
+    shadow_color = tt.Unicode("#c9c9c9").tag(sync=True)
+    bar_radius = tt.Int(4).tag(sync=True)
+    y_max = tt.Int(0).tag(sync=True)
+    y_ticks = tt.List([]).tag(sync=True)
+    y_grid = tt.List([]).tag(sync=True)
+    x_label = tt.Unicode("").tag(sync=True)
+    y_label = tt.Unicode("").tag(sync=True)
+    offset = tt.Int(0).tag(sync=True)
+    font_size = tt.Float(0.8).tag(sync=True)
+    main_label = tt.Unicode("").tag(sync=True)
+    shadow_label = tt.Unicode("").tag(sync=True)
+    marker_label = tt.Unicode("").tag(sync=True)
+
+    _css = """
+    .barchart {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+        }
+
+    .barchart svg {
         max-width: 100%;
         max-height: 100%;
         }
