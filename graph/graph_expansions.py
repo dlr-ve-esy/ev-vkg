@@ -4,12 +4,15 @@ import polars as pl
 from maplib import Mapping
 import re
 import datetime
+import logging
 
 CHIO = "https://dlr-ve-esy.github.io/charging-ontology/"
 VKG = "https://gitlab.dlr.de/vkg#"
 
 CHALLENGE_MODE = True
 # USE THE polars sample API to do the challenge mode
+
+logger = logging.getLogger(__name__)
 
 
 def map_plug_standards(text: str) -> str:
@@ -73,8 +76,8 @@ def map_plug_standards(text: str) -> str:
         case "teslar" | "tesla_r" | "roadster" | "tesla_roadster":
             out = f"{CHIO}CHIO_00000045"
         case _:
-            # print(f"Unkown pattern: {text}")
-            out = f"{CHIO}CHIO_00000015"  # TODO: Add logging
+            logger.warning("Unknown plug standard notation: %s", text)
+            out = f"{CHIO}CHIO_00000015"
     return out
 
 

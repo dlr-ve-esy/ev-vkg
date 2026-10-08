@@ -12,6 +12,13 @@ import yaml
 
 OUTPUT_PATH = "parsed"
 RAW_PATH = "sources"
+# BNetZA (German charging station register) snapshot to parse. File names
+# must match the snapshot's content date: the archive file named
+# "bnetza_charging_stations_raw_08_2025.xlsx" actually contains the July
+# 2025 snapshot (Stand 18.07.2025). The German values published in the
+# paper (e.g. 9159 MW total power) come from the May 2025 snapshot
+# (Stand 07.05.2025, "bnetza_charging_stations_raw_05_2025.xlsx").
+BNETZA_SNAPSHOT = "sources/BNETZA/bnetza_charging_stations_raw_08_2025.xlsx"
 
 
 if Path(RAW_PATH).exists():
@@ -43,10 +50,7 @@ if Path(RAW_PATH).exists():
     irve_data = irve_extract_csv(source_irve)
     write_annotated_irve_csv(irve_data, OUTPUT_PATH, name_irve, "irve/metadata.yml")
 
-    get_renamed_bnetza(
-        OUTPUT_PATH,
-        "sources/BNETZA/bnetza_charging_stations_raw_08_2025.xlsx",
-    )
+    get_renamed_bnetza(OUTPUT_PATH, BNETZA_SNAPSHOT)
 
     with open("datex2/annotations.yml", "r") as f:
         annotations = yaml.safe_load(f)

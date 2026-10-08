@@ -17,6 +17,11 @@ WHERE {
         bfo:BFO_0000171+ ?country . 
 ?country dbo:iso31661Code ?code .
 BIND(xsd:float(?value) AS ?floatValue)
+# All bins use inclusive upper bounds except the 150-350 kW bin
+# (< 350000), so connectors rated exactly 350 kW land in "350+ kW". This
+# differs from EAFO's half-open intervals (150 kW <= P < 350 kW) and is
+# documented as such in the manuscript; do not change the boundary
+# without re-running the pipeline and updating the published values.
 BIND(
 IF(?floatValue <= 7400, "0-7,4 kW",
   IF(?floatValue <= 22000, "7,4-22 kW",

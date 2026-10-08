@@ -640,8 +640,21 @@ def _(mappings: "List[Tuple[str, str]]", mo):
         splitted = label.split("-")
         return splitted[0] + "-" + splitted[-1]
 
+    # The German comparison in the paper uses only de.2 (BNetZA); de.1
+    # (mobilithek/Eco-Movement) is not part of the quantitative comparison
+    # and is deselected by default. Selecting both German datasets would
+    # double-count German EVSEs in the SPARQL results.
+    EXCLUDED_FROM_ANALYSIS = ("DE-20250701-ECOMOVEMENT-DATEXII",)
+
     checkbox = [
-        (l, mo.ui.checkbox(label=f"{short_name(l[0])}", value=True)) for l in mappings
+        (
+            l,
+            mo.ui.checkbox(
+                label=f"{short_name(l[0])}",
+                value=l[0] not in EXCLUDED_FROM_ANALYSIS,
+            ),
+        )
+        for l in mappings
     ]
     return (checkbox,)
 
@@ -676,8 +689,12 @@ def _(
             or ("datexii" in path.lower())
             or ("irve" in path.lower())
         ):
-            if country == "NO":
-                country_filter = ["NO", "SE", "IS"]
+            # The NOBIL source also covers DK/FI/IS/SE but is expanded
+            # unfiltered: the historical NO/SE/IS branch here was dead
+            # code (reset by the else clause) and the published values
+            # were produced without it. The AT filter is kept even though
+            # it is a no-op in practice (all AT addresses already carry
+            # country "AT").
             if country == "AT":
                 country_filter = ["AT"]
             else:
@@ -1054,32 +1071,44 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
         "350+ kW",
     ]
 
-    summary_cols = ["Total EVSE", "Max Power MW"]
+    # "Total Power MW" is the sum over EVSEs of the minimum connector
+    # power, i.e. a lower bound on the installed power (see
+    # queries/total_aggregated_power_per_country_lower.sparql).
+    # "Total EVSE" is the sum of the per-bin DISTINCT-EVSE counts and can
+    # exceed the number of physical EVSEs when one EVSE has connectors
+    # in more than one power bin.
+    summary_cols = ["Total EVSE", "Total Power MW"]
     total_cols = pl.sum_horizontal(*value_cols).alias("Total EVSE").cast(int)
 
+    # EAFO reference frame: EAFO counts and the EAFO reported total power
     error_heatmap_reference = (
         power_counts_tracker.with_columns(
             [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
         )
         .join(
-            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
+            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
             left_on="code",
             right_on="Code",
             how="left",
         )
-        .rename({"total_accounted_power": "Max Power MW"})
+        .rename({"total_mw": "Total Power MW"})
     )
+    # Calculated frame: SPARQL results, negated so that the diagonal
+    # concatenation below yields reference - calculated for every
+    # indicator (uniform sign convention)
     error_heatmap_calculated = (
         total_evses_per_power_df.with_columns(
             [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
         )
         .join(
-            results.select(pl.col("Code"), pl.col("total_mw").cast(int).mul(-1)),
+            results.select(
+                pl.col("Code"), pl.col("total_accounted_power").cast(int).mul(-1)
+            ),
             left_on="code",
             right_on="Code",
             how="left",
         )
-        .rename({"total_mw": "Max Power MW"})
+        .rename({"total_accounted_power": "Total Power MW"})
     )
 
     absolute_error = (
@@ -1091,12 +1120,26 @@ def _(pl, power_counts_tracker, results, total_evses_per_power_df):
         .sum()
     )
 
+    # Relative error denominators, as documented in the manuscript: the
+    # EAFO reference for the seven count indicators, the calculated
+    # value for the power indicator. IS/NO have no EAFO power reference
+    # and are excluded from the power error (null denominator).
     relative_error = (
         absolute_error.join(error_heatmap_reference.with_columns(total_cols), on="code")
+        .join(
+            results.select(
+                pl.col("Code").alias("code"),
+                pl.col("total_accounted_power").cast(int),
+            ),
+            on="code",
+            how="left",
+        )
         .select(
             ["code"]
             + [
                 (pl.col(x) / pl.col(f"{x}_right")).abs()
+                if x != "Total Power MW"
+                else (pl.col(x) / pl.col("total_accounted_power")).abs()
                 for x in value_cols + summary_cols
             ]
         )
@@ -1139,12 +1182,12 @@ def _(
             [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
         )
         .join(
-            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
+            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
             left_on="code",
             right_on="Code",
             how="left",
         )
-        .rename({"total_accounted_power": "Max Power MW"})
+        .rename({"total_mw": "Total Power MW"})
     )
 
     calculated_df = (
@@ -1152,12 +1195,12 @@ def _(
             [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
         )
         .join(
-            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
+            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
             left_on="code",
             right_on="Code",
             how="left",
         )
-        .rename({"total_mw": "Max Power MW"})
+        .rename({"total_accounted_power": "Total Power MW"})
     ).join(reference_df, on="code", how="left")
     table_caps = GT(
         calculated_df.select(
@@ -1208,7 +1251,7 @@ def _(
 
     for scs in summary_cols:
         colscss = [scs, f"{scs}_right"]
-        if scs == "Max Power MW":
+        if scs == "Total Power MW":
             colscss.append("Target MW")
             col_labelssc["Target MW"] = "Target"
         table_qs = table_qs.tab_spanner(label=scs, columns=colscss)
@@ -1235,7 +1278,7 @@ def _(HeatMapWidget, mo, relative_error):
         "50-150 kW": "#6181ab",
         "150-350 kW": "#6181ab",
         "350+ kW": "#6181ab",
-        "Max Power MW": "#c1a2bb",
+        "Total Power MW": "#c1a2bb",
         "Total EVSE": "#e0ba2f",
         "Overall Fidelity": "#73a861",
     }
@@ -1333,14 +1376,19 @@ def _(pl, scatter_df):
     mm = 7
 
     grid = assign_points_to_grid(points, nn, mm, resolve_by="x")
+    # Grid cells store (x, y, code, column, row): the column index derives
+    # from the points' x value (fidelity error) and the row index from the
+    # points' y value (FAIR score). The widget's horizontal axis ("x")
+    # therefore carries the error bin and the vertical axis ("y") the
+    # score bin, matching the axis labels below.
     grid_info = []
     for row in grid:
         for col in row:
             if col is not None:
                 grid_info.append(
                     {
-                        "x": col[4],
-                        "y": col[3],
+                        "x": col[3],
+                        "y": col[4],
                         "code": col[2],
                     }
                 )
@@ -1382,8 +1430,8 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
             x_axis="x",
             y_axis="y",
             color_col="code",
-            y_label="Quantity fidelity",
-            x_label="FAIR alignment",
+            y_label="FAIR alignment",
+            x_label="Quantity fidelity",
             cell_size=25,
             x_padding=0.0,
             base_color="grey",
