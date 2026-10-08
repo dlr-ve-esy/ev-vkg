@@ -39,6 +39,9 @@ def _():
     from datetime import datetime
     import pyqrcode
     from great_tables import GT
+    import error_metrics as em
+    import fair_scoring as fs
+    import run_config as rc
 
     data_folder = "parsed"
     return (
@@ -59,15 +62,30 @@ def _():
         VkgSchematicWidget,
         data_folder,
         datetime,
+        em,
         expand_bnezta,
         expand_relational_csv,
+        fs,
         glob,
         json,
         mo,
         pl,
         pyqrcode,
+        rc,
         requests,
     )
+
+
+@app.cell
+def _(mo, rc):
+    # The run configuration is the persisted source selection: dataset
+    # IDs, snapshot dates, input paths, checksums, analysis inclusion,
+    # country coverage and exclusion reasons (run_config.yaml). The
+    # analysis no longer relies on notebook checkbox state.
+    config = rc.load()
+    checksum_problems = rc.verify_checksums(config)
+    config
+    return (config, checksum_problems)
 
 
 @app.cell
@@ -228,25 +246,34 @@ def _(BarChartWidget, mo, pl):
 
 
 @app.cell
-def _(mo, pl, sources_nap):
-    considered_sources = sources_nap.with_columns(
-        pl.col("id").str.split("-").list[0].alias("country")
+def _(fs, mo, pl, sources_nap):
+    # One row per assessed dataset (the latest assessment record,
+    # selected by parsed publication date): 23 datasets from 22
+    # countries, with both German datasets (de.1, de.2) visible.
+    considered_sources = fs.latest_record_per_dataset(sources_nap).with_columns(
+        pl.col("dataset_id").str.split(".").list[0].str.to_uppercase().alias("country")
     )
 
     sources_table = mo.ui.table(
         data=considered_sources.select(
-            "country", "name", "publication_date", "metadata_url", "standard"
+            "dataset_id",
+            "country",
+            "name",
+            "publication_date",
+            "metadata_url",
+            "standard",
         ),
         show_column_summaries=False,
         show_download=False,
     )
-    num_countries = len(considered_sources)
-    avail_data = len(sources_nap.filter(~pl.col("local").is_null()))
+    num_datasets = considered_sources.height
+    num_countries = considered_sources["country"].n_unique()
+    avail_data = considered_sources.filter(~pl.col("local").is_null()).height
     mo.md(
         f"""
     # FAIR Analysis
 
-    As a proof of concept of our analysis we selected data reports published in the NAP of {num_countries} countries. From which only {avail_data} could be aqcuired, the rest is either behind a paywall or no longer availaible.
+    As a proof of concept of our analysis we selected data reports published in the NAPs of {num_countries} countries, comprising {num_datasets} assessed datasets. From which only {avail_data} could be acquired, the rest is either behind a paywall or no longer available.
     {sources_table}
     """
     )
@@ -306,102 +333,38 @@ def _(INDENT, colored_square, mo):
 
 
 @app.cell
-def _(BarChartWidget, datetime, mo, pl, sources_per_country):
-    sources_nap = pl.read_csv("sources/metadata.csv", encoding="utf-8")
-    sources_nap = sources_nap.with_columns(
-        pl.col("actionable").replace_strict({"NO": False, "YES": True}),
-        pl.col("identifier").replace_strict({"NO": False, "YES": True}),
-    ).sort(by="publication_date", descending=False)
+def _(BarChartWidget, config, fs, mo, pl, sources_per_country):
+    # Metadata with booleans and dates parsed; dataset identity comes
+    # from the stable dataset_id column, never from date-containing
+    # record IDs or substring matching.
+    sources_nap = fs.load_sources("sources/metadata.csv")
 
     countries = list(sources_per_country.keys())
 
-    fair_scores = {
-        sc: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0}
-        for sc in sources_nap["id"].unique()
-    }
-    accesible = [
-        "OPEN",
-        "REGISTERED_USERS",
-        "PER_REQUEST",
-    ]
-    optimal_access_media = ["ARCHIVE", "API"]
-    interoperable_formats = ["OCPI", "OICP", "DATEXII"]
-    partial_formats = ["DATEXII_P"]
-    for sn in sources_nap["id"].unique():
-        records = sources_nap.filter(pl.col("id").str.contains(sn)).to_dicts()
-        if len(records) == 0:
-            continue
-        dates = [datetime.strptime(r["publication_date"], "%m/%d/%Y") for r in records]
-        latest_idx = dates.index(max(dates))
-        latest_record = records[latest_idx]
-        # FINDABILITY
-        if (latest_record["metadata_url"] is None) & (
-            latest_record["access_url"] is not None
-        ):
-            if latest_record["medium"] in optimal_access_media:
-                fair_scores[sn]["F"] = 1
-        elif latest_record["metadata_url"] is not None:
-            fair_scores[sn]["F"] = 2
-            if latest_record["actionable"]:
-                fair_scores[sn]["F"] = 3
-        # ACCESIBILITY
-        if latest_record["access"] in accesible:
-            fair_scores[sn]["A"] += 1
-            if latest_record["medium"] in optimal_access_media:
-                fair_scores[sn]["A"] += 1
-                if latest_record["access_url"] is not None:
-                    fair_scores[sn]["A"] += 1
-        # INTEROPERABILITY
-        if latest_record["standard"] == "DOCUMENTED":
-            fair_scores[sn]["I"] += 1
-        if latest_record["standard"] in interoperable_formats:
-            fair_scores[sn]["I"] += 3
-        if latest_record["standard"] in partial_formats:
-            fair_scores[sn]["I"] += 2
-        # REUSABILITY
-        if latest_record["license"] is not None:
-            fair_scores[sn]["R"] += 1
-            if latest_record["provenance"] == "TEXTUAL":
-                fair_scores[sn]["R"] += 1
-            elif latest_record["provenance"] in ["EU", "LSV", "AT"]:
-                fair_scores[sn]["R"] += 2
-        fair_scores[sn]["TOTAL"] = sum(list(fair_scores[sn].values()))
+    # One FAIR score row per assessed dataset (23 rows, both German
+    # datasets separate), scored from the latest assessment record of
+    # each dataset by fair_scoring.score_record.
+    scores_df = fs.dataset_scores(sources_nap)
 
-    flattened_scoures = [
-        {"source": source, "principle": principle, "value": inner_value}
-        for source, scores in fair_scores.items()
-        for principle, inner_value in scores.items()
-    ]
-    scores_df = (
-        pl.DataFrame(flattened_scoures)
-        .pivot(index="source", on="principle", values="value")
-        .with_columns(pl.col("source").str.slice(0, 2).alias("country"))
-        .join(
-            sources_nap.select("id", "publication_date"),
-            left_on="source",
-            right_on="id",
-            how="left",
-        )
-        .sort(by=["country", "publication_date"], descending=False)
-        .drop("publication_date")
-    )
-
-    country_df = scores_df.group_by("country", maintain_order=True).first()
+    # Country-level view for the cartogram and the total chart. The
+    # selection rule is explicit and deterministic (fair_scoring.
+    # country_view): a country with several assessed datasets is
+    # represented by the dataset included in the quantitative
+    # comparison (de.2 for Germany); a country with a single assessed
+    # dataset is represented by that dataset.
+    analysis_dataset_ids = [d.dataset_id for d in config.analysis_datasets()]
+    selected_country_scores = fs.country_view(scores_df, analysis_dataset_ids)
 
     fair_scores_country = {
         c: {"F": 0, "A": 0, "I": 0, "R": 0, "TOTAL": 0} for c in countries
     }
-    totals = {}
-    for c in country_df["country"].unique():
-        fair_scores_country[c] = (
-            country_df.filter(pl.col("country") == c)
-            .select(["F", "A", "I", "R", "TOTAL"])
-            .to_dicts()[0]
-        )
-        totals[c] = country_df.filter(pl.col("country") == c)["TOTAL"][0]
+    for c, scores in selected_country_scores.items():
+        if c in fair_scores_country:
+            fair_scores_country[c] = scores
 
-    fair_scores_country = {
-        k: v for k, v in fair_scores_country.items() if k in countries
+    totals = {
+        c: scores["TOTAL"]
+        for c, scores in fair_scores_country.items()
     }
     total_data = {
         k: v
@@ -431,12 +394,6 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     <p style="text-align: center;">States with zero score were excluded.</p>"""
     )
     return fair_scores_country, scores_df, sources_nap, total_data
-
-
-@app.cell
-def _(scores_df):
-    scores_df.group_by("country", maintain_order=True).first()
-    return
 
 
 @app.cell
@@ -538,7 +495,6 @@ def _(considered_sources, pl):
         pl.col("source").alias("Source"),
         pl.col("provider").alias("Provider"),
         pl.col("publication_date")
-        .str.to_date("%m/%d/%Y")
         .dt.to_string("%d %b, %Y")
         .alias("Publication Date"),
         pl.when(pl.col("metadata_url").is_null())
@@ -581,14 +537,10 @@ def _(considered_sources, pl):
         .alias("License"),
     )
 
+    # Stable dataset IDs (at.1, de.1, de.2, ...) instead of
+    # order-dependent per-country counters.
     latex_output = latex_output.with_columns(
-        pl.concat_str(
-            [
-                pl.col("Country").str.to_lowercase(),
-                (pl.col("Country").cum_count().over("Country")).alias("idx_b"),
-            ],
-            separator=".",
-        ).alias("Identifier")
+        pl.col("dataset_id").alias("Identifier")
     )
 
     general_information = latex_output.select(
@@ -670,45 +622,66 @@ def _(List, Path, Tuple, data_folder, glob, mo):
 
 
 @app.cell
-def _(mappings: "List[Tuple[str, str]]", mo):
-    def short_name(label):
-        splitted = label.split("-")
-        return splitted[0] + "-" + splitted[-1]
+def _(Path, config, data_folder, mo, pl):
+    # Source selection is persisted in run_config.yaml (analysis
+    # inclusion and exclusion reasons), not in notebook checkbox
+    # state. de.1 is excluded from the German quantitative comparison
+    # to prevent overlap with de.2 (both German datasets would
+    # double-count German EVSEs); the exclusion and its reason are
+    # recorded in the manifest.
+    parsed_dirs = {
+        p.name: p.as_posix() for p in Path(data_folder).iterdir() if p.is_dir()
+    }
+    selected_sources = []
+    missing_parsed = []
+    for entry in config.analysis_datasets():
+        if entry.parsed_dir is None:
+            continue
+        if entry.parsed_dir in parsed_dirs:
+            selected_sources.append(
+                (entry.parsed_dir, parsed_dirs[entry.parsed_dir])
+            )
+        else:
+            missing_parsed.append(entry.dataset_id)
 
-    # The German comparison in the paper uses only de.2 (BNetZA); de.1
-    # (mobilithek/Eco-Movement) is not part of the quantitative comparison
-    # and is deselected by default. Selecting both German datasets would
-    # double-count German EVSEs in the SPARQL results.
-    EXCLUDED_FROM_ANALYSIS = ("DE-20250701-ECOMOVEMENT-DATEXII",)
+    selection_table = mo.ui.table(
+        data=pl.DataFrame(
+            [
+                {
+                    "dataset_id": d.dataset_id,
+                    "snapshot_id": d.snapshot_id,
+                    "snapshot_date": str(d.snapshot_date or ""),
+                    "included": d.include_in_analysis,
+                    "coverage": ", ".join(d.country_coverage),
+                    "exclusion_reason": d.exclusion_reason or "",
+                }
+                for d in config.datasets
+            ]
+        ),
+        show_column_summaries=False,
+        show_download=False,
+    )
+    warning = (
+        f"WARNING: parsed output missing for {', '.join(missing_parsed)}. "
+        "Run `uv run python extract_data.py` to extract the configured "
+        "inputs before expanding the graph."
+        if missing_parsed
+        else ""
+    )
+    mo.md(
+        f"""## Configured source selection
 
-    checkbox = [
-        (
-            l,
-            mo.ui.checkbox(
-                label=f"{short_name(l[0])}",
-                value=l[0] not in EXCLUDED_FROM_ANALYSIS,
-            ),
-        )
-        for l in mappings
-    ]
-    return (checkbox,)
+    {selection_table}
 
-
-@app.cell
-def _(checkbox, mo):
-    mo.vstack([c[1] for c in checkbox])
-    return
-
-
-@app.cell
-def _(checkbox):
-    selected_sources = [c[0] for c in checkbox if c[1].value]
+    {warning}"""
+    )
     return (selected_sources,)
 
 
 @app.cell
 def _(
     Mapping,
+    config,
     expand_bnezta,
     expand_relational_csv,
     selected_sources,
@@ -717,32 +690,25 @@ def _(
 ):
     m = Mapping([vkg_common, vkg_evse])
     for name, path in selected_sources:
-        country: str = name.split("-")[0]
-        # if country in ["NO", "AT", "ES"]:
-        if (
-            ("nobil" in name.lower())
-            or ("datexii" in path.lower())
-            or ("irve" in path.lower())
-        ):
-            # The NOBIL source also covers DK/FI/IS/SE but is expanded
-            # unfiltered: the historical NO/SE/IS branch here was dead
-            # code (reset by the else clause) and the published values
-            # were produced without it. The AT filter is kept even though
-            # it is a no-op in practice (all AT addresses already carry
-            # country "AT").
-            if country == "AT":
-                country_filter = ["AT"]
-            else:
-                country_filter = []
+        entry = config.entry_by_parsed_dir(name)
+        country = entry.country
+        # Explicit per-source country coverage from the run
+        # configuration. The NOBIL filter lists NO, DK, FI, IS and SE
+        # explicitly, so no country can be silently reset (the
+        # historical if/else overwrote the Norwegian filter through
+        # its else branch). National single-country publications keep
+        # their historical unfiltered expansion; AT keeps its
+        # historical ["AT"] filter.
+        if entry.format in ("datex2", "nobil", "irve"):
             expand_relational_csv(
                 "graph",
                 path,
                 m,
                 challenge=False,
                 country=country,
-                country_filter=country_filter,
+                country_filter=entry.expansion_country_filter,
             )
-        if "bnetza" in name.lower():
+        elif entry.format == "bnetza":
             expand_bnezta("graph", path, m, challenge=False, country=country)
     return (m,)
 
@@ -902,9 +868,10 @@ def _(mo):
 @app.cell
 def _(
     TEST_GRAPH,
+    country_codes,
     df_to_dict,
+    em,
     m,
-    pl,
     target_tracker,
     total_aggregated_power_per_country_lower,
 ):
@@ -912,19 +879,22 @@ def _(
         total_aggregated_power_per_country_lower, graph=TEST_GRAPH
     )
     study_filter = list(aggregated_power_df["code"].unique())
-    results = (
-        target_tracker.join(
-            aggregated_power_df, left_on="Code", right_on="code", how="left"
-        )
-        .with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000))
-        .filter(pl.col("Code").is_in(study_filter))
+
+    # Calculated-led join (error_metrics.build_results_frame): every
+    # country with a calculated power stays in the frame even when the
+    # EAFO reports no reference power or AFIR target (IS, NO). Missing
+    # references and targets stay missing; nothing is filled with
+    # zero, so a failed or unavailable calculation cannot appear as
+    # measured zero capacity.
+    results = em.build_results_frame(
+        aggregated_power_df, target_tracker, country_codes
     )
 
-    result_codes = list(aggregated_power_df["code"].unique())
+    # AFIR target markers only where a target exists.
     filtered_markers = {
         k: v
         for k, v in df_to_dict(results, key_col="Code", value_col="target_mw").items()
-        if k in result_codes
+        if v is not None
     }
     return aggregated_power_df, filtered_markers, results, study_filter
 
@@ -974,7 +944,7 @@ def _(GroupedBarChartWidget, df_to_dict, filtered_markers, mo, results):
 def _():
     with open("queries/total_evses_per_power.sparql", "r") as input_f:
         total_evses_per_power = input_f.read()
-    # mo.md(f"""### Count of EVSES based on max nominal capacity
+    # mo.md(f"""### EVSE counts per connector power band
 
     # ```sparql
     # {total_evses_per_power}
@@ -1073,7 +1043,7 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
+def _(DoubleStackedBarChartWidget, cat_colors, cat_hatches, chart_input, chart_input_2, mo):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,
@@ -1098,7 +1068,14 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
     stacked_chart_widget = mo.ui.anywidget(stacked_chart_3)
 
     mo.md(
-        f"""### Count of EVSES based on max nominal capacity
+        f"""### EVSE counts per connector power band
+
+    The calculated bands count DISTINCT EVSEs per connector power band
+    (an EVSE with connectors in several bands contributes to each);
+    their sum is reported as the EVSE band sum. The EAFO reference
+    merges the approximate fast-AC and slow-DC categories into the
+    22-50 kW band and distinguishes current types the calculated side
+    does not.
 
     {stacked_chart_widget}"""
     )
@@ -1106,149 +1083,54 @@ def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
 
 
 @app.cell
-def _(pl, power_counts_tracker, results, total_evses_per_power_df):
-    value_cols = [
-        "0-7,4 kW",
-        "7,4-22 kW",
-        "22-50 kW",
-        "50-150 kW",
-        "150-350 kW",
-        "350+ kW",
-    ]
+def _(config, em, power_counts_tracker, results, total_evses_per_power_df):
+    # Shared error calculation (error_metrics.py): the same function
+    # feeds the comparison tables, the fidelity heatmap and the
+    # exported labels. SPARQL total_accounted_power is the calculated
+    # power, EAFO total_mw the reference power; differences are
+    # calculated minus reference; the denominator is the EAFO
+    # reference for the seven count indicators and the calculated
+    # value for power; relative errors are absolute, capped at 1 and
+    # averaged only over indicators with a usable error (the coverage
+    # is exported next to every mean).
+    #
+    # "EVSE band sum" is the sum of the per-band DISTINCT-EVSE counts,
+    # not an independently deduplicated EVSE total. "Total Power MW"
+    # is the sum over EVSEs of the minimum connector power (see
+    # queries/total_aggregated_power_per_country_lower.sparql), a
+    # minimum-connector aggregation, not guaranteed deliverable power.
+    reference_df = em.build_reference_frame(power_counts_tracker, results)
+    calculated_df = em.build_calculated_frame(total_evses_per_power_df, results)
+    error_table = em.compute_error_table(reference_df, calculated_df)
+    fidelity = em.fidelity_summary(error_table)
+    relative_error = em.heatmap_frame(error_table, fidelity)
 
-    # "Total Power MW" is the sum over EVSEs of the minimum connector
-    # power, i.e. a lower bound on the installed power (see
-    # queries/total_aggregated_power_per_country_lower.sparql).
-    # "Total EVSE" is the sum of the per-bin DISTINCT-EVSE counts and can
-    # exceed the number of physical EVSEs when one EVSE has connectors
-    # in more than one power bin.
-    summary_cols = ["Total EVSE", "Total Power MW"]
-    total_cols = pl.sum_horizontal(*value_cols).alias("Total EVSE").cast(int)
+    # Descriptive labels with evidence and provenance (N/A reasons
+    # separate from computed Low outcomes; SE/FI marked as NOBIL
+    # source substitutions).
+    fidelity_labels = em.fidelity_labels_for(fidelity, config)
 
-    # EAFO reference frame: EAFO counts and the EAFO reported total power
-    error_heatmap_reference = (
-        power_counts_tracker.with_columns(
-            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
-        )
-        .join(
-            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
-            left_on="code",
-            right_on="Code",
-            how="left",
-        )
-        .rename({"total_mw": "Total Power MW"})
+    value_cols = em.BANDS
+    summary_cols = [em.BAND_SUM, em.POWER]
+    return (
+        calculated_df,
+        error_table,
+        fidelity,
+        fidelity_labels,
+        reference_df,
+        relative_error,
+        summary_cols,
+        value_cols,
     )
-    # Calculated frame: SPARQL results, negated so that the diagonal
-    # concatenation below yields reference - calculated for every
-    # indicator (uniform sign convention)
-    error_heatmap_calculated = (
-        total_evses_per_power_df.with_columns(
-            [-pl.col(vc).cast(int) for vc in value_cols] + [-total_cols]
-        )
-        .join(
-            results.select(
-                pl.col("Code"), pl.col("total_accounted_power").cast(int).mul(-1)
-            ),
-            left_on="code",
-            right_on="Code",
-            how="left",
-        )
-        .rename({"total_accounted_power": "Total Power MW"})
-    )
-
-    absolute_error = (
-        pl.concat(
-            [error_heatmap_calculated, error_heatmap_reference],
-            how="diagonal",
-        )
-        .group_by("code", maintain_order=True)
-        .sum()
-    )
-
-    # Relative error denominators, as documented in the manuscript: the
-    # EAFO reference for the seven count indicators, the calculated
-    # value for the power indicator. IS/NO have no EAFO power reference
-    # and are excluded from the power error (null denominator).
-    relative_error = (
-        absolute_error.join(error_heatmap_reference.with_columns(total_cols), on="code")
-        .join(
-            results.select(
-                pl.col("Code").alias("code"),
-                pl.col("total_accounted_power").cast(int),
-            ),
-            on="code",
-            how="left",
-        )
-        .select(
-            ["code"]
-            + [
-                (pl.col(x) / pl.col(f"{x}_right")).abs()
-                if x != "Total Power MW"
-                else (pl.col(x) / pl.col("total_accounted_power")).abs()
-                for x in value_cols + summary_cols
-            ]
-        )
-        .with_columns(
-            [
-                pl.when(pl.col(x) > 1.0).then(pl.lit(1.0)).otherwise(pl.col(x)).alias(x)
-                for x in value_cols + summary_cols
-            ]
-        )
-        .with_columns(
-            pl.mean_horizontal(value_cols + summary_cols, ignore_nulls=True).alias(
-                "Overall Fidelity"
-            )
-        )
-        .unpivot(index="code", variable_name="range", value_name="error")
-    ).with_columns(
-        pl.col("error")
-        .cut(
-            breaks=[0.0, 0.2, 0.4, 0.6, 0.8, 1.0],
-            left_closed=True,
-            labels=["6", "5", "4", "3", "2", "1", "0"],
-        )
-        .alias("cat")
-    )
-    return relative_error, summary_cols, total_cols, value_cols
 
 
 @app.cell
-def _(
-    GT,
-    pl,
-    power_counts_tracker,
-    results,
-    total_cols,
-    total_evses_per_power_df,
-    value_cols,
-):
-    reference_df = (
-        power_counts_tracker.with_columns(
-            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
-        )
-        .join(
-            results.select(pl.col("Code"), pl.col("total_mw").cast(int)),
-            left_on="code",
-            right_on="Code",
-            how="left",
-        )
-        .rename({"total_mw": "Total Power MW"})
-    )
-
-    calculated_df = (
-        total_evses_per_power_df.with_columns(
-            [pl.col(vc).cast(int) for vc in value_cols] + [total_cols]
-        )
-        .join(
-            results.select(pl.col("Code"), pl.col("total_accounted_power").cast(int)),
-            left_on="code",
-            right_on="Code",
-            how="left",
-        )
-        .rename({"total_accounted_power": "Total Power MW"})
-    ).join(reference_df, on="code", how="left")
+def _(GT, calculated_df, reference_df, value_cols):
+    # Comparison table from the same shared frames as the error
+    # calculation: calculated vs EAFO reference per power band.
+    comparison_df = calculated_df.join(reference_df, on="code", how="left")
     table_caps = GT(
-        calculated_df.select(
+        comparison_df.select(
             ["code"] + value_cols + [f"{vcc}_right" for vcc in value_cols]
         )
     )
@@ -1261,34 +1143,25 @@ def _(
 
     table_caps = table_caps.cols_label(col_labels)
     print(table_caps.as_latex())
-    return (calculated_df,)
+    return (comparison_df,)
 
 
 @app.cell
-def _(
-    GT,
-    aggregated_power_df,
-    calculated_df,
-    pl,
-    summary_cols,
-    target_tracker,
-):
-    reference_values = target_tracker.join(
-        aggregated_power_df, left_on="Code", right_on="code", how="left"
-    ).with_columns(pl.col("total_accounted_power").fill_null(0).truediv(1000))
-
+def _(GT, comparison_df, pl, results, summary_cols):
+    # Quantities table from the shared frames: calculated vs EAFO
+    # reference vs AFIR target. IS/NO keep their calculated power with
+    # missing reference/target entries (no zero fill).
     quantities_df = (
-        calculated_df.select(
+        comparison_df.select(
             ["code"] + summary_cols + [f"{sc}_right" for sc in summary_cols]
         )
         .join(
-            reference_values.select("Code", "Target kW"),
-            left_on="code",
-            right_on="Code",
+            results.select(pl.col("Code").alias("code"), pl.col("target_mw")),
+            on="code",
             how="left",
         )
-        .with_columns(pl.col("Target kW").mul(0.001).cast(int).alias("Target MW"))
-        .drop("Target kW")
+        .with_columns(pl.col("target_mw").alias("Target MW"))
+        .drop("target_mw")
     )
 
     table_qs = GT(quantities_df)
@@ -1324,7 +1197,7 @@ def _(HeatMapWidget, mo, relative_error):
         "150-350 kW": "#6181ab",
         "350+ kW": "#6181ab",
         "Total Power MW": "#c1a2bb",
-        "Total EVSE": "#e0ba2f",
+        "EVSE band sum": "#e0ba2f",
         "Overall Fidelity": "#73a861",
     }
 
@@ -1505,6 +1378,9 @@ def _(
     cat_colors,
     chart_input,
     chart_input_2,
+    error_table,
+    fidelity,
+    fidelity_labels,
     filtered_markers,
     grid_info,
     json,
@@ -1522,6 +1398,9 @@ def _(
         "total_evses_per_power": total_evses_per_power_df,
         "results": results,
         "relative_error": relative_error,
+        "error_table": error_table,
+        "fidelity_summary": fidelity,
+        "fidelity_labels": fidelity_labels,
         "filtered_markers": filtered_markers,
         "cat_colors": cat_colors,
         "chart_input": chart_input,

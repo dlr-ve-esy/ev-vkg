@@ -2,13 +2,13 @@
   {
     "code": "AT",
     "range": "0-7,4 kW",
-    "error": 0.9845440494590417,
+    "error": 0.8531684698608965,
     "cat": "1"
   },
   {
     "code": "DE",
     "range": "0-7,4 kW",
-    "error": 0.7414151925078044,
+    "error": 0.7351716961498439,
     "cat": "2"
   },
   {
@@ -74,13 +74,13 @@
   {
     "code": "AT",
     "range": "7,4-22 kW",
-    "error": 0.0929366541202851,
-    "cat": "5"
+    "error": 0.21446304156322576,
+    "cat": "4"
   },
   {
     "code": "DE",
     "range": "7,4-22 kW",
-    "error": 0.02412477211630566,
+    "error": 0.051293143404505144,
     "cat": "5"
   },
   {
@@ -134,7 +134,7 @@
   {
     "code": "SE",
     "range": "7,4-22 kW",
-    "error": 0.31406159209761764,
+    "error": 0.3315175285686616,
     "cat": "4"
   },
   {
@@ -218,13 +218,13 @@
   {
     "code": "AT",
     "range": "50-150 kW",
-    "error": 0.3041084286319356,
-    "cat": "4"
+    "error": 0.10504023718763236,
+    "cat": "5"
   },
   {
     "code": "DE",
     "range": "50-150 kW",
-    "error": 0.5480377166156982,
+    "error": 0.4689092762487258,
     "cat": "3"
   },
   {
@@ -290,14 +290,14 @@
   {
     "code": "AT",
     "range": "150-350 kW",
-    "error": 0.37239926257571765,
-    "cat": "4"
+    "error": 0.6315512246510403,
+    "cat": "2"
   },
   {
     "code": "DE",
     "range": "150-350 kW",
-    "error": 0.19950111993484015,
-    "cat": "5"
+    "error": 0.25427611484422724,
+    "cat": "4"
   },
   {
     "code": "DK",
@@ -362,13 +362,13 @@
   {
     "code": "AT",
     "range": "350+ kW",
-    "error": 0.12749615975422426,
-    "cat": "5"
+    "error": 0.5637480798771122,
+    "cat": "3"
   },
   {
     "code": "DE",
     "range": "350+ kW",
-    "error": 0.7176964852956246,
+    "error": 0.7556102059637257,
     "cat": "2"
   },
   {
@@ -433,86 +433,86 @@
   },
   {
     "code": "AT",
-    "range": "Total EVSE",
-    "error": 0.012706365255183654,
+    "range": "EVSE band sum",
+    "error": 0.18778860954335558,
     "cat": "5"
   },
   {
     "code": "DE",
-    "range": "Total EVSE",
-    "error": 0.017665332004499386,
+    "range": "EVSE band sum",
+    "error": 0.051451517959657064,
     "cat": "5"
   },
   {
     "code": "DK",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.7480971621875587,
     "cat": "2"
   },
   {
     "code": "ES",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.6075727883538634,
     "cat": "2"
   },
   {
     "code": "FI",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.7207829925650557,
     "cat": "2"
   },
   {
     "code": "FR",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.23762779736697556,
     "cat": "4"
   },
   {
     "code": "IS",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.6720707442888725,
     "cat": "2"
   },
   {
     "code": "LV",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.6445783132530121,
     "cat": "2"
   },
   {
     "code": "NO",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.0617185155546664,
     "cat": "5"
   },
   {
     "code": "PT",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.19302483581188193,
     "cat": "5"
   },
   {
     "code": "SE",
-    "range": "Total EVSE",
-    "error": 0.24562195040438473,
+    "range": "EVSE band sum",
+    "error": 0.25766994184880687,
     "cat": "4"
   },
   {
     "code": "SI",
-    "range": "Total EVSE",
+    "range": "EVSE band sum",
     "error": 0.15628917676556622,
     "cat": "5"
   },
   {
     "code": "AT",
     "range": "Total Power MW",
-    "error": 0.33031161473087817,
-    "cat": "4"
+    "error": 0.011705685618729096,
+    "cat": "5"
   },
   {
     "code": "DE",
     "range": "Total Power MW",
-    "error": 0.1872751567478672,
+    "error": 0.13669614586745277,
     "cat": "5"
   },
   {
@@ -566,7 +566,7 @@
   {
     "code": "SE",
     "range": "Total Power MW",
-    "error": 0.15890926187118007,
+    "error": 0.171021377672209,
     "cat": "5"
   },
   {
@@ -578,13 +578,13 @@
   {
     "code": "AT",
     "range": "Overall Fidelity",
-    "error": 0.4030628168159083,
+    "error": 0.44593316853774895,
     "cat": "3"
   },
   {
     "code": "DE",
     "range": "Overall Fidelity",
-    "error": 0.42946447190282994,
+    "error": 0.43167601255476723,
     "cat": "3"
   },
   {
@@ -596,13 +596,13 @@
   {
     "code": "ES",
     "range": "Overall Fidelity",
-    "error": 0.699745608267671,
+    "error": 0.6997456082676711,
     "cat": "2"
   },
   {
     "code": "FI",
     "range": "Overall Fidelity",
-    "error": 0.7385310532552292,
+    "error": 0.7385310532552293,
     "cat": "2"
   },
   {
@@ -614,7 +614,7 @@
   {
     "code": "IS",
     "range": "Overall Fidelity",
-    "error": 0.7523581953986435,
+    "error": 0.7523581953986433,
     "cat": "2"
   },
   {
@@ -632,13 +632,13 @@
   {
     "code": "PT",
     "range": "Overall Fidelity",
-    "error": 0.4496706283041836,
+    "error": 0.44967062830418364,
     "cat": "3"
   },
   {
     "code": "SE",
     "range": "Overall Fidelity",
-    "error": 0.372189931439615,
+    "error": 0.37739193690417683,
     "cat": "4"
   },
   {

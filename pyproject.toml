@@ -35,3 +35,8 @@ members = [
 [tool.uv.sources]
 bnetza-parser = { workspace = true }
 nobil-parser = { workspace = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

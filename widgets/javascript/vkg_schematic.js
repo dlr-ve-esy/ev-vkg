@@ -1,25 +1,30 @@
 import * as d3 from "https://esm.sh/d3@7";
 
-// Layout in design units (1 unit = 1 cm at the original manuscript scale),
-// mirroring the manuscript figure built by the repo-root vkg_schematic.py:
-// the reviewed sources on the left feed two branches -- the FAIR assessment
-// of the sources (upper lane) and the harmonisation-and-querying pipeline
-// over the acquired datasets (lower lane) -- and both feed the integrated
-// assessment on the right.
-const VIEW = { x: -0.15, y: -4.05, w: 17.8, h: 6.85 };
+// Layout in design units (1 unit = 1 cm at the original manuscript scale).
+// The reviewed sources on the left feed two branches -- the FAIR
+// assessment of the sources and the harmonisation-and-querying pipeline
+// over the acquired datasets -- and both converge into the integrated
+// assessment on the right. The lanes funnel towards the assessment: the
+// boxes descend in cy from the source side to the assessment side, so
+// the space between the branches narrows towards the right instead of
+// forming an empty band across the middle of the figure.
+const VIEW = { x: -0.15, y: -2.9, w: 17.9, h: 5.45 };
 
-const SRC = { cx: 1.3, cy: 0.0, w: 2.4, h: 3.8 };
-const UPPER_Y = 2.0;
-const LOWER_Y = -2.0;
-const EVIDENCE = { cx: 4.6, w: 2.3, h: 1.1 };
-const FAIR = { cx: 7.8, w: 2.5, h: 1.1 };
-const ACQUIRED = { cx: 4.6, w: 2.3, h: 1.1 };
-const PARSING = { cx: 7.8, w: 2.5, h: 1.1 };
-const PANEL = { cx: 11.1, w: 2.9, h: 1.7 };
-const INDICATORS = { cx: 14.0, w: 2.2, h: 1.2 };
-const COMPARISON = { cx: 16.35, w: 2.1, h: 1.3 };
-const REFERENCE = { cx: 16.35, cy: -3.55, w: 2.1, h: 0.85 };
-const ASSESSMENT = { cx: 16.35, cy: 1.0, w: 2.5, h: 1.7 };
+const SRC = { cx: 1.3, cy: 0.0, w: 2.4, h: 4.9 };
+// Pipeline branch (upper lane in design coordinates).
+const ACQUIRED = { cx: 4.5, cy: -1.85, w: 2.2, h: 1.3 };
+const PARSING = { cx: 7.5, cy: -1.6, w: 2.3, h: 1.3 };
+const PANEL = { cx: 10.6, cy: -1.3, w: 2.7, h: 1.7 };
+const INDICATORS = { cx: 13.55, cy: -0.95, w: 2.0, h: 1.3 };
+const COMPARISON = { cx: 16.15, cy: -0.75, w: 2.0, h: 1.3 };
+// FAIR branch (lower lane in design coordinates).
+const EVIDENCE = { cx: 4.5, cy: 1.75, w: 2.3, h: 1.3 };
+const FAIR = { cx: 7.7, cy: 1.5, w: 2.4, h: 1.3 };
+const SCORES = { cx: 11.0, cy: 1.1, w: 2.5, h: 1.3 };
+// Separate EAFO reference input below the fidelity comparison, and the
+// integrated assessment receiving both branches.
+const REFERENCE = { cx: 16.15, cy: -2.2, w: 2.0, h: 0.8 };
+const ASSESSMENT = { cx: 16.35, cy: 1.3, w: 2.5, h: 1.9 };
 
 // 1 PostScript point expressed in design units.
 const PT = 0.0353;
@@ -79,11 +84,11 @@ function renderSchematic(container, cfg) {
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
     .attr("fill", colors.ink);
 
-  const box = (b, cy, fill, { rounding = boxRounding, dashed = false } = {}) =>
+  const box = (b, fill, { rounding = boxRounding, dashed = false } = {}) =>
     svg
       .append("rect")
       .attr("x", b.cx - b.w / 2)
-      .attr("y", cy - b.h / 2)
+      .attr("y", b.cy - b.h / 2)
       .attr("width", b.w)
       .attr("height", b.h)
       .attr("rx", rounding)
@@ -153,11 +158,29 @@ function renderSchematic(container, cfg) {
     };
   };
 
+  // Two-line box label: bold title above a smaller note.
+  const label = (b, title, note, { fill = colors.ink } = {}) => {
+    makeText({
+      x: b.cx,
+      y: b.cy + 0.22,
+      str: title,
+      fill,
+    }).fit(b.w, 0.55);
+    makeText({
+      x: b.cx,
+      y: b.cy - 0.32,
+      str: note,
+      size: 5.5,
+      weight: "normal",
+      fill,
+    }).fit(b.w, 0.45);
+  };
+
   // -- left: the reviewed sources (common starting point) -------------------
-  box(SRC, SRC.cy, colors.source);
+  box(SRC, colors.source);
   makeText({
     x: SRC.cx,
-    y: 0.75,
+    y: 1.2,
     str: labels.sources_title,
     fill: "white",
   }).fit(SRC.w - 0.3, 0.6);
@@ -171,87 +194,51 @@ function renderSchematic(container, cfg) {
   }).fit(SRC.w - 0.3, 1.0);
   makeText({
     x: SRC.cx,
-    y: -0.95,
+    y: -1.15,
     str: labels.sources_count,
     size: 5.5,
     weight: "normal",
     fill: "white",
   }).fit(SRC.w - 0.3, 0.5);
 
-  // -- upper lane: FAIR assessment branch -----------------------------------
-  arrow(SRC.cx + SRC.w / 2, 1.2, EVIDENCE.cx - EVIDENCE.w / 2, UPPER_Y);
-  box(EVIDENCE, UPPER_Y, "white");
-  makeText({
-    x: EVIDENCE.cx,
-    y: UPPER_Y,
-    str: labels.evidence,
-  }).fit(EVIDENCE.w, EVIDENCE.h);
-
-  arrow(EVIDENCE.cx + EVIDENCE.w / 2, UPPER_Y, FAIR.cx - FAIR.w / 2, UPPER_Y);
-  box(FAIR, UPPER_Y, colors.ontology);
-  makeText({
-    x: FAIR.cx,
-    y: UPPER_Y + 0.18,
-    str: labels.fair_title,
+  // -- pipeline branch: acquired datasets to fidelity comparison ------------
+  // Both branch arrows fan out from the middle of the sources box, so
+  // the wedge between the lanes reads as the branching point.
+  arrow(SRC.cx + SRC.w / 2, -0.5, ACQUIRED.cx - ACQUIRED.w / 2, ACQUIRED.cy);
+  box(ACQUIRED, colors.source);
+  label(ACQUIRED, labels.acquired_title, labels.acquired_note, {
     fill: "white",
-  }).fit(FAIR.w, 0.55);
-  makeText({
-    x: FAIR.cx,
-    y: UPPER_Y - 0.25,
-    str: labels.fair_note,
-    size: 5.5,
-    weight: "normal",
-    fill: "white",
-  }).fit(FAIR.w, 0.45);
-
-  // -- lower lane: harmonisation and querying branch ------------------------
-  arrow(SRC.cx + SRC.w / 2, -1.2, ACQUIRED.cx - ACQUIRED.w / 2, LOWER_Y);
-  box(ACQUIRED, LOWER_Y, colors.source);
+  });
   makeText({
     x: ACQUIRED.cx,
-    y: LOWER_Y + 0.16,
-    str: labels.acquired_title,
-    fill: "white",
-  }).fit(ACQUIRED.w, 0.55);
-  makeText({
-    x: ACQUIRED.cx,
-    y: LOWER_Y - 0.26,
-    str: labels.acquired_note,
-    size: 5.5,
-    weight: "normal",
-    fill: "white",
-  }).fit(ACQUIRED.w, 0.45);
-  makeText({
-    x: ACQUIRED.cx,
-    y: -2.95,
+    y: -2.72,
     str: labels.acquired_aside,
     size: 5,
     weight: "normal",
     style: "italic",
   });
 
-  arrow(ACQUIRED.cx + ACQUIRED.w / 2, LOWER_Y, PARSING.cx - PARSING.w / 2, LOWER_Y);
-  box(PARSING, LOWER_Y, colors.mapping);
-  makeText({
-    x: PARSING.cx,
-    y: LOWER_Y + 0.16,
-    str: labels.parsing_title,
+  arrow(
+    ACQUIRED.cx + ACQUIRED.w / 2,
+    ACQUIRED.cy,
+    PARSING.cx - PARSING.w / 2,
+    PARSING.cy
+  );
+  box(PARSING, colors.mapping);
+  label(PARSING, labels.parsing_title, labels.parsing_note, {
     fill: "white",
-  }).fit(PARSING.w, 0.55);
-  makeText({
-    x: PARSING.cx,
-    y: LOWER_Y - 0.26,
-    str: labels.parsing_note,
-    size: 5.5,
-    weight: "normal",
-    fill: "white",
-  }).fit(PARSING.w, 0.45);
+  });
 
-  arrow(PARSING.cx + PARSING.w / 2, LOWER_Y, PANEL.cx - PANEL.w / 2, LOWER_Y);
-  box(PANEL, LOWER_Y, "white", { rounding: boxRounding * 1.4 });
+  arrow(
+    PARSING.cx + PARSING.w / 2,
+    PARSING.cy,
+    PANEL.cx - PANEL.w / 2,
+    PANEL.cy
+  );
+  box(PANEL, "white", { rounding: boxRounding * 1.4 });
   makeText({
     x: PANEL.cx,
-    y: -1.45,
+    y: PANEL.cy + 0.55,
     str: labels.panel_title,
     size: 6.5,
   }).fit(PANEL.w - 0.3, 0.5);
@@ -260,7 +247,7 @@ function renderSchematic(container, cfg) {
   // panel-normalized coordinates ([-1, 1] on both axes).
   const nodes = motifNodes.map(([u, v]) => [
     PANEL.cx + u * (PANEL.w / 2),
-    LOWER_Y + v * (PANEL.h / 2),
+    PANEL.cy + v * (PANEL.h / 2),
   ]);
   motifEdges.forEach(([i, j]) => {
     svg
@@ -285,47 +272,57 @@ function renderSchematic(container, cfg) {
   });
   makeText({
     x: PANEL.cx,
-    y: -2.62,
+    y: PANEL.cy - 0.65,
     str: labels.panel_note,
     size: 5,
     weight: "normal",
     style: "italic",
   }).fit(PANEL.w - 0.3, 0.6);
 
-  arrow(PANEL.cx + PANEL.w / 2, LOWER_Y, INDICATORS.cx - INDICATORS.w / 2, LOWER_Y);
-  box(INDICATORS, LOWER_Y, "white");
-  makeText({
-    x: INDICATORS.cx,
-    y: LOWER_Y + 0.28,
-    str: labels.indicators_title,
-  }).fit(INDICATORS.w, 0.7);
-  makeText({
-    x: INDICATORS.cx,
-    y: LOWER_Y - 0.32,
-    str: labels.indicators_note,
-    size: 5,
-    weight: "normal",
-  }).fit(INDICATORS.w, 0.6);
+  arrow(
+    PANEL.cx + PANEL.w / 2,
+    PANEL.cy,
+    INDICATORS.cx - INDICATORS.w / 2,
+    INDICATORS.cy
+  );
+  box(INDICATORS, "white");
+  label(INDICATORS, labels.indicators_title, labels.indicators_note);
 
-  // -- comparison with its separate EAFO reference input --------------------
-  arrow(INDICATORS.cx + INDICATORS.w / 2, LOWER_Y, COMPARISON.cx - COMPARISON.w / 2, LOWER_Y);
-  box(COMPARISON, LOWER_Y, colors.ink);
-  makeText({
-    x: COMPARISON.cx,
-    y: LOWER_Y + 0.28,
-    str: labels.comparison_title,
+  arrow(
+    INDICATORS.cx + INDICATORS.w / 2,
+    INDICATORS.cy,
+    COMPARISON.cx - COMPARISON.w / 2,
+    COMPARISON.cy
+  );
+  box(COMPARISON, colors.ink);
+  label(COMPARISON, labels.comparison_title, labels.comparison_note, {
     fill: "white",
-  }).fit(COMPARISON.w, 0.7);
-  makeText({
-    x: COMPARISON.cx,
-    y: LOWER_Y - 0.38,
-    str: labels.comparison_note,
-    size: 5,
-    weight: "normal",
-    fill: "white",
-  }).fit(COMPARISON.w, 0.6);
+  });
 
-  box(REFERENCE, REFERENCE.cy, "white", { dashed: true });
+  // -- FAIR branch: evidence to per-dataset scores ---------------------------
+  arrow(SRC.cx + SRC.w / 2, 0.5, EVIDENCE.cx - EVIDENCE.w / 2, EVIDENCE.cy);
+  box(EVIDENCE, "white");
+  makeText({
+    x: EVIDENCE.cx,
+    y: EVIDENCE.cy,
+    str: labels.evidence,
+  }).fit(EVIDENCE.w, EVIDENCE.h);
+
+  arrow(
+    EVIDENCE.cx + EVIDENCE.w / 2,
+    EVIDENCE.cy,
+    FAIR.cx - FAIR.w / 2,
+    FAIR.cy
+  );
+  box(FAIR, colors.ontology);
+  label(FAIR, labels.fair_title, labels.fair_note, { fill: "white" });
+
+  arrow(FAIR.cx + FAIR.w / 2, FAIR.cy, SCORES.cx - SCORES.w / 2, SCORES.cy);
+  box(SCORES, "white");
+  label(SCORES, labels.scores_title, labels.scores_note);
+
+  // -- separate EAFO reference input ----------------------------------------
+  box(REFERENCE, "white", { dashed: true });
   makeText({
     x: REFERENCE.cx,
     y: REFERENCE.cy + 0.14,
@@ -342,28 +339,38 @@ function renderSchematic(container, cfg) {
     REFERENCE.cx,
     REFERENCE.cy + REFERENCE.h / 2,
     COMPARISON.cx,
-    LOWER_Y - COMPARISON.h / 2,
+    COMPARISON.cy - COMPARISON.h / 2,
     true
   );
 
   // -- right: integrated assessment receives both branches ------------------
-  box(ASSESSMENT, ASSESSMENT.cy, colors.graph);
+  box(ASSESSMENT, colors.graph);
   makeText({
     x: ASSESSMENT.cx,
-    y: ASSESSMENT.cy + 0.3,
+    y: ASSESSMENT.cy + 0.35,
     str: labels.assessment_title,
     fill: "white",
   }).fit(ASSESSMENT.w, 0.8);
   makeText({
     x: ASSESSMENT.cx,
-    y: ASSESSMENT.cy - 0.45,
+    y: ASSESSMENT.cy - 0.5,
     str: labels.assessment_note,
     size: 5.5,
     weight: "normal",
     fill: "white",
   }).fit(ASSESSMENT.w, 0.5);
-  arrow(FAIR.cx + FAIR.w / 2, UPPER_Y, ASSESSMENT.cx - ASSESSMENT.w / 2, ASSESSMENT.cy + 0.3);
-  arrow(COMPARISON.cx, LOWER_Y + COMPARISON.h / 2, ASSESSMENT.cx, ASSESSMENT.cy - ASSESSMENT.h / 2);
+  arrow(
+    SCORES.cx + SCORES.w / 2,
+    SCORES.cy,
+    ASSESSMENT.cx - ASSESSMENT.w / 2,
+    ASSESSMENT.cy + 0.35
+  );
+  arrow(
+    COMPARISON.cx,
+    COMPARISON.cy + COMPARISON.h / 2,
+    ASSESSMENT.cx,
+    ASSESSMENT.cy - ASSESSMENT.h / 2
+  );
 }
 
 export default { render };

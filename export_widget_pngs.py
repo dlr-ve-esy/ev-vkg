@@ -40,6 +40,7 @@ from pathlib import Path
 import polars as pl
 
 import canonical_values as cv
+from write_canonical_query_results import canonical_error_outputs
 from widgets.barchart import (
     BarChartWidget,
     DoubleStackedBarChartWidget,
@@ -199,6 +200,22 @@ def assert_canonical_inputs() -> None:
         "query_results/chart_input_2.json",
     )
     cv.assert_filtered_markers(load_json("query_results/filtered_markers.json"))
+
+    # The fidelity heatmap input and the exported labels must match the
+    # values derived from the published tables with the shared error
+    # calculation (error_metrics.py); a stale or divergent dump would
+    # render a wrong figure.
+    heatmap_rows, labels = canonical_error_outputs()
+    if load_json("query_results/relative_error.json") != heatmap_rows:
+        raise AssertionError(
+            "query_results/relative_error.json does not match the "
+            "canonical error frame; run write_canonical_query_results.py"
+        )
+    if load_json("query_results/fidelity_labels.json") != labels:
+        raise AssertionError(
+            "query_results/fidelity_labels.json does not match the "
+            "canonical labels; run write_canonical_query_results.py"
+        )
 
 
 # Manuscript float -> exported widget mapping (guide M-2). figure_3,
@@ -469,7 +486,7 @@ def build_specs() -> list:
         "150-350 kW": "#6181ab",
         "350+ kW": "#6181ab",
         "Total Power MW": "#c1a2bb",
-        "Total EVSE": "#e0ba2f",
+        "EVSE band sum": "#e0ba2f",
         "Overall Fidelity": "#73a861",
     }
     specs.append(

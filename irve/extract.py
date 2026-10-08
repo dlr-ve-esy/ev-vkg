@@ -301,9 +301,19 @@ def irve_extract_csv(filepath: str):
         pl.when(pl.col("facility_id").is_in(non_unique_ids))
         .then(
             pl.struct("facility_id", "_dup_count").map_elements(
-                lambda row: f"{row['facility_id']}C{suffixes[row['_dup_count']]}"
-                if row["_dup_count"] < len(suffixes)
-                else f"{row['facility_id']}C{row['_dup_count']}",
+                # Rows outside the when-branch reach the lambda with
+                # null fields in polars >= 2.0 (older versions skipped
+                # them); return None so the otherwise-branch value is
+                # used, as before.
+                lambda row: (
+                    None
+                    if row["_dup_count"] is None
+                    else (
+                        f"{row['facility_id']}C{suffixes[row['_dup_count']]}"
+                        if row["_dup_count"] < len(suffixes)
+                        else f"{row['facility_id']}C{row['_dup_count']}"
+                    )
+                ),
                 return_dtype=pl.String,
             )
         )

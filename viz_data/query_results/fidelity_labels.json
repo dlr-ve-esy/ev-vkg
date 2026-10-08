@@ -1,0 +1,242 @@
+[
+  {
+    "code": "AT",
+    "label": "Good",
+    "mean_capped_relative_error": 0.44593316853774895,
+    "indicator_coverage": 8,
+    "source_dataset_id": "at.1",
+    "source_snapshot_id": "AT-20250120-ECONTROL-DATEXII",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "DE",
+    "label": "Good",
+    "mean_capped_relative_error": 0.43167601255476723,
+    "indicator_coverage": 8,
+    "source_dataset_id": "de.2",
+    "source_snapshot_id": "DE-20241201-BNETZA-DE",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "DK",
+    "label": "Low",
+    "mean_capped_relative_error": 0.7763989612679614,
+    "indicator_coverage": 8,
+    "source_dataset_id": "no.1",
+    "source_snapshot_id": "NO-20250120-NOBIL-NOBIL",
+    "substitution_note": "No separately assessed Danish dataset; the calculated values derive from the NOBIL dump (no.1).",
+    "na_reason": null
+  },
+  {
+    "code": "ES",
+    "label": "Low",
+    "mean_capped_relative_error": 0.6997456082676711,
+    "indicator_coverage": 8,
+    "source_dataset_id": "es.1",
+    "source_snapshot_id": "ES-20250120-MITERD-DATEXII",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "FI",
+    "label": "Low",
+    "mean_capped_relative_error": 0.7385310532552293,
+    "indicator_coverage": 8,
+    "source_dataset_id": "no.1",
+    "source_snapshot_id": "NO-20250120-NOBIL-NOBIL",
+    "substitution_note": "Source substitution: the calculated values derive from the NOBIL dump (no.1), not from the separately assessed Finnish dataset fi.1, which could not be acquired.",
+    "na_reason": null
+  },
+  {
+    "code": "FR",
+    "label": "Excellent",
+    "mean_capped_relative_error": 0.39372159063624396,
+    "indicator_coverage": 8,
+    "source_dataset_id": "fr.1",
+    "source_snapshot_id": "FR-20250128-TDATAFR-IRVE",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "IS",
+    "label": "Low",
+    "mean_capped_relative_error": 0.7523581953986433,
+    "indicator_coverage": 7,
+    "source_dataset_id": "no.1",
+    "source_snapshot_id": "NO-20250120-NOBIL-NOBIL",
+    "substitution_note": "No separately assessed Icelandic dataset; the calculated values derive from the NOBIL dump (no.1).",
+    "na_reason": null
+  },
+  {
+    "code": "LV",
+    "label": "Low",
+    "mean_capped_relative_error": 0.6080149556836989,
+    "indicator_coverage": 8,
+    "source_dataset_id": "lv.1",
+    "source_snapshot_id": "LV-20250120-NPPDK-DATEXII",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "NO",
+    "label": "Good",
+    "mean_capped_relative_error": 0.5181545002458583,
+    "indicator_coverage": 7,
+    "source_dataset_id": "no.1",
+    "source_snapshot_id": "NO-20250120-NOBIL-NOBIL",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "PT",
+    "label": "Good",
+    "mean_capped_relative_error": 0.44967062830418364,
+    "indicator_coverage": 8,
+    "source_dataset_id": "pt.1",
+    "source_snapshot_id": "PT-20250116-MOBIE-DATEXII",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "SE",
+    "label": "Excellent",
+    "mean_capped_relative_error": 0.37739193690417683,
+    "indicator_coverage": 8,
+    "source_dataset_id": "no.1",
+    "source_snapshot_id": "NO-20250120-NOBIL-NOBIL",
+    "substitution_note": "Source substitution: the calculated values derive from the NOBIL dump (no.1), not from the separately assessed Swedish dataset se.1, which could not be acquired.",
+    "na_reason": null
+  },
+  {
+    "code": "SI",
+    "label": "Low",
+    "mean_capped_relative_error": 0.7282531748725252,
+    "indicator_coverage": 8,
+    "source_dataset_id": "si.1",
+    "source_snapshot_id": "SI-20250120-NCUP-DATEXII",
+    "substitution_note": null,
+    "na_reason": null
+  },
+  {
+    "code": "CY",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "cy.1",
+    "source_snapshot_id": "CY-20250120-EAC-DATEXII",
+    "substitution_note": null,
+    "na_reason": "The parsed DATEX II (modified) output contains no EVSE or connector records, so no calculated values exist."
+  },
+  {
+    "code": "BE",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "be.1",
+    "source_snapshot_id": "BE-NA-ECOMOVEMENT-OCPI",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Eco-Movement OCPI endpoint requires a commercial subscription; no open dump is available."
+  },
+  {
+    "code": "CH",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "ch.1",
+    "source_snapshot_id": "CH-20250120-BFE-OICP",
+    "substitution_note": null,
+    "na_reason": "OICP data model is not mapped by the current pipeline and no open dump could be acquired, so no calculated values exist. EAFO count and power references for Switzerland do exist; the exclusion reflects the missing analysis, not missing reference data."
+  },
+  {
+    "code": "EL",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "el.1",
+    "source_snapshot_id": "EL-20250128-FORTISIS-MAP",
+    "substitution_note": null,
+    "na_reason": "Not acquired: only an interactive map is available, no machine-actionable data."
+  },
+  {
+    "code": "HU",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "hu.1",
+    "source_snapshot_id": "HU-20250128-KOZUT-DATEXII",
+    "substitution_note": null,
+    "na_reason": "The acquired XML did not parse into EVSE records in the published run (no parsed/HU-* output), so the dataset contributes no graph data."
+  },
+  {
+    "code": "IT",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "it.1",
+    "source_snapshot_id": "IT-20250128-PUN-OCPI",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Unique National Platform requires registration and provides no open dump."
+  },
+  {
+    "code": "LT",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "lt.1",
+    "source_snapshot_id": "LT-20250120-LAKD-LT",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Lithuanian road administration register (ev.lakd.lt) exposes no machine-actionable export."
+  },
+  {
+    "code": "LU",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "lu.1",
+    "source_snapshot_id": "LU-20230106-CHARGY-INSPIRE",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Chargy INSPIRE endpoint was not retrievable in a machine-actionable form."
+  },
+  {
+    "code": "MT",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "mt.1",
+    "source_snapshot_id": "MT-20250120-CHMYR-MT",
+    "substitution_note": null,
+    "na_reason": "Not acquired: Charge my Ride exposes a dashboard only."
+  },
+  {
+    "code": "NL",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "nl.1",
+    "source_snapshot_id": "NL-20180122-ECOMOVEMENT-OCPI",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Eco-Movement OCPI endpoint requires a commercial subscription."
+  },
+  {
+    "code": "PL",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "pl.1",
+    "source_snapshot_id": "PL-20250120-GREENWAY-GW",
+    "substitution_note": null,
+    "na_reason": "Not acquired: the Greenway endpoint was not retrievable in a machine-actionable form."
+  },
+  {
+    "code": "UK",
+    "label": "N/A",
+    "mean_capped_relative_error": null,
+    "indicator_coverage": 0,
+    "source_dataset_id": "uk.1",
+    "source_snapshot_id": "UK-20250120-ZAPMAP-OCPI",
+    "substitution_note": null,
+    "na_reason": "Not acquired: Zapmap Insights is a commercial product."
+  }
+]

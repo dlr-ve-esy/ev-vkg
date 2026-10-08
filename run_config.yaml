@@ -1,0 +1,357 @@
+# Run configuration for the EVSE virtual knowledge graph analysis.
+#
+# This manifest is the single source of truth for which inputs the
+# analysis runs on (audit item: "Make input and source selection
+# reproducible"). Every entry records the stable dataset ID, the
+# snapshot it runs on, the input file and its checksum, whether the
+# dataset is part of the graph analysis, the countries it covers, and
+# the reason for any exclusion. The notebook (main.py) and the extractor
+# (extract_data.py) read this file instead of relying on hard-coded
+# filenames or notebook checkbox state.
+#
+# Distinctions recorded here:
+# - dataset_id is the stable identity of the assessed dataset (at.1,
+#   de.1, de.2, ...). The metadata record id (sources/metadata.csv) is
+#   the snapshot/assessment record id and may contain dates.
+# - snapshot_date is the content date of the acquired data file. It is
+#   distinct from the NAP publication/inventory date in metadata.csv.
+# - The latest assessment record of a dataset (FAIR scoring) does not
+#   have to be the record whose snapshot feeds the quantitative
+#   analysis; both selections are recorded explicitly here.
+
+analysis:
+  name: EVSE VKG manuscript analysis
+  eafo_reference:
+    snapshot_id: eafo-20250617
+    snapshot_date: "2025-06-17"
+    meaning: >-
+      EAFO AFIR target tracker and recharging point power counts export
+      used as the reference for the quantitative comparison.
+    inputs:
+      - path: viz_data/17.06.2025-eafo-target-tracker.csv
+        checksum: sha256:70bf5d99c27612dce0da121109c69ca5b44f71e332887291b04d5477f4b4fd08
+      - path: viz_data/17.06.2025-eafo-power-counts.csv
+        checksum: sha256:80fb9ea901d3a41cd08147a8fab5393f2ec0643aeafd6686b03b0f988aa3cdfd
+
+datasets:
+  - dataset_id: at.1
+    format: datex2
+    snapshot_id: AT-20250120-ECONTROL-DATEXII
+    snapshot_date: "2025-01-20"
+    snapshot_meaning: >-
+      E-Control Ladestellenverzeichnis DATEX II pull of 20 January 2025;
+      the Austrian input used for the published results. The September
+      2025 refetch (AT-20250904) is a later assessment snapshot and does
+      not reproduce the published calculation.
+    input_path: sources/JSON/20.01.2025-DATEXII-AT.json
+    checksum: sha256:5d02847eff772059a6114675366a425832ca95c6f1506a75114d42a476a9bcce
+    parsed_dir: AT-20250120-ECONTROL-DATEXII
+    include_in_analysis: true
+    country_coverage: [AT]
+    expansion_country_filter: [AT]
+
+  - dataset_id: be.1
+    format: ocpi
+    snapshot_id: BE-NA-ECOMOVEMENT-OCPI
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [BE]
+    exclusion_reason: >-
+      Not acquired: the Eco-Movement OCPI endpoint requires a commercial
+      subscription; no open dump is available.
+
+  - dataset_id: ch.1
+    format: oicp
+    snapshot_id: CH-20250120-BFE-OICP
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [CH]
+    exclusion_reason: >-
+      OICP data model is not mapped by the current pipeline and no open
+      dump could be acquired, so no calculated values exist. EAFO count
+      and power references for Switzerland do exist; the exclusion
+      reflects the missing analysis, not missing reference data.
+
+  - dataset_id: cy.1
+    format: datex2
+    snapshot_id: CY-20250120-EAC-DATEXII
+    snapshot_date: "2025-01-20"
+    snapshot_meaning: >-
+      Fix Cyprus DATEX II (modified) pull of 20 January 2025.
+    input_path: sources/XML/20.01.2025-CY.xml
+    checksum: sha256:a138c77dc5320785ee64a77a064ffffb20d13367d0aaba609f330972917b09ee
+    parsed_dir: CY-20250120-EAC-DATEXII
+    include_in_analysis: true
+    country_coverage: [CY]
+
+  - dataset_id: de.1
+    format: datex2
+    snapshot_id: DE-20250701-ECOMOVEMENT-DATEXII
+    snapshot_date: "2025-07-01"
+    snapshot_meaning: >-
+      Eco-Movement AFIR DATEX II feed for Germany of 1 July 2025.
+    input_path: sources/XML/01.07.2025-DE.xml
+    checksum: sha256:ebe270914aa9b112759a5f469d9443cdca58a732b61b2d1d52128e04c4d68b16
+    parsed_dir: DE-20250701-ECOMOVEMENT-DATEXII
+    include_in_analysis: false
+    country_coverage: [DE]
+    exclusion_reason: >-
+      Excluded from the German quantitative comparison to prevent
+      unintended overlap with de.2: expanding both German datasets
+      would double-count German EVSEs in the SPARQL results. The
+      manuscript comparison uses de.2 (BNetZA).
+
+  - dataset_id: de.2
+    format: bnetza
+    snapshot_id: DE-20241201-BNETZA-DE
+    snapshot_date: "2025-05-07"
+    snapshot_meaning: >-
+      BNetZA Ladesaulenregister workbook "Stand 07.05.2025" (file
+      bnetza_charging_stations_raw_05_2025.xlsx). This is the workbook
+      used for the published German comparison (e.g. 9159 MW
+      calculated power). The July 2025 workbook
+      (bnetza_charging_stations_raw_08_2025.xlsx, Stand 18.07.2025) is
+      a later snapshot and is NOT the published analysis input.
+    input_path: sources/BNETZA/bnetza_charging_stations_raw_05_2025.xlsx
+    checksum: sha256:56654cf040a69a96af7638590c0f994aaaa5181baf48527715e01cbdb199556f
+    parsed_dir: DE-20250507-BNETZA-BNETZA
+    include_in_analysis: true
+    country_coverage: [DE]
+
+  - dataset_id: el.1
+    format: other
+    snapshot_id: EL-20250128-FORTISIS-MAP
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [EL]
+    exclusion_reason: >-
+      Not acquired: only an interactive map is available, no
+      machine-actionable data.
+
+  - dataset_id: es.1
+    format: datex2
+    snapshot_id: ES-20250120-MITERD-DATEXII
+    snapshot_date: "2025-01-20"
+    snapshot_meaning: MITERD DATEX II electrolineras publication of 20 January 2025.
+    input_path: sources/XML/20.01.2025-ES.xml
+    checksum: sha256:a11b9df9e09214e3cf365a4350e849200922474cb58ab837aff909ba71845b29
+    parsed_dir: ES-20250120-MITERD-DATEXII
+    include_in_analysis: true
+    country_coverage: [ES]
+
+  - dataset_id: fi.1
+    format: other
+    snapshot_id: FI-20250120-LATAUSKARTTA-LTK
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [FI]
+    exclusion_reason: >-
+      Not acquired: latauskartta.fi exposes a dashboard only. The
+      Finnish values in the quantitative comparison are a NOBIL source
+      substitution, not a measurement of this dataset.
+
+  - dataset_id: fr.1
+    format: irve
+    snapshot_id: FR-20250128-TDATAFR-IRVE
+    snapshot_date: "2025-06-10"
+    snapshot_meaning: >-
+      French IRVE static consolidation snapshot of 10 June 2025
+      (schema v2.3.1) from data.gouv.fr.
+    input_path: sources/IRVE/consolidation-etalab-schema-irve-statique-v-2.3.1-20250610.csv
+    checksum: sha256:3ef67eb398c59428e1678b341644e34706c9ef7edb66182fe2b6b89bc36ab922
+    parsed_dir: FR-20250128-TDATAFR-IRVE
+    include_in_analysis: true
+    country_coverage: [FR]
+
+  - dataset_id: hu.1
+    format: datex2
+    snapshot_id: HU-20250128-KOZUT-DATEXII
+    snapshot_date: "2025-01-31"
+    snapshot_meaning: Magyar Kozut DATEX II publication of 31 January 2025.
+    input_path: sources/XML/31.01.2025-HU.xml
+    checksum: sha256:c085c9cf44733dc5874692c5aacc2f1eb708f8b3d1b4e6a65ba97a2806804b17
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [HU]
+    exclusion_reason: >-
+      The acquired XML did not parse into EVSE records in the published
+      run (no parsed/HU-* output), so the dataset contributes no graph
+      data.
+
+  - dataset_id: it.1
+    format: ocpi
+    snapshot_id: IT-20250128-PUN-OCPI
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [IT]
+    exclusion_reason: >-
+      Not acquired: the Unique National Platform requires registration
+      and provides no open dump.
+
+  - dataset_id: lt.1
+    format: other
+    snapshot_id: LT-20250120-LAKD-LT
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [LT]
+    exclusion_reason: >-
+      Not acquired: the Lithuanian road administration register
+      (ev.lakd.lt) exposes no machine-actionable export.
+
+  - dataset_id: lu.1
+    format: other
+    snapshot_id: LU-20230106-CHARGY-INSPIRE
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [LU]
+    exclusion_reason: >-
+      Not acquired: the Chargy INSPIRE endpoint was not retrievable in
+      a machine-actionable form.
+
+  - dataset_id: lv.1
+    format: datex2
+    snapshot_id: LV-20250120-NPPDK-DATEXII
+    snapshot_date: "2025-01-20"
+    snapshot_meaning: Latvian State Roads DATEX II publication of 20 January 2025.
+    input_path: sources/XML/20.01.2025-LV.xml
+    checksum: sha256:3e3fce6d56f4d6cfbf27201abb43a7f7a091c6b20fb4e7eb8d3caa6bb91c9a9b
+    parsed_dir: LV-20250120-NPPDK-DATEXII
+    include_in_analysis: true
+    country_coverage: [LV]
+
+  - dataset_id: mt.1
+    format: other
+    snapshot_id: MT-20250120-CHMYR-MT
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [MT]
+    exclusion_reason: >-
+      Not acquired: Charge my Ride exposes a dashboard only.
+
+  - dataset_id: nl.1
+    format: ocpi
+    snapshot_id: NL-20180122-ECOMOVEMENT-OCPI
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [NL]
+    exclusion_reason: >-
+      Not acquired: the Eco-Movement OCPI endpoint requires a commercial
+      subscription.
+
+  - dataset_id: no.1
+    format: nobil
+    snapshot_id: NO-20250120-NOBIL-NOBIL
+    snapshot_date: "2025-01-20"
+    snapshot_meaning: >-
+      NOBIL charging station dump of 20 January 2025. The dump covers
+      the five Nordic countries; the coverage list below is explicit.
+      Sweden and Finland have separately assessed datasets (se.1,
+      fi.1) that could not be acquired, so their calculated values are
+      NOBIL source substitutions rather than measurements of those
+      datasets.
+    input_path: sources/NOBIL/20-01-2025-NOBIL-dump.json
+    checksum: sha256:ce0af8fb50ad59b20b0f9dbf49e9896d4fcdcfd196082a0fea17fb12ebedc462
+    parsed_dir: NO-20250120-NOBIL-NOBIL
+    include_in_analysis: true
+    country_coverage: ["NO", DK, FI, IS, SE]
+    expansion_country_filter: ["NO", DK, FI, IS, SE]
+
+  - dataset_id: pl.1
+    format: other
+    snapshot_id: PL-20250120-GREENWAY-GW
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [PL]
+    exclusion_reason: >-
+      Not acquired: the Greenway endpoint was not retrievable in a
+      machine-actionable form.
+
+  - dataset_id: pt.1
+    format: datex2
+    snapshot_id: PT-20250116-MOBIE-DATEXII
+    snapshot_date: "2025-01-16"
+    snapshot_meaning: MOBI.E DATEX II publication of 16 January 2025.
+    input_path: sources/XML/16.01.2025-PT.xml
+    checksum: sha256:2df2592e6012174a9215f38ff457d429131a2c581b28b07d73ceb2880b277dc4
+    parsed_dir: PT-20250116-MOBIE-DATEXII
+    include_in_analysis: true
+    country_coverage: [PT]
+
+  - dataset_id: se.1
+    format: ocpi
+    snapshot_id: SE-NA-ECOMOVEMENT-OCPI
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [SE]
+    exclusion_reason: >-
+      Not acquired: the Eco-Movement OCPI endpoint is closed. The
+      Swedish values in the quantitative comparison are a NOBIL source
+      substitution, not a measurement of this dataset.
+
+  - dataset_id: si.1
+    format: datex2
+    snapshot_id: SI-20250120-NCUP-DATEXII
+    snapshot_date: "2025-01-21"
+    snapshot_meaning: NAP Slovenia Prometej DATEX II publication of 21 January 2025.
+    input_path: sources/XML/21.01.2025-SI.xml
+    checksum: sha256:99d4fcbf6302c593ea5f92717ad2cfacbfd968fbc824f254132e24f37bf2132d
+    parsed_dir: SI-20250120-NCUP-DATEXII
+    include_in_analysis: true
+    country_coverage: [SI]
+
+  - dataset_id: uk.1
+    format: ocpi
+    snapshot_id: UK-20250120-ZAPMAP-OCPI
+    snapshot_date: null
+    snapshot_meaning: not acquired
+    input_path: null
+    checksum: null
+    parsed_dir: null
+    include_in_analysis: false
+    country_coverage: [UK]
+    exclusion_reason: >-
+      Not acquired: Zapmap Insights is a commercial product.
