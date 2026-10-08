@@ -918,8 +918,8 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
         width=539 * 2,  # 539   for elsevier size
         height=202 * 2,  # 202 for elsevier size
         y_max=10000,
-        # y_ticks=[2000, 4000, 6000, 8000],
-        # y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
+        y_ticks=[2000, 4000, 6000, 8000],
+        y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
         font_size=1.0,
@@ -930,7 +930,7 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
             "top": 17,
             "right": 0,
             "bottom": 39,
-            "left": 45,
+            "left": 33 # 45,
         },  # left 33, right 0 for paper
     )
 

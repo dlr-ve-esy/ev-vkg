@@ -1,8 +1,9 @@
 """Export the figure widgets as PNGs sized for a journal paper.
 
-Each widget is rendered by its own JavaScript module with a mock model
-(the modules only call ``model.get``), embedded in a minimal HTML page,
-and screenshotted with a headless Chromium-based browser (Edge by default).
+Each widget is instantiated with its paper configuration, the widget's
+trait values are serialized into a mock model (the JavaScript modules
+only call ``model.get``), embedded in a minimal HTML page, and
+screenshotted with a headless Chromium-based browser (Edge by default).
 
 The widget dimensions follow the "for paper" comments in main.py
 (single-column Elsevier figures are ~539px wide at the notebook's scale).
@@ -27,6 +28,15 @@ import tempfile
 from pathlib import Path
 
 import polars as pl
+
+from widgets.barchart import (
+    BarChartWidget,
+    DoubleStackedBarChartWidget,
+    FAIRBarChartsWidget,
+)
+from widgets.cartogram import SourcesCartogramWidget, FAIRCartogramWidget
+from widgets.grid_scatter import GridScatterWidget
+from widgets.heatmap import HeatMapWidget
 
 ROOT = Path(__file__).resolve().parent
 WIDGETS_JS = ROOT / "widgets" / "javascript"
@@ -120,6 +130,25 @@ await render({{ model, el }});
 """
 
 
+def widget_to_state(widget) -> dict:
+    """All JSON-serializable trait values of a widget.
+
+    Mirrors what ``model.get`` returns in the notebook: traits that are
+    not explicitly configured fall back to the widget class defaults.
+    """
+    state = {}
+    for name in type(widget).class_trait_names():
+        if name.startswith("_"):
+            continue
+        value = getattr(widget, name)
+        try:
+            json.dumps(value)
+        except (TypeError, ValueError):
+            continue
+        state[name] = value
+    return state
+
+
 def load_json(name):
     with open(ROOT / "viz_data" / name, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -134,7 +163,7 @@ def df_to_dict(df: pl.DataFrame, key_col: str, value_col: str) -> dict:
 
 
 def build_specs() -> list:
-    """Widget model states at paper dimensions, mirroring main.py."""
+    """Widget instances at paper dimensions, mirroring main.py."""
     sources_per_country = load_json("sources_per_country.json")
     source_colors = load_json("source_colors.json")
     color_legend = load_json("color_legend.json")
@@ -150,18 +179,18 @@ def build_specs() -> list:
         {
             "name": "sources_cartogram",
             "module": WIDGETS_JS / "sources_cartogram.js",
-            "state": {
-                "sources_per_country": sources_per_country,
-                "source_colors": source_colors,
-                "color_legend": color_legend,
-                "country_grid": country_grid,
-                "width": 539,
-                "height": 404,
-                "marker_size": 18,
-                "marker_size_secondary": 6,
-                "legend_marker_size": 9,
-                "legend_height": 20,
-            },
+            "widget": SourcesCartogramWidget(
+                sources_per_country=sources_per_country,
+                source_colors=source_colors,
+                color_legend=color_legend,
+                country_grid=country_grid,
+                width=539,
+                height=404,
+                marker_size=18,
+                marker_size_secondary=6,
+                legend_marker_size=9,
+                legend_height=20,
+            ),
         }
     )
 
@@ -170,13 +199,13 @@ def build_specs() -> list:
         {
             "name": "fair_cartogram",
             "module": WIDGETS_JS / "fair_score_cartogram.js",
-            "state": {
-                "fair_scores": fair_scores,
-                "source_colors": spectrum_colors,
-                "country_grid": country_grid,
-                "width": 539,
-                "height": 404,
-            },
+            "widget": FAIRCartogramWidget(
+                fair_scores=fair_scores,
+                source_colors=spectrum_colors,
+                country_grid=country_grid,
+                width=539,
+                height=404,
+            ),
         }
     )
 
@@ -186,18 +215,18 @@ def build_specs() -> list:
         {
             "name": "fair_barcharts",
             "module": WIDGETS_JS / "fair_score_barcharts.js",
-            "state": {
-                "fair_scores": fair_scores,
-                "source_colors": spectrum_colors,
-                "width": 539,
-                "height": int(640 * 539 / 700),
-                "bar_radius": 4,
-                "font_size": 0.8,
-            },
+            "widget": FAIRBarChartsWidget(
+                fair_scores=fair_scores,
+                source_colors=spectrum_colors,
+                width=539,
+                height=int(640 * 539 / 700),
+                bar_radius=4,
+                font_size=0.8,
+            ),
         }
     )
 
-    # Total FAIR score bar chart: 549x101 for paper, margin top 6 for paper.
+    # Total FAIR score bar chart: 549x101 for paper.
     total_data = {
         k: v["TOTAL"]
         for k, v in sorted(
@@ -209,27 +238,24 @@ def build_specs() -> list:
         {
             "name": "fair_total_scores",
             "module": WIDGETS_JS / "barchart.js",
-            "state": {
-                "input": total_data,
-                "shadow": {},
-                "markers": {},
-                "width": 549,
-                "height": 101,
-                "margin": {"top": 24, "right": 10, "bottom": 30, "left": 30},
-                "bar_color": "#9d6b92",
-                "bar_radius": 4,
-                "y_max": 12,
-                "y_ticks": [3, 6, 9, 12],
-                "y_grid": [3, 6, 9, 12],
-                "y_label": "Total Score",
-                "offset": 36,
-                "font_size": 1.2,
-            },
+            "widget": BarChartWidget(
+                input=total_data,
+                bar_radius=4,
+                bar_color="#9d6b92",
+                width=549,
+                height=101,
+                y_max=12,
+                y_ticks=[3, 6, 9, 12],
+                y_grid=[3, 6, 9, 12],
+                y_label="Total Score",
+                font_size=1.2,
+                offset=36,
+                margin={"top": 24, "right": 10, "bottom": 30, "left": 30},
+            ),
         }
     )
 
-    # Capacity plots from the EAFO target tracker: 539x101 for paper,
-    # margin right 0 for paper.
+    # Capacity plots from the EAFO target tracker: 539x101 for paper.
     country_codes = pl.read_csv(ROOT / "viz_data" / "code_mappings.csv")
     target_tracker = (
         pl.read_csv(ROOT / "viz_data" / "17.06.2025-eafo-target-tracker.csv")
@@ -263,23 +289,22 @@ def build_specs() -> list:
             {
                 "name": name,
                 "module": WIDGETS_JS / "barchart.js",
-                "state": {
-                    "input": df_to_dict(subset, "Code", "total_mw"),
-                    "markers": df_to_dict(subset, "Code", "target_mw"),
-                    "shadow": {},
-                    "width": 539,
-                    "height": 101,
-                    "margin": margin,
-                    "bar_color": "#de8f05",
-                    "marker_color": "#353839",
-                    "bar_radius": 4,
-                    "y_max": y_max,
-                    "y_ticks": y_ticks,
-                    "y_grid": y_ticks,
-                    "y_label": y_label,
-                    "offset": 36,
-                    "font_size": 0.9,
-                },
+                "widget": BarChartWidget(
+                    input=df_to_dict(subset, "Code", "total_mw"),
+                    markers=df_to_dict(subset, "Code", "target_mw"),
+                    bar_radius=4,
+                    bar_color="#de8f05",
+                    marker_color="#353839",
+                    width=539,
+                    height=101,
+                    y_max=y_max,
+                    y_ticks=y_ticks,
+                    y_grid=y_ticks,
+                    y_label=y_label,
+                    offset=36,
+                    font_size=0.9,
+                    margin=margin,
+                ),
             }
         )
 
@@ -296,29 +321,29 @@ def build_specs() -> list:
         {
             "name": "results_plot",
             "module": WIDGETS_JS / "barchart.js",
-            "state": {
-                "input": {
+            "widget": BarChartWidget(
+                input={
                     r["Code"]: r["total_accounted_power"] for r in results
                 },
-                "shadow": {r["Code"]: r["total_mw"] for r in results},
-                "markers": query("filtered_markers"),
-                "width": 539,
-                "height": 202,
-                "margin": {"top": 22, "right": 10, "bottom": 39, "left": 50},
-                "bar_color": "#0173b2",
-                "marker_color": "#353839",
-                "shadow_color": "#d55e00",
-                "bar_radius": 4,
-                "y_max": 10000,
-                "y_ticks": [2000, 4000, 6000, 8000],
-                "y_grid": [2000, 4000, 6000, 8000],
-                "y_label": "Power (MW)",
-                "offset": 25,
-                "font_size": 1.0,
-                "main_label": "NAP Estimation",
-                "shadow_label": "EAFO Reported",
-                "marker_label": "AFIR Target",
-            },
+                shadow={r["Code"]: r["total_mw"] for r in results},
+                markers=query("filtered_markers"),
+                bar_radius=4,
+                bar_color="#0173b2",
+                marker_color="#353839",
+                shadow_color="#d55e00",
+                width=539,
+                height=202,
+                y_max=10000,
+                y_ticks=[2000, 4000, 6000, 8000],
+                y_grid=[2000, 4000, 6000, 8000],
+                y_label="Power (MW)",
+                offset=25,
+                font_size=1.0,
+                main_label="NAP Estimation",
+                shadow_label="EAFO Reported",
+                marker_label="AFIR Target",
+                margin={"top": 22, "right": 10, "bottom": 39, "left": 50},
+            ),
         }
     )
 
@@ -327,25 +352,25 @@ def build_specs() -> list:
         {
             "name": "power_counts_stacked",
             "module": WIDGETS_JS / "double_stacked_barchart.js",
-            "state": {
-                "input_a": query("chart_input_2"),
-                "input_b": query("chart_input"),
-                "x_key": "code",
-                "width": 539,
-                "height": 202,
-                "margin": {"top": 20, "right": 10, "bottom": 60, "left": 52},
-                "cat_colors": query("cat_colors"),
-                "bar_radius": 4,
-                "y_max": 180000,
-                "y_ticks": [20000, 90000, 180000],
-                "y_grid": [20000, 90000, 180000],
-                "x1_label": "European Alternative Fuels Observatory, Juny 2025",
-                "x2_label": "Estimation using available data from the National Access Points",
-                "y_label": "Counts per capacity",
-                "offset": 38,
-                "font_size": 0.9,
-                "legend_item_width": 5.4,
-            },
+            "widget": DoubleStackedBarChartWidget(
+                input_a=query("chart_input_2"),
+                input_b=query("chart_input"),
+                x_key="code",
+                bar_radius=4,
+                cat_colors=query("cat_colors"),
+                width=539,
+                height=202,
+                y_label="Counts per capacity",
+                x1_label="European Alternative Fuels Observatory, Juny 2025",
+                x2_label="Estimation using available data from the National Access Points",
+                offset=38,
+                legend_item_width=5.4,
+                y_grid=[20000, 90000, 180000],
+                y_ticks=[20000, 90000, 180000],
+                y_max=180000,
+                font_size=0.9,
+                margin={"top": 20, "right": 10, "bottom": 60, "left": 52},
+            ),
         }
     )
 
@@ -365,22 +390,22 @@ def build_specs() -> list:
         {
             "name": "fidelity_heatmap",
             "module": WIDGETS_JS / "heatmap.js",
-            "state": {
-                "input": query("relative_error"),
-                "x_axis": "code",
-                "y_axis": "range",
-                "c_axis": "cat",
-                "colors": hm_colors,
-                "cell_size": 30,
-                "x_padding": 0.0,
-                "base_color": "#F5F5F5",
-                "width": 539,
-                "height": 404,
-                "margin": {"top": 30, "right": 0, "bottom": 48, "left": 115},
-                "font_size": 0.9,
-                "invert_c": False,
-                "radius": 5,
-            },
+            "widget": HeatMapWidget(
+                input=query("relative_error"),
+                x_axis="code",
+                y_axis="range",
+                c_axis="cat",
+                colors=hm_colors,
+                cell_size=30,
+                x_padding=0.0,
+                base_color="#F5F5F5",
+                width=539,
+                height=404,
+                margin={"top": 30, "right": 0, "bottom": 48, "left": 115},
+                font_size=0.9,
+                invert_c=False,
+                radius=5,
+            ),
         }
     )
 
@@ -389,25 +414,25 @@ def build_specs() -> list:
         {
             "name": "performance_grid",
             "module": WIDGETS_JS / "grid_scatter.js",
-            "state": {
-                "input": query("grid_info"),
-                "x_domain": query("x_domain"),
-                "y_domain": query("y_domain"),
-                "x_axis": "x",
-                "y_axis": "y",
-                "color_col": "code",
-                "y_label": "FAIR alignment",
-                "x_label": "Quantity fidelity",
-                "cell_size": 25,
-                "x_padding": 0.0,
-                "base_color": "grey",
-                "width": 255,
-                "height": 229,
-                "margin": {"top": 20, "right": 10, "bottom": 25, "left": 10},
-                "font_size": 1.0,
-                "cell_ycorrection": 2,
-                "colors": query("region_level"),
-            },
+            "widget": GridScatterWidget(
+                input=query("grid_info"),
+                x_domain=query("x_domain"),
+                y_domain=query("y_domain"),
+                x_axis="x",
+                y_axis="y",
+                color_col="code",
+                y_label="FAIR alignment",
+                x_label="Quantity fidelity",
+                cell_size=25,
+                x_padding=0.0,
+                base_color="grey",
+                width=255,
+                height=229,
+                margin={"top": 20, "right": 10, "bottom": 25, "left": 10},
+                font_size=1.0,
+                cell_ycorrection=2,
+                colors=query("region_level"),
+            ),
         }
     )
 
@@ -415,13 +440,14 @@ def build_specs() -> list:
 
 
 def export_widget(spec, browser: Path, output_dir: Path, scale: int) -> Path:
-    width = spec["state"]["width"]
-    height = spec["state"]["height"]
+    state = widget_to_state(spec["widget"])
+    width = state["width"]
+    height = state["height"]
     html = HTML_TEMPLATE.format(
         width=width,
         height=height,
         module_source=spec["module"].read_text(encoding="utf-8"),
-        state=json.dumps(spec["state"]),
+        state=json.dumps(state),
     )
 
     png_path = output_dir / f"{spec['name']}.png"
