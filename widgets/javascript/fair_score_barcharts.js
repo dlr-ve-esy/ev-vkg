@@ -39,13 +39,11 @@ const renderFigure = (
     .attr("width", width)
     .attr("height", height);
 
-  // Shared country list for every plot: drop only TOTAL == 0 countries,
-  // order by total score descending (ties by country code) so all x axes match.
-  const countries = Object.keys(data)
-    .filter((c) => data[c]["TOTAL"] > 0)
-    .sort(
-      (a, b) => data[b]["TOTAL"] - data[a]["TOTAL"] || a.localeCompare(b)
-    );
+  // Shared dataset list for every plot: drop only TOTAL == 0 datasets,
+  // order by total score descending (ties by dataset code) so all x axes match.
+  const datasets = Object.keys(data)
+    .filter((d) => data[d]["TOTAL"] > 0)
+    .sort((a, b) => data[b]["TOTAL"] - data[a]["TOTAL"] || a.localeCompare(b));
 
   const gap = 4;
   const bottomHeight = Math.round(height * 0.32);
@@ -59,7 +57,7 @@ const renderFigure = (
     renderPrinciplePlot(
       svg,
       data,
-      countries,
+      datasets,
       colors,
       p,
       col * (cellWidth + gap),
@@ -76,7 +74,7 @@ const renderFigure = (
   renderTotalPlot(
     svg,
     data,
-    countries,
+    datasets,
     colors,
     0,
     topHeight + gap,
@@ -90,7 +88,7 @@ const renderFigure = (
 
 const renderFrame = (
   svg,
-  countries,
+  datasets,
   x,
   y,
   width,
@@ -100,12 +98,13 @@ const renderFrame = (
   yMax,
   yTicks,
   showXLabels,
-  xLabelFactor
+  xLabelFactor,
+  rotateX
 ) => {
   const margin = {
     top: 32,
     right: 10,
-    bottom: showXLabels ? 40 : 12,
+    bottom: 40,
     left: 35,
   };
   const innerWidth = width - margin.left - margin.right;
@@ -117,7 +116,7 @@ const renderFrame = (
 
   const xScale = d3
     .scaleBand()
-    .domain(countries)
+    .domain(datasets)
     .range([0, innerWidth])
     .padding(0.2);
   const yScale = d3.scaleLinear().domain([0, yMax]).range([innerHeight, 0]);
@@ -137,7 +136,7 @@ const renderFrame = (
     .append("g")
     .attr("transform", `translate(0, ${innerHeight})`);
 
-  x_axis
+  const x_texts = x_axis
     .call(
       d3
         .axisBottom(xScale)
@@ -146,10 +145,22 @@ const renderFrame = (
         .tickFormat(showXLabels ? null : "")
     )
     .selectAll("text")
-    .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
     .style("font-size", `${fontSize * xLabelFactor}rem`)
     .style("opacity", 1);
+
+  if (rotateX) {
+    // Dataset codes are too dense for horizontal labels in the half-width
+    // grid cells: rotate them to read bottom-to-top below the axis.
+    x_texts
+      .attr("text-anchor", "end")
+      .attr("y", 0)
+      .attr("x", -9)
+      .attr("dy", "0.35em")
+      .attr("transform", "rotate(-90)");
+  } else {
+    x_texts.style("text-anchor", "middle");
+  }
 
   x_axis.selectAll("path").style("opacity", 0.8);
 
@@ -197,7 +208,7 @@ const roundedTopPath = (bx, by, barWidth, barHeight, barRadius) => `
 const renderPrinciplePlot = (
   svg,
   data,
-  countries,
+  datasets,
   colors,
   principle,
   x,
@@ -211,7 +222,7 @@ const renderPrinciplePlot = (
 ) => {
   const { chart, xScale, yScale, innerWidth, innerHeight } = renderFrame(
     svg,
-    countries,
+    datasets,
     x,
     y,
     width,
@@ -221,7 +232,8 @@ const renderPrinciplePlot = (
     3,
     [1, 2, 3],
     showXLabels,
-    0.6
+    0.6,
+    true
   );
 
   renderTitle(chart, principle.title, fontSize);
@@ -231,7 +243,7 @@ const renderPrinciplePlot = (
   // Add clip-paths for rounded tops
   chart
     .selectAll("clipPath")
-    .data(countries)
+    .data(datasets)
     .join("clipPath")
     .attr("id", (d, i) => `clip-${id}-${i}`)
     .append("path")
@@ -245,11 +257,11 @@ const renderPrinciplePlot = (
       )
     );
 
-  // Add bars; zero-score countries keep a zero-height bar so the
+  // Add bars; zero-score datasets keep a zero-height bar so the
   // shared x axis stays intact across all plots.
   chart
     .selectAll(".bar")
-    .data(countries)
+    .data(datasets)
     .join("rect")
     .attr("class", "bar")
     .attr("x", (d) => xScale(d))
@@ -263,7 +275,7 @@ const renderPrinciplePlot = (
 const renderTotalPlot = (
   svg,
   data,
-  countries,
+  datasets,
   colors,
   x,
   y,
@@ -275,7 +287,7 @@ const renderTotalPlot = (
 ) => {
   const { chart, xScale, yScale, innerWidth, innerHeight } = renderFrame(
     svg,
-    countries,
+    datasets,
     x,
     y,
     width,
@@ -285,7 +297,8 @@ const renderTotalPlot = (
     12,
     [3, 6, 9, 12],
     true,
-    0.8
+    0.8,
+    false
   );
 
   renderTitle(chart, "Total Score", fontSize);
@@ -300,7 +313,7 @@ const renderTotalPlot = (
   // Add clip-paths for rounded tops
   chart
     .selectAll("clipPath")
-    .data(countries)
+    .data(datasets)
     .join("clipPath")
     .attr("id", (d, i) => `clip-${id}-${i}`)
     .append("path")
@@ -317,7 +330,7 @@ const renderTotalPlot = (
   // Add bars
   chart
     .selectAll(".bar")
-    .data(countries)
+    .data(datasets)
     .join("rect")
     .attr("class", "bar")
     .attr("x", (d) => xScale(d))
