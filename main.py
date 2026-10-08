@@ -23,6 +23,7 @@ def _():
     from widgets.barchart import (
         BarChartWidget,
         DoubleStackedBarChartWidget,
+        FAIRBarChartsWidget,
     )
     from widgets.heatmap import HeatMapWidget
     from widgets.grid_scatter import GridScatterWidget
@@ -43,6 +44,7 @@ def _():
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
+        FAIRBarChartsWidget,
         FAIRCartogramWidget,
         GT,
         GridScatterWidget,
@@ -459,6 +461,26 @@ def _(
     mo.md(
         f"""## FAIR Scores by principle
     {fair_widget}"""
+    )
+    return
+
+
+@app.cell
+def _(
+    FAIRBarChartsWidget,
+    fair_scores_country,
+    mo,
+    spectrum_colors,
+):
+    fair_bars_widget = mo.ui.anywidget(
+        FAIRBarChartsWidget(
+            fair_scores=fair_scores_country,
+            source_colors=spectrum_colors,
+        )
+    )
+    mo.md(
+        f"""## FAIR Scores by principle and total
+    {fair_bars_widget}"""
     )
     return
 

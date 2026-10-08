@@ -122,3 +122,31 @@ class DoubleStackedBarChartWidget(anywidget.AnyWidget):
         max-height: 100%;
         }
     """
+
+
+class FAIRBarChartsWidget(anywidget.AnyWidget):
+    # Widget front-end JavaScript code
+    _esm = pathlib.Path("widgets/javascript/fair_score_barcharts.js")
+
+    # Stateful property that can be accessed by JavaScript & Python
+    fair_scores = tt.Dict({}).tag(sync=True)
+    source_colors = tt.Dict({}).tag(sync=True)
+    width = tt.Int(700).tag(sync=True)
+    height = tt.Int(640).tag(sync=True)
+    bar_radius = tt.Int(4).tag(sync=True)
+    font_size = tt.Float(0.8).tag(sync=True)
+
+    _css = """
+    .fair-barcharts {
+        display: flex;
+        justify-content: center; 
+        align-items: center;
+        height: 100%; /* Adjust as needed */
+        width: 100%; /* Adjust as needed */
+        }
+
+    .fair-barcharts svg {
+        max-width: 100%;
+        max-height: 100%;
+        }
+    """
