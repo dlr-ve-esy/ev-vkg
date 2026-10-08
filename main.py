@@ -462,15 +462,19 @@ def _(
 
 
 @app.cell
-def _(FAIRBarChartsWidget, fair_scores_country, mo, spectrum_colors):
+def _(FAIRBarChartsWidget, json, mo, spectrum_colors):
+    # Dataset-level FAIR scores (Table 8 unit) in the principle grid,
+    # so the two German datasets are both visible.
+    with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _fd:
+        fair_scores_dataset = {row["code"]: row for row in json.load(_fd)}
     fair_bars_widget = mo.ui.anywidget(
         FAIRBarChartsWidget(
-            fair_scores=fair_scores_country,
+            fair_scores=fair_scores_dataset,
             source_colors=spectrum_colors,
         )
     )
     mo.md(
-        f"""## FAIR Scores by principle and total
+        f"""## FAIR dataset scores by principle and total
     {fair_bars_widget}"""
     )
     return

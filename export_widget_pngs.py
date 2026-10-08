@@ -267,14 +267,16 @@ def build_specs() -> list:
         }
     )
 
-    # FAIR principle grid (2x2) + total score chart, scaled from the 700px
-    # design width to the 539px paper width.
+    # FAIR principle grid (2x2) + total score chart at the dataset level
+    # (Table 8 unit), scaled from the 700px design width to the 539px
+    # paper width.
+    fair_scores_datasets = load_json("fair_scores_datasets.json")
     specs.append(
         {
             "name": "fair_barcharts",
             "module": WIDGETS_JS / "fair_score_barcharts.js",
             "widget": FAIRBarChartsWidget(
-                fair_scores=fair_scores,
+                fair_scores={row["code"]: row for row in fair_scores_datasets},
                 source_colors=spectrum_colors,
                 width=539,
                 height=int(640 * 539 / 700),
