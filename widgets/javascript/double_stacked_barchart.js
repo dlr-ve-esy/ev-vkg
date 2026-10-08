@@ -7,6 +7,7 @@ async function render({ model, el }) {
   const width = model.get("width");
   const height = model.get("height");
   const catColors = model.get("cat_colors");
+  const catHatches = model.get("cat_hatches");
   const barRadius = model.get("bar_radius");
   const yTicks = model.get("y_ticks");
   const xTicks = model.get("x_ticks");
@@ -43,6 +44,7 @@ async function render({ model, el }) {
     width,
     innerH,
     catColors,
+    catHatches,
     barRadius,
     yTicks,
     xTicks,
@@ -71,6 +73,7 @@ async function render({ model, el }) {
     width,
     innerH,
     catColors,
+    catHatches,
     barRadius,
     yTicks,
     xTicks,
@@ -94,6 +97,7 @@ function renderBarChartDouble(
   width = 500,
   height = 300,
   catColors = {},
+  catHatches = {},
   barRadius = 5,
   yTicks,
   xTicks,
@@ -151,6 +155,9 @@ function renderBarChartDouble(
   axis.call(y_grid).attr("stroke-opacity", 0.2);
   axis.selectAll("path").style("opacity", 0);
 
+  // Greyscale support: hatch pattern per band colour.
+  const fillOf = addHatchDefs(svg, catHatches);
+
   // Add clip-paths for rounded tops
   chartGroup
     .selectAll("clipPath")
@@ -181,7 +188,7 @@ function renderBarChartDouble(
     .data(series)
     .join("g")
     .attr("class", "stack")
-    .attr("fill", (d) => catColors[d.key] || "#888")
+    .attr("fill", (d) => fillOf(catColors[d.key] || "#888"))
     .selectAll("rect")
     .data((d) => d)
     .join("rect")
@@ -279,7 +286,9 @@ function renderBarChartDouble(
           .attr("height", legendSquareSize)
           .attr("rx", barRadius / 2)
           .attr("ry", barRadius / 2)
-          .attr("fill", d[1])
+          .attr("fill", (d) => fillOf(d[1]))
+          .attr("stroke", "#4a4a4a")
+          .attr("stroke-width", 0.4)
           .attr("y", -legendSquareSize / 2);
 
         legendItem
@@ -294,6 +303,60 @@ function renderBarChartDouble(
       });
   }
 }
+const addHatchDefs = (svg, hatches) => {
+  const patterns = {};
+  const defs = svg.append("defs");
+  Object.entries(hatches).forEach(([colorValue, hatch], i) => {
+    if (hatch === "none" || hatch === undefined) {
+      return;
+    }
+    const id = `band-hatch-${i}`;
+    const pattern = defs
+      .append("pattern")
+      .attr("id", id)
+      .attr("width", 6)
+      .attr("height", 6)
+      .attr("patternUnits", "userSpaceOnUse");
+    pattern
+      .append("rect")
+      .attr("width", 6)
+      .attr("height", 6)
+      .attr("fill", colorValue);
+    const c = d3.color(colorValue);
+    const lum = (0.3 * c.r + 0.59 * c.g + 0.11 * c.b) / 255;
+    const line = lum > 0.55 ? "#4a4a4a" : "#ffffff";
+    pattern
+      .append("path")
+      .attr("d", hatchPath(hatch))
+      .attr("stroke", line)
+      .attr("stroke-width", 1.1)
+      .attr("fill", "none");
+    patterns[colorValue] = `url(#${id})`;
+  });
+  return (colorValue) => patterns[colorValue] || colorValue;
+};
+
+const hatchPath = (hatch) => {
+  switch (hatch) {
+    case "diag":
+      return "M0,6 L6,0";
+    case "diag2":
+      return "M0,0 L6,6";
+    case "cross":
+      return "M0,6 L6,0 M0,0 L6,6";
+    case "grid":
+      return "M0,3 L6,3 M3,0 L3,6";
+    case "dot":
+      return "M3,3 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0";
+    case "hline":
+      return "M0,3 L6,3";
+    case "vline":
+      return "M3,0 L3,6";
+    default:
+      return "M0,6 L6,0";
+  }
+};
+
 function convertRemToPixels(rem) {
   return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
 }

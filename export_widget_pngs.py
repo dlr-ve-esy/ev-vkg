@@ -314,7 +314,7 @@ def build_specs() -> list:
     )
 
     # Dataset-level FAIR scores (fig:fair-summary, Table 8 unit): one
-    # stacked bar per dataset, greyscale-safe by construction.
+    # stacked bar per dataset, colour fills plus hatching.
     specs.append(
         {
             "name": "fair_dataset_scores",
@@ -391,7 +391,7 @@ def build_specs() -> list:
     # Results plot (fig:capacity-comparison): grouped side-by-side
     # bars, calculated vs EAFO reference, AFIR target markers retained.
     # Twelve countries including IS/NO (no EAFO bar where no reference
-    # exists); greyscale-safe fills.
+    # exists); colour fills, shadow series hatched.
     specs.append(
         {
             "name": "results_plot",
@@ -403,9 +403,9 @@ def build_specs() -> list:
                 shadow={r["Code"]: r["total_mw"] for r in results},
                 markers=query("filtered_markers"),
                 bar_radius=4,
-                bar_color="#4d4d4d",
-                marker_color="#1a1a1a",
-                shadow_color="#c9c9c9",
+                bar_color="#0173b2",
+                marker_color="#353839",
+                shadow_color="#d55e00",
                 width=539,
                 height=202,
                 y_max=10000,
@@ -423,7 +423,7 @@ def build_specs() -> list:
     )
 
     # Double stacked chart (fig:device-counts): 539x202 elsevier size,
-    # greyscale band palette with hatching.
+    # band palette with hatching.
     specs.append(
         {
             "name": "power_counts_stacked",
@@ -435,12 +435,12 @@ def build_specs() -> list:
                 bar_radius=4,
                 cat_colors=query("cat_colors"),
                 cat_hatches={
-                    "#262626": "none",
-                    "#525252": "diag",
-                    "#7f7f7f": "cross",
-                    "#a6a6a6": "dot",
-                    "#cccccc": "hline",
-                    "#efefef": "vline",
+                    "#9dc291": "none",
+                    "#73a861": "diag",
+                    "#527a44": "cross",
+                    "#e9cf6f": "dot",
+                    "#e0ba2f": "hline",
+                    "#aa8b1a": "vline",
                 },
                 width=539,
                 height=202,

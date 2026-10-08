@@ -39,25 +39,39 @@ const renderFigure = (
     .attr("width", width)
     .attr("height", height);
 
+  // Shared country list for every plot: drop only TOTAL == 0 countries,
+  // order by total score descending (ties by country code) so all x axes match.
   const countries = Object.keys(data)
     .filter((c) => data[c]["TOTAL"] > 0)
-    .sort((a, b) => data[b]["TOTAL"] - data[a]["TOTAL"]);
+    .sort(
+      (a, b) => data[b]["TOTAL"] - data[a]["TOTAL"] || a.localeCompare(b)
+    );
 
-  const rowHeight = height / 2;
+  const gap = 4;
+  const bottomHeight = Math.round(height * 0.32);
+  const topHeight = height - bottomHeight - gap;
+  const cellWidth = (width - gap) / 2;
+  const cellHeight = (topHeight - gap) / 2;
 
-  renderStackedPlot(
-    svg,
-    data,
-    countries,
-    colors,
-    0,
-    0,
-    width,
-    rowHeight,
-    barRadius,
-    fontSize,
-    "STACKED"
-  );
+  PRINCIPLES.forEach((p, i) => {
+    const col = i % 2;
+    const row = Math.floor(i / 2);
+    renderPrinciplePlot(
+      svg,
+      data,
+      countries,
+      colors,
+      p,
+      col * (cellWidth + gap),
+      row * (cellHeight + gap),
+      cellWidth,
+      cellHeight,
+      barRadius,
+      fontSize,
+      p.key,
+      row === 1
+    );
+  });
 
   renderTotalPlot(
     svg,
@@ -65,17 +79,35 @@ const renderFigure = (
     countries,
     colors,
     0,
-    rowHeight,
+    topHeight + gap,
     width,
-    rowHeight,
+    bottomHeight,
     barRadius,
     fontSize,
     "TOTAL"
   );
 };
 
-const renderFrame = (svg, countries, x, y, width, height, fontSize, id) => {
-  const margin = { top: 40, right: 10, bottom: 40, left: 35 };
+const renderFrame = (
+  svg,
+  countries,
+  x,
+  y,
+  width,
+  height,
+  fontSize,
+  id,
+  yMax,
+  yTicks,
+  showXLabels,
+  xLabelFactor
+) => {
+  const margin = {
+    top: 32,
+    right: 10,
+    bottom: showXLabels ? 40 : 12,
+    left: 35,
+  };
   const innerWidth = width - margin.left - margin.right;
   const innerHeight = height - margin.top - margin.bottom;
 
@@ -88,13 +120,13 @@ const renderFrame = (svg, countries, x, y, width, height, fontSize, id) => {
     .domain(countries)
     .range([0, innerWidth])
     .padding(0.2);
-  const yScale = d3.scaleLinear().domain([0, 12]).range([innerHeight, 0]);
+  const yScale = d3.scaleLinear().domain([0, yMax]).range([innerHeight, 0]);
 
   // Add y-axis gridlines
   const y_grid = d3
     .axisLeft(yScale)
     .tickSize(-innerWidth)
-    .tickValues([3, 6, 9, 12])
+    .tickValues(yTicks)
     .tickFormat("");
   var axis = chart.append("g").attr("class", `y-grid-${id}`);
   axis.call(y_grid).attr("stroke-opacity", 0.2);
@@ -106,11 +138,17 @@ const renderFrame = (svg, countries, x, y, width, height, fontSize, id) => {
     .attr("transform", `translate(0, ${innerHeight})`);
 
   x_axis
-    .call(d3.axisBottom(xScale).tickSize(0).tickPadding(10))
+    .call(
+      d3
+        .axisBottom(xScale)
+        .tickSize(0)
+        .tickPadding(10)
+        .tickFormat(showXLabels ? null : "")
+    )
     .selectAll("text")
     .style("text-anchor", "middle")
     .style("font-family", "Tinos, serif")
-    .style("font-size", `${fontSize * 0.8}rem`)
+    .style("font-size", `${fontSize * xLabelFactor}rem`)
     .style("opacity", 1);
 
   x_axis.selectAll("path").style("opacity", 0.8);
@@ -120,7 +158,7 @@ const renderFrame = (svg, countries, x, y, width, height, fontSize, id) => {
     .axisLeft(yScale)
     .tickSize(0)
     .tickPadding(10)
-    .tickValues([0, 3, 6, 9, 12]);
+    .tickValues([0, ...yTicks]);
   var y_axis_ticks = chart.append("g");
 
   y_axis_ticks
@@ -156,18 +194,20 @@ const roundedTopPath = (bx, by, barWidth, barHeight, barRadius) => `
   Z
 `;
 
-const renderStackedPlot = (
+const renderPrinciplePlot = (
   svg,
   data,
   countries,
   colors,
+  principle,
   x,
   y,
   width,
   height,
   barRadius,
   fontSize,
-  id
+  id,
+  showXLabels
 ) => {
   const { chart, xScale, yScale, innerWidth, innerHeight } = renderFrame(
     svg,
@@ -177,55 +217,47 @@ const renderStackedPlot = (
     width,
     height,
     fontSize,
-    id
+    id,
+    3,
+    [1, 2, 3],
+    showXLabels,
+    0.6
   );
 
-  renderTitle(chart, "Scores by principle", fontSize);
-  renderLegend(chart, colors, innerWidth, fontSize, barRadius);
+  renderTitle(chart, principle.title, fontSize);
 
   const barWidth = xScale.bandwidth();
 
-  countries.forEach((c, i) => {
-    let cumulative = 0;
-    const segments = PRINCIPLES.map((p) => {
-      const value = data[c][p.key];
-      const segment = { principle: p, value: value, base: cumulative };
-      cumulative += value;
-      return segment;
-    }).filter((s) => s.value > 0);
+  // Add clip-paths for rounded tops
+  chart
+    .selectAll("clipPath")
+    .data(countries)
+    .join("clipPath")
+    .attr("id", (d, i) => `clip-${id}-${i}`)
+    .append("path")
+    .attr("d", (d) =>
+      roundedTopPath(
+        xScale(d),
+        yScale(data[d][principle.key]),
+        barWidth,
+        innerHeight - yScale(data[d][principle.key]),
+        barRadius
+      )
+    );
 
-    if (segments.length === 0) {
-      return;
-    }
-
-    const total = cumulative;
-
-    chart
-      .append("clipPath")
-      .attr("id", `clip-${id}-${i}`)
-      .append("path")
-      .attr("d", () =>
-        roundedTopPath(
-          xScale(c),
-          yScale(total),
-          barWidth,
-          innerHeight - yScale(total),
-          barRadius
-        )
-      );
-
-    chart
-      .selectAll(null)
-      .data(segments)
-      .join("rect")
-      .attr("class", `segment-${id}-${i}`)
-      .attr("x", xScale(c))
-      .attr("y", (d) => yScale(d.base + d.value))
-      .attr("width", barWidth)
-      .attr("height", (d) => yScale(d.base) - yScale(d.base + d.value))
-      .attr("fill", (d) => colors[d.principle.key][1])
-      .attr("clip-path", `url(#clip-${id}-${i})`);
-  });
+  // Add bars; zero-score countries keep a zero-height bar so the
+  // shared x axis stays intact across all plots.
+  chart
+    .selectAll(".bar")
+    .data(countries)
+    .join("rect")
+    .attr("class", "bar")
+    .attr("x", (d) => xScale(d))
+    .attr("y", (d) => yScale(data[d][principle.key]))
+    .attr("width", barWidth)
+    .attr("height", (d) => innerHeight - yScale(data[d][principle.key]))
+    .attr("fill", colors[principle.key][1])
+    .attr("clip-path", (d, i) => `url(#clip-${id}-${i})`);
 };
 
 const renderTotalPlot = (
@@ -249,7 +281,11 @@ const renderTotalPlot = (
     width,
     height,
     fontSize,
-    id
+    id,
+    12,
+    [3, 6, 9, 12],
+    true,
+    0.8
   );
 
   renderTitle(chart, "Total Score", fontSize);
@@ -293,56 +329,5 @@ const renderTotalPlot = (
     )
     .attr("clip-path", (d, i) => `url(#clip-${id}-${i})`);
 };
-
-const renderLegend = (chart, colors, innerWidth, fontSize, barRadius) => {
-  const size = convertRemToPixels(fontSize * 0.8);
-  const spacing = size * 0.5;
-
-  let offset = 0;
-  const items = PRINCIPLES.map((p) => {
-    const item = {
-      principle: p,
-      x: offset,
-      width: size + spacing + p.title.length * size * 0.55,
-    };
-    offset += item.width + spacing * 3;
-    return item;
-  });
-  const totalWidth = offset - spacing * 3;
-
-  const legend = chart
-    .append("g")
-    .attr("class", "legend")
-    .attr("transform", `translate(${innerWidth - totalWidth}, ${-14})`);
-
-  items.forEach((item) => {
-    const legendItem = legend
-      .append("g")
-      .attr("class", "legend-item")
-      .attr("transform", `translate(${item.x}, 0)`);
-
-    legendItem
-      .append("rect")
-      .attr("width", size)
-      .attr("height", size)
-      .attr("rx", barRadius / 2)
-      .attr("ry", barRadius / 2)
-      .attr("y", -size / 2)
-      .attr("fill", colors[item.principle.key][1]);
-
-    legendItem
-      .append("text")
-      .text(item.principle.title)
-      .attr("x", size + spacing)
-      .attr("y", size / 8)
-      .attr("dominant-baseline", "middle")
-      .style("font-family", "Tinos, serif")
-      .attr("font-size", `${fontSize * 0.8}rem`);
-  });
-};
-
-function convertRemToPixels(rem) {
-  return rem * parseFloat(getComputedStyle(document.documentElement).fontSize);
-}
 
 export default { render };

@@ -155,7 +155,7 @@ class FAIRBarChartsWidget(anywidget.AnyWidget):
 
 
 class FAIRDatasetScoresWidget(anywidget.AnyWidget):
-    """Stacked FAIR scores per dataset (Table 8 unit), greyscale-safe."""
+    """Stacked FAIR scores per dataset (Table 8 unit), hatched fills."""
 
     # Widget front-end JavaScript code
     _esm = pathlib.Path("widgets/javascript/fair_dataset_scores.js")
@@ -172,7 +172,7 @@ class FAIRDatasetScoresWidget(anywidget.AnyWidget):
     y_grid = tt.List([3, 6, 9, 12]).tag(sync=True)
     y_label = tt.Unicode("FAIR score").tag(sync=True)
     colors = tt.Dict(
-        {"F": "#404040", "A": "#7a7a7a", "I": "#adadad", "R": "#dfdfdf"}
+        {"F": "#6181ab", "A": "#e0ba2f", "I": "#c8433e", "R": "#73a861"}
     ).tag(sync=True)
     dimension_labels = tt.Dict(
         {
@@ -213,9 +213,9 @@ class GroupedBarChartWidget(anywidget.AnyWidget):
     width = tt.Int(500).tag(sync=True)
     height = tt.Int(300).tag(sync=True)
     margin = tt.Dict({"top": 20, "right": 0, "bottom": 40, "left": 50}).tag(sync=True)
-    bar_color = tt.Unicode("#4d4d4d").tag(sync=True)
-    marker_color = tt.Unicode("#1a1a1a").tag(sync=True)
-    shadow_color = tt.Unicode("#c9c9c9").tag(sync=True)
+    bar_color = tt.Unicode("#0173b2").tag(sync=True)
+    marker_color = tt.Unicode("#353839").tag(sync=True)
+    shadow_color = tt.Unicode("#d55e00").tag(sync=True)
     bar_radius = tt.Int(4).tag(sync=True)
     y_max = tt.Int(0).tag(sync=True)
     y_ticks = tt.List([]).tag(sync=True)

@@ -12,18 +12,19 @@ class SourcesCartogramWidget(anywidget.AnyWidget):
     source_colors = tt.Dict({}).tag(sync=True)
     color_legend = tt.Dict({}).tag(sync=True)
     country_grid = tt.Dict({}).tag(sync=True)
-    # Hatch pattern per fill colour so the source categories stay
-    # distinguishable in greyscale print (keyed by colour value).
-    color_hatches = tt.Dict(
+    # Hatch pattern per source category (keyed by category name,
+    # so several categories can share a fill colour and stay
+    # distinguishable by pattern).
+    source_hatches = tt.Dict(
         {
-            "#262626": "none",
-            "#454545": "diag",
-            "#646464": "cross",
-            "#838383": "dot",
-            "#a1a1a1": "hline",
-            "#bfbfbf": "vline",
-            "#dddddd": "diag2",
-            "#f0f0f0": "grid",
+            "Eco-Movement": "none",
+            "Tesla": "none",
+            "Chargemap": "cross",
+            "Openchargemap": "dot",
+            "Finnish Transport Agency": "hline",
+            "Governmental source": "vline",
+            "Greenway": "diag2",
+            "Other": "none",
         }
     ).tag(sync=True)
     width = tt.Int(539).tag(sync=True)
