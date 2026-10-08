@@ -31,7 +31,7 @@ FAIR_DATASET_SCORES = {
     "ch.1": ("CH", "Bundesamt für Energie", 2, 3, 3, 3),
     "fr.1": ("FR", "data.gouv.fr", 3, 3, 1, 3),
     "no.1": ("NO", "NOBIL", 3, 3, 1, 3),
-    "at.1": ("AT", "ladestellen.at", 3, 3, 3, 1),
+    "at.1": ("AT", "ladestellen.at", 3, 3, 3, 3),
     "cy.1": ("CY", "Fix Cyprus", 3, 1, 2, 3),
     "lv.1": ("LV", "Latvian State Roads", 3, 1, 3, 2),
     "es.1": ("ES", "General Traffic Directorate", 2, 1, 3, 2),
@@ -56,7 +56,7 @@ FAIR_DATASET_SCORES = {
 # (the German country score is de.2, the dataset used in the
 # quantitative comparison).
 FAIR_COUNTRY_TOTALS = {
-    "AT": 10, "BE": 6, "CH": 11, "CY": 9, "DE": 7, "EL": 0, "ES": 8,
+    "AT": 12, "BE": 6, "CH": 11, "CY": 9, "DE": 7, "EL": 0, "ES": 8,
     "FI": 2, "FR": 10, "HU": 5, "IT": 3, "LT": 1, "LU": 5, "LV": 9,
     "MT": 0, "NL": 2, "NO": 10, "PL": 0, "PT": 7, "SE": 6, "SI": 6,
     "UK": 4,

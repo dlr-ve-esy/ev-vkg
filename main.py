@@ -363,7 +363,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             fair_scores[sn]["R"] += 1
             if latest_record["provenance"] == "TEXTUAL":
                 fair_scores[sn]["R"] += 1
-            elif latest_record["provenance"] in ["EU", "LSV"]:
+            elif latest_record["provenance"] in ["EU", "LSV", "AT"]:
                 fair_scores[sn]["R"] += 2
         fair_scores[sn]["TOTAL"] = sum(list(fair_scores[sn].values()))
 
@@ -942,7 +942,7 @@ def _(GroupedBarChartWidget, df_to_dict, filtered_markers, mo, results):
         height=202 * 2,  # 202 for elsevier size
         y_max=10000,
         y_ticks=[2000, 4000, 6000, 8000],
-        y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
+        y_grid=[2000, 4000, 6000, 8000],  # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
         font_size=1.0,
@@ -953,7 +953,7 @@ def _(GroupedBarChartWidget, df_to_dict, filtered_markers, mo, results):
             "top": 17,
             "right": 0,
             "bottom": 39,
-            "left": 33 # 45,
+            "left": 33,  # 45,
         },  # left 33, right 0 for paper
     )
 
