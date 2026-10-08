@@ -17,7 +17,6 @@ wheels/
 
 # other
 *.jar
-uv.lock
 .python-version
 temp/
 
