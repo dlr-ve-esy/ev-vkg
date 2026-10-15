@@ -51,8 +51,8 @@ def _():
         FAIRCartogramWidget,
         FAIRDatasetScoresWidget,
         GT,
-        GroupedBarChartWidget,
         GridScatterWidget,
+        GroupedBarChartWidget,
         HeatMapWidget,
         List,
         Mapping,
@@ -61,7 +61,6 @@ def _():
         Tuple,
         VkgSchematicWidget,
         data_folder,
-        datetime,
         em,
         expand_bnezta,
         expand_relational_csv,
@@ -77,7 +76,7 @@ def _():
 
 
 @app.cell
-def _(mo, rc):
+def _(rc):
     # The run configuration is the persisted source selection: dataset
     # IDs, snapshot dates, input paths, checksums, analysis inclusion,
     # country coverage and exclusion reasons (run_config.yaml). The
@@ -85,7 +84,7 @@ def _(mo, rc):
     config = rc.load()
     checksum_problems = rc.verify_checksums(config)
     config
-    return (config, checksum_problems)
+    return (config,)
 
 
 @app.cell
@@ -333,7 +332,7 @@ def _(INDENT, colored_square, mo):
 
 
 @app.cell
-def _(BarChartWidget, config, fs, mo, pl, sources_per_country):
+def _(BarChartWidget, config, fs, mo, sources_per_country):
     # Metadata with booleans and dates parsed; dataset identity comes
     # from the stable dataset_id column, never from date-containing
     # record IDs or substring matching.
@@ -397,6 +396,12 @@ def _(BarChartWidget, config, fs, mo, pl, sources_per_country):
 
 
 @app.cell
+def _(sources_nap):
+    sources_nap
+    return
+
+
+@app.cell
 def _(
     FAIRCartogramWidget,
     country_grid,
@@ -419,14 +424,33 @@ def _(
 
 
 @app.cell
-def _(FAIRBarChartsWidget, json, mo, spectrum_colors):
+def _(scores_df):
+    f_scores = {}
+    f_scores_datasets = []
+    for _k, _v in scores_df.partition_by("dataset_id", include_key=True, as_dict=True).items():
+        _rs = _v.row(named=True)
+        f_scores[_k[0]] = _rs
+        _rs["code "] = _rs["dataset_id"]
+        f_scores_datasets.append(_rs)
+    f_scores
+    return f_scores, f_scores_datasets
+
+
+@app.cell
+def _(fair_scores_dataset):
+    fair_scores_dataset
+    return
+
+
+@app.cell
+def _(FAIRBarChartsWidget, f_scores, json, mo, spectrum_colors):
     # Dataset-level FAIR scores (Table 8 unit) in the principle grid,
     # so the two German datasets are both visible.
     with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _fd:
         fair_scores_dataset = {row["code"]: row for row in json.load(_fd)}
     fair_bars_widget = mo.ui.anywidget(
         FAIRBarChartsWidget(
-            fair_scores=fair_scores_dataset,
+            fair_scores=f_scores,
             source_colors=spectrum_colors,
         )
     )
@@ -434,22 +458,34 @@ def _(FAIRBarChartsWidget, json, mo, spectrum_colors):
         f"""## FAIR dataset scores by principle and total
     {fair_bars_widget}"""
     )
-    return
+    return (fair_scores_dataset,)
 
 
 @app.cell
-def _(FAIRDatasetScoresWidget, json, mo):
+def _(FAIRDatasetScoresWidget, f_scores_datasets, json, mo):
     # Dataset-level FAIR scores (Table 8 unit): one stacked bar per
     # dataset, so the two German datasets are both visible.
     with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _f:
         fair_scores_datasets = json.load(_f)
     fair_dataset_widget = mo.ui.anywidget(
-        FAIRDatasetScoresWidget(input=fair_scores_datasets)
+        FAIRDatasetScoresWidget(input=f_scores_datasets)
     )
     mo.md(
         f"""## FAIR Scores per dataset
     {fair_dataset_widget}"""
     )
+    return (fair_scores_datasets,)
+
+
+@app.cell
+def _(fair_scores_datasets):
+    fair_scores_datasets
+    return
+
+
+@app.cell
+def _(f_scores):
+    list(f_scores.values())
     return
 
 
@@ -618,7 +654,7 @@ def _(List, Path, Tuple, data_folder, glob, mo):
     Each comand expands to different patterns.
     """
     )
-    return VKG, mappings, vkg_common, vkg_evse
+    return VKG, vkg_common, vkg_evse
 
 
 @app.cell
@@ -634,15 +670,15 @@ def _(Path, config, data_folder, mo, pl):
     }
     selected_sources = []
     missing_parsed = []
-    for entry in config.analysis_datasets():
-        if entry.parsed_dir is None:
+    for _entry in config.analysis_datasets():
+        if _entry.parsed_dir is None:
             continue
-        if entry.parsed_dir in parsed_dirs:
+        if _entry.parsed_dir in parsed_dirs:
             selected_sources.append(
-                (entry.parsed_dir, parsed_dirs[entry.parsed_dir])
+                (_entry.parsed_dir, parsed_dirs[_entry.parsed_dir])
             )
         else:
-            missing_parsed.append(entry.dataset_id)
+            missing_parsed.append(_entry.dataset_id)
 
     selection_table = mo.ui.table(
         data=pl.DataFrame(
@@ -700,6 +736,7 @@ def _(
         # their historical unfiltered expansion; AT keeps its
         # historical ["AT"] filter.
         if entry.format in ("datex2", "nobil", "irve"):
+            print(entry)
             expand_relational_csv(
                 "graph",
                 path,
@@ -1043,7 +1080,14 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, cat_hatches, chart_input, chart_input_2, mo):
+def _(
+    DoubleStackedBarChartWidget,
+    cat_colors,
+    cat_hatches,
+    chart_input,
+    chart_input_2,
+    mo,
+):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,

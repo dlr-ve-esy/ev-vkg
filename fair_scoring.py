@@ -56,10 +56,10 @@ def score_record(record: dict[str, Any]) -> dict[str, int]:
     # ACCESIBILITY
     if record["access"] in ACCESIBLE:
         scores["A"] += 1
-        if record["medium"] in OPTIMAL_ACCESS_MEDIA:
-            scores["A"] += 1
-            if record["access_url"] is not None:
-                scores["A"] += 1
+    if record["access_url"] is not None:
+        scores["A"] += 1
+    if record["medium"] in OPTIMAL_ACCESS_MEDIA:
+        scores["A"] += 1
 
     # INTEROPERABILITY
     if record["standard"] == "DOCUMENTED":
