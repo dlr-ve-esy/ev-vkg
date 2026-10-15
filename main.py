@@ -50,6 +50,7 @@ def _():
         GT,
         GroupedBarChartWidget,
         GridScatterWidget,
+        GroupedBarChartWidget,
         HeatMapWidget,
         List,
         Mapping,
@@ -347,10 +348,10 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         # ACCESIBILITY
         if latest_record["access"] in accesible:
             fair_scores[sn]["A"] += 1
-            if latest_record["medium"] in optimal_access_media:
-                fair_scores[sn]["A"] += 1
-                if latest_record["access_url"] is not None:
-                    fair_scores[sn]["A"] += 1
+        if latest_record["medium"] in optimal_access_media:
+            fair_scores[sn]["A"] += 1
+        if latest_record["access_url"] is not None:
+            fair_scores[sn]["A"] += 1
         # INTEROPERABILITY
         if latest_record["standard"] == "DOCUMENTED":
             fair_scores[sn]["I"] += 1
@@ -385,7 +386,14 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         .sort(by=["country", "publication_date"], descending=False)
         .drop("publication_date")
     )
-
+    scores_df.insert_column(
+        0,
+        (
+            pl.col("country").str.to_lowercase()
+            + "."
+            + (pl.int_range(pl.len()).over("country") + 1).cast(str)
+        ).alias("code"),
+    )
     country_df = scores_df.group_by("country", maintain_order=True).first()
 
     fair_scores_country = {
@@ -421,7 +429,12 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         y_label="Total Score",
         font_size=1.2,
         offset=36,
-        margin={"top": 17, "right": 0, "bottom": 20, "left": 22},  # For paper use top 6
+        margin={
+            "top": 17,
+            "right": 0,
+            "bottom": 20,
+            "left": 22,
+        },  # For paper use top 6
     )
     wg = mo.ui.anywidget(total_widget)
 
@@ -430,12 +443,12 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>"""
     )
-    return fair_scores_country, scores_df, sources_nap, total_data
+    return fair_scores, fair_scores_country, scores_df, sources_nap, total_data
 
 
 @app.cell
 def _(scores_df):
-    scores_df.group_by("country", maintain_order=True).first()
+    scores_df
     return
 
 
@@ -462,38 +475,41 @@ def _(
 
 
 @app.cell
-def _(FAIRBarChartsWidget, json, mo, spectrum_colors):
-    # Dataset-level FAIR scores (Table 8 unit) in the principle grid,
-    # so the two German datasets are both visible.
-    with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _fd:
-        fair_scores_dataset = {row["code"]: row for row in json.load(_fd)}
-    fair_bars_widget = mo.ui.anywidget(
-        FAIRBarChartsWidget(
-            fair_scores=fair_scores_dataset,
-            source_colors=spectrum_colors,
+def _(
+    FAIRBarChartsWidget,
+    FAIRDatasetScoresWidget,
+    fair_scores,
+    mo,
+    spectrum_colors,
+):
+    # Each source assessment uses the scores calculated above from metadata.
+    # Retain source IDs alongside compact plot labels. The numbering is
+    # local to this plot, not a persistent dataset identifier.
+    fair_scores_datasets = []
+    _country_counts = {}
+    for _source, _scores in sorted(fair_scores.items()):
+        _country = _source.split("-")[0].lower()
+        _country_counts[_country] = _country_counts.get(_country, 0) + 1
+        fair_scores_datasets.append(
+            {
+                "code": f"{_country}.{_country_counts[_country]}",
+                "source_id": _source,
+                **_scores,
+            }
         )
+    mo.vstack(
+        [
+            mo.md("## FAIR scores per source assessment"),
+            mo.ui.anywidget(FAIRDatasetScoresWidget(input=fair_scores_datasets)),
+            mo.ui.anywidget(
+                FAIRBarChartsWidget(
+                    fair_scores={row["code"]: row for row in fair_scores_datasets},
+                    source_colors=spectrum_colors,
+                )
+            ),
+        ]
     )
-    mo.md(
-        f"""## FAIR dataset scores by principle and total
-    {fair_bars_widget}"""
-    )
-    return
-
-
-@app.cell
-def _(FAIRDatasetScoresWidget, json, mo):
-    # Dataset-level FAIR scores (Table 8 unit): one stacked bar per
-    # dataset, so the two German datasets are both visible.
-    with open("viz_data/fair_scores_datasets.json", "r", encoding="utf-8") as _f:
-        fair_scores_datasets = json.load(_f)
-    fair_dataset_widget = mo.ui.anywidget(
-        FAIRDatasetScoresWidget(input=fair_scores_datasets)
-    )
-    mo.md(
-        f"""## FAIR Scores per dataset
-    {fair_dataset_widget}"""
-    )
-    return
+    return (fair_scores_datasets,)
 
 
 @app.cell
@@ -1073,7 +1089,14 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
+def _(
+    DoubleStackedBarChartWidget,
+    cat_colors,
+    cat_hatches,
+    chart_input,
+    chart_input_2,
+    mo,
+):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,
@@ -1505,6 +1528,8 @@ def _(
     cat_colors,
     chart_input,
     chart_input_2,
+    fair_scores_country,
+    fair_scores_datasets,
     filtered_markers,
     grid_info,
     json,
@@ -1518,6 +1543,8 @@ def _(
     dump_dir = Path("viz_data/query_results")
     dump_dir.mkdir(parents=True, exist_ok=True)
     dumps = {
+        "fair_scores": fair_scores_country,
+        "fair_scores_datasets": fair_scores_datasets,
         "aggregated_power": aggregated_power_df,
         "total_evses_per_power": total_evses_per_power_df,
         "results": results,

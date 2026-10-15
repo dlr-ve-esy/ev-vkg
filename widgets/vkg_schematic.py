@@ -2,16 +2,18 @@
 
 `VkgSchematicWidget` is an anywidget rendering the two-branch methodology
 schematic in the notebook (front-end code in
-`widgets/javascript/vkg_schematic.js`). The layout mirrors the manuscript
-figure built by the repo-root `vkg_schematic.py` (Methodology section,
-Knowledge Graph Analysis subsection): the reviewed EVCI data sources on
-the left feed two branches -- the FAIR assessment of the sources (upper
-lane) and the harmonisation-and-querying pipeline over the acquired
-datasets (lower lane) -- and both feed the integrated assessment on the
-right.
+`widgets/javascript/vkg_schematic.js`). The layout: the reviewed EVCI
+data sources on the left feed two branches -- the FAIR assessment of
+the sources (upper lane: metadata and access evidence, the assessment
+itself, and the resulting per-dataset scores) and the
+harmonisation-and-querying pipeline over the acquired datasets (lower
+lane) -- and both converge into the integrated assessment box on the
+right, which spans the height between the two lanes so the branch
+arrows enter it symmetrically.
 
-Importing the module only needs anywidget and traitlets; the manuscript
-figure itself is built with matplotlib by the standalone script.
+Importing the module only needs anywidget and traitlets; the notebook
+renders the widget, and the rendered PNG next to it are produced
+with export_widget_pngs.py --only vkg_schematic (PNG).
 """
 
 import pathlib
@@ -26,18 +28,20 @@ class VkgSchematicWidget(anywidget.AnyWidget):
 
     # Stateful properties that can be accessed by JavaScript & Python
     width = tt.Int(890).tag(sync=True)
-    height = tt.Int(340).tag(sync=True)
+    height = tt.Int(270).tag(sync=True)
     font_size = tt.Float(1.0).tag(sync=True)
     labels = tt.Dict(
         {
             "sources_title": "EVCI data sources",
             "sources_note": "reviewed in NAPs\n& registries",
-            "sources_count": "(33 countries)",
+            "sources_count": "",
             "evidence": "Metadata &\naccess evidence",
             "fair_title": "FAIR assessment",
-            "fair_note": "(F/A/I/R scores)",
+            "fair_note": "",
+            "scores_title": "F/A/I/R scores",
+            "scores_note": "(per source assessment)",
             "acquired_title": "Datasets acquired",
-            "acquired_note": "(23 datasets)",
+            "acquired_note": "",
             "acquired_aside": "remaining sources listed\nbut not accessible",
             "parsing_title": "Parsing & mappings",
             "parsing_note": "(maplib, OTTR, CHIO)",

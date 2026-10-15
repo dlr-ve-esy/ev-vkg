@@ -35,7 +35,7 @@ class BarChartWidget(anywidget.AnyWidget):
     _css = """
     .barchart {
         display: flex;
-        justify-content: center; 
+        justify-content: center;
         align-items: center;
         height: 100%; /* Adjust as needed */
         width: 100%; /* Adjust as needed */
@@ -71,7 +71,7 @@ class StackedBarChartWidget(anywidget.AnyWidget):
     _css = """
     .barchart {
         display: flex;
-        justify-content: center; 
+        justify-content: center;
         align-items: center;
         height: 100%; /* Adjust as needed */
         width: 100%; /* Adjust as needed */
@@ -113,7 +113,7 @@ class DoubleStackedBarChartWidget(anywidget.AnyWidget):
     _css = """
     .barchart-double {
         display: flex;
-        justify-content: center; 
+        justify-content: center;
         align-items: center;
         height: 100%; /* Adjust as needed */
         width: 100%; /* Adjust as needed */
@@ -141,7 +141,7 @@ class FAIRBarChartsWidget(anywidget.AnyWidget):
     _css = """
     .fair-barcharts {
         display: flex;
-        justify-content: center; 
+        justify-content: center;
         align-items: center;
         height: 100%; /* Adjust as needed */
         width: 100%; /* Adjust as needed */
