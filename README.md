@@ -7,7 +7,7 @@ This repository is the code supporting the publication "Are European electric ve
 To work with this repository you need to acquire the data from
  [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17422740.svg)](https://doi.org/10.5281/zenodo.17422740). The script `get_data.py` can be used to download it automatically and saved in the right folder.
 
-The archived version of the analysis code is available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17435147.svg)](https://doi.org/10.5281/zenodo.17435147).
+The archived version of the analysis code is available at [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23393023.svg)](https://doi.org/10.5281/zenodo.23393023).
 
 This repository depends on work from other contexts, the external repository can be imported by using the terminal to go to this folder after cloning and using git.
 
