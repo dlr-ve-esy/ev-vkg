@@ -1,18 +1,16 @@
 import marimo
 
-__generated_with = "0.17.0"
+__generated_with = "0.25.1"
 app = marimo.App(width="medium", css_file="styles/custom.css")
 
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # FAIR Electric Vehicle Charging Infrastructure Data
     ## Enabling digital preservation of policy performance analyses
     ### Arellano Ruiz et al.
-    """
-    )
+    """)
     return
 
 
@@ -47,11 +45,11 @@ def _():
         BarChartWidget,
         DoubleStackedBarChartWidget,
         FAIRBarChartsWidget,
-        FAIRDatasetScoresWidget,
-        GroupedBarChartWidget,
         FAIRCartogramWidget,
+        FAIRDatasetScoresWidget,
         GT,
         GridScatterWidget,
+        GroupedBarChartWidget,
         HeatMapWidget,
         List,
         Mapping,
@@ -74,8 +72,7 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md(
-        r"""
+    mo.md(r"""
     # Background
     ## Charging infrastructure data from the AFIR
 
@@ -83,8 +80,7 @@ def _(mo):
     - This regulation contains data provisions regarding the availability of charging infrastructure data.
     - The union reports the regulations performance through European Alternative Fuels Observatory (EAFO)
     - Some of the sources reported by the EAFO cannot be validated.
-    """
-    )
+    """)
     return
 
 
@@ -275,8 +271,7 @@ def _(mo):
 
 @app.cell
 def _(INDENT, colored_square, mo):
-    mo.md(
-        f"""
+    mo.md(f"""
     ### Findability
 
     {INDENT}{colored_square("#c2cfdf")} If the resource can be accessed through a URL but has no metadata associated, we assign it one point.  
@@ -288,15 +283,13 @@ def _(INDENT, colored_square, mo):
     {INDENT}{colored_square("#e9cf6f")} If the metadata reports clear paths of accesibility we add a point to the score.  
     {INDENT}{colored_square("#e0ba2f")} If the access endpoint is shared we assign one point.  
     {INDENT}{colored_square("#aa8b1a")} If the access media is either an API or an archive we assign a point.
-    """
-    )
+    """)
     return
 
 
 @app.cell
 def _(INDENT, colored_square, mo):
-    mo.md(
-        f"""
+    mo.md(f"""
     ### Interoperability
 
     {INDENT}{colored_square("#d97c78")} If the resource has a non-standarized exchange format but has rich documentation it gets one point.  
@@ -308,8 +301,7 @@ def _(INDENT, colored_square, mo):
     {INDENT}{colored_square("#9dc291")} If the resource provides a clear license it gets one point.  
     {INDENT}{colored_square("#73a861")} If the resource records provenance textually it gets a point.  
     {INDENT}{colored_square("#527a44")} If the resource properly uses  the EU framework as source it gets an additional point.
-    """
-    )
+    """)
     return
 
 
@@ -339,7 +331,10 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         records = sources_nap.filter(pl.col("id").str.contains(sn)).to_dicts()
         if len(records) == 0:
             continue
-        dates = [datetime.strptime(r["publication_date"], "%m/%d/%Y") for r in records]
+        dates = [
+            datetime.strptime(r["publication_date"], "%m/%d/%Y")
+            for r in records
+        ]
         latest_idx = dates.index(max(dates))
         latest_record = records[latest_idx]
         # FINDABILITY
@@ -355,10 +350,10 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         # ACCESIBILITY
         if latest_record["access"] in accesible:
             fair_scores[sn]["A"] += 1
-            if latest_record["medium"] in optimal_access_media:
-                fair_scores[sn]["A"] += 1
-                if latest_record["access_url"] is not None:
-                    fair_scores[sn]["A"] += 1
+        if latest_record["medium"] in optimal_access_media:
+            fair_scores[sn]["A"] += 1
+        if latest_record["access_url"] is not None:
+            fair_scores[sn]["A"] += 1
         # INTEROPERABILITY
         if latest_record["standard"] == "DOCUMENTED":
             fair_scores[sn]["I"] += 1
@@ -371,7 +366,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
             fair_scores[sn]["R"] += 1
             if latest_record["provenance"] == "TEXTUAL":
                 fair_scores[sn]["R"] += 1
-            elif latest_record["provenance"] in ["EU", "LSV"]:
+            elif latest_record["provenance"] in ["EU", "LSV", "AT"]:
                 fair_scores[sn]["R"] += 2
         fair_scores[sn]["TOTAL"] = sum(list(fair_scores[sn].values()))
 
@@ -393,7 +388,13 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         .sort(by=["country", "publication_date"], descending=False)
         .drop("publication_date")
     )
-
+    scores_df.insert_column(
+        0,
+        (
+            pl.col("country").str.to_lowercase()
+            + "."+ (pl.int_range(pl.len()).over("country") + 1).cast(str)
+        ).alias("code"),
+    )
     country_df = scores_df.group_by("country", maintain_order=True).first()
 
     fair_scores_country = {
@@ -413,7 +414,9 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     }
     total_data = {
         k: v
-        for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True)
+        for k, v in sorted(
+            totals.items(), key=lambda item: item[1], reverse=True
+        )
         if v > 0
     }
 
@@ -429,7 +432,12 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
         y_label="Total Score",
         font_size=1.2,
         offset=36,
-        margin={"top": 17, "right": 0, "bottom": 20, "left": 22},  # For paper use top 6
+        margin={
+            "top": 17,
+            "right": 0,
+            "bottom": 20,
+            "left": 22,
+        },  # For paper use top 6
     )
     wg = mo.ui.anywidget(total_widget)
 
@@ -443,7 +451,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
 
 @app.cell
 def _(scores_df):
-    scores_df.group_by("country", maintain_order=True).first()
+    scores_df
     return
 
 
@@ -470,7 +478,13 @@ def _(
 
 
 @app.cell
-def _(FAIRBarChartsWidget, FAIRDatasetScoresWidget, fair_scores, mo, spectrum_colors):
+def _(
+    FAIRBarChartsWidget,
+    FAIRDatasetScoresWidget,
+    fair_scores,
+    mo,
+    spectrum_colors,
+):
     # Each source assessment uses the scores calculated above from metadata.
     # Retain source IDs alongside compact plot labels. The numbering is
     # local to this plot, not a persistent dataset identifier.
@@ -623,7 +637,9 @@ def _(considered_sources, pl):
 
 @app.cell
 def _(mo):
-    mo.md(r"""# Knowledge Graph Analysis""")
+    mo.md(r"""
+    # Knowledge Graph Analysis
+    """)
     return
 
 
@@ -758,13 +774,11 @@ def _(Path, VKG, m, mo, pyqrcode, requests):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md("""
     ## Visual summary of ontological commitments
 
     <p style="justify-content: space-evenly; display: flex;"><img src="public/mereology-summary.png"/></p>
-    """
-    )
+    """)
     return
 
 
@@ -845,8 +859,7 @@ def _(TEST_GRAPH, m, mo):
 
 @app.cell
 def _(mo):
-    mo.md(
-        """
+    mo.md("""
     ### Mereology: "part of" is reflexive
 
     Everything is a part of itself, in BFO "part of" is a primitive relation and has axioms to distinguish it from "proper part of" where reflixibility is excluded.
@@ -860,8 +873,7 @@ def _(mo):
     ```
 
     In this excercise we have no practical application for this property, so we do not infer it.
-    """
-    )
+    """)
     return
 
 
@@ -1057,7 +1069,14 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, cat_hatches, chart_input, chart_input_2, mo):
+def _(
+    DoubleStackedBarChartWidget,
+    cat_colors,
+    cat_hatches,
+    chart_input,
+    chart_input_2,
+    mo,
+):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,
@@ -1458,9 +1477,9 @@ def _(
     cat_colors,
     chart_input,
     chart_input_2,
-    filtered_markers,
     fair_scores_country,
     fair_scores_datasets,
+    filtered_markers,
     grid_info,
     json,
     region_level,

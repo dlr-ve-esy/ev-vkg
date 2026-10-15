@@ -198,7 +198,7 @@ def expand_relational_csv(
         ).drop_nulls(subset="operator")
         m.expand("vkg-evse:Operator", operator, graph=f"{VKG}{name}")
     if (p := Path(f"{path}/columns.csv")).exists():
-        columns: pl.DataFrame = pl.read_csv(p)
+        columns: pl.DataFrame = pl.read_csv(p, infer_schema_length=None)
         columns = columns.filter(pl.col("facility_id").is_in(facility_ids))
         column_ids = columns["id"].unique()
         challenge_ids = column_ids
