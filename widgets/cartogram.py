@@ -12,6 +12,21 @@ class SourcesCartogramWidget(anywidget.AnyWidget):
     source_colors = tt.Dict({}).tag(sync=True)
     color_legend = tt.Dict({}).tag(sync=True)
     country_grid = tt.Dict({}).tag(sync=True)
+    # Hatch pattern per source category (keyed by category name,
+    # so several categories can share a fill colour and stay
+    # distinguishable by pattern).
+    source_hatches = tt.Dict(
+        {
+            "Eco-Movement": "none",
+            "Tesla": "none",
+            "Chargemap": "cross",
+            "Openchargemap": "dot",
+            "Finnish Transport Agency": "hline",
+            "Governmental source": "vline",
+            "Greenway": "diag2",
+            "Other": "none",
+        }
+    ).tag(sync=True)
     width = tt.Int(539).tag(sync=True)
     height = tt.Int(404).tag(sync=True)
     marker_size = tt.Int(18).tag(sync=True)

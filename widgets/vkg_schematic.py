@@ -1,27 +1,19 @@
-"""Virtual knowledge graph (VKG) methodology schematic.
+"""Virtual knowledge graph (VKG) methodology schematic widget.
 
-This module has two roles:
+`VkgSchematicWidget` is an anywidget rendering the two-branch methodology
+schematic in the notebook (front-end code in
+`widgets/javascript/vkg_schematic.js`). The layout: the reviewed EVCI
+data sources on the left feed two branches -- the FAIR assessment of
+the sources (upper lane: metadata and access evidence, the assessment
+itself, and the resulting per-dataset scores) and the
+harmonisation-and-querying pipeline over the acquired datasets (lower
+lane) -- and both converge into the integrated assessment box on the
+right, which spans the height between the two lanes so the branch
+arrows enter it symmetrically.
 
-1. `VkgSchematicWidget`, an anywidget rendering the schematic in the
-   notebook (front-end code in `widgets/javascript/vkg_schematic.js`).
-   Importing the module only needs anywidget and traitlets; matplotlib is
-   not required and is imported lazily by the build code below.
-
-2. The build script for the manuscript figure (Methodology section,
-   Knowledge Graph Analysis subsection), written next to this file as
-   `vkg_schematic.pdf`, with a 300-dpi PNG twin for the raster figure set.
-
-Run the build with uv (installs matplotlib into an ephemeral environment):
-
-    uv run widgets/vkg_schematic.py
-
-or with any Python that already has matplotlib:
-
-    python widgets/vkg_schematic.py
-
-The design matches the other figures of the manuscript (Observable Plot
-exports): a Times-compatible serif (Tinos/Times) and the seaborn
-"colorblind" palette sampled from the SVG sources of the existing figures.
+Importing the module only needs anywidget and traitlets; the notebook
+renders the widget, and the rendered PNG next to it are produced
+with export_widget_pngs.py --only vkg_schematic (PNG).
 """
 
 import pathlib
@@ -34,36 +26,35 @@ class VkgSchematicWidget(anywidget.AnyWidget):
     # Widget front-end JavaScript code
     _esm = pathlib.Path("widgets/javascript/vkg_schematic.js")
 
-    # Stateful property that can be accessed by JavaScript & Python
+    # Stateful properties that can be accessed by JavaScript & Python
     width = tt.Int(890).tag(sync=True)
-    height = tt.Int(320).tag(sync=True)
+    height = tt.Int(270).tag(sync=True)
     font_size = tt.Float(1.0).tag(sync=True)
-    sources = tt.List(
-        [
-            "DATEX II profiles",
-            "OCPI",
-            "OICP",
-            "NOBIL API",
-            "National formats",
-        ]
-    ).tag(sync=True)
     labels = tt.Dict(
         {
-            "sources_title": "Heterogeneous\ndata sources",
-            "mapping_title": "Per-source\nmapping modules",
-            "mapping": "maplib + OTTR",
-            "ontology_abbr": "CHIO",
-            "ontology_name": "Charging\nInfrastructure\nOntology",
-            "ontology_note": "(shared vocabulary)",
+            "sources_title": "EVCI data sources",
+            "sources_note": "reviewed in NAPs\n& registries",
+            "sources_count": "",
+            "evidence": "Metadata &\naccess evidence",
+            "fair_title": "FAIR assessment",
+            "fair_note": "",
+            "scores_title": "F/A/I/R scores",
+            "scores_note": "(per source assessment)",
+            "acquired_title": "Datasets acquired",
+            "acquired_note": "",
+            "acquired_aside": "remaining sources listed\nbut not accessible",
+            "parsing_title": "Parsing & mappings",
+            "parsing_note": "(maplib, OTTR, CHIO)",
             "panel_title": "Virtual knowledge graph",
-            "panel_note": "instantiated at query time\n(no RDF materialized)",
-            "query_title": "SPARQL query",
-            "query_note": "(Listing 1; identical\nfor all sources)",
-            "query_time": "query time",
-            "quantities": "Relevant\nquantities",
-            "quantities_note": "(eight, per country)",
-            "fidelity": "Comparison against\nEAFO reports",
-            "fidelity_note": "(fidelity assessment)",
+            "panel_note": "materialised in memory\n(no persistent triple store)",
+            "indicators_title": "Monitoring\nindicators",
+            "indicators_note": "(SPARQL, Listing 1;\neight per country)",
+            "comparison_title": "Fidelity\ncomparison",
+            "comparison_note": "(N/A if no reference\nor failed analysis)",
+            "reference_title": "EAFO reports",
+            "reference_note": "(June 2025 reference)",
+            "assessment_title": "Integrated\nassessment",
+            "assessment_note": "(four groups)",
         }
     ).tag(sync=True)
     colors = tt.Dict(
@@ -72,21 +63,18 @@ class VkgSchematicWidget(anywidget.AnyWidget):
             "source": "#0173B2",
             "mapping": "#DE8F05",
             "ontology": "#9D6B92",
-            "query": "#D55E00",
             "graph": "#029E73",
         }
     ).tag(sync=True)
-    # Motif nodes in normalized panel coordinates ([-1, 1] on both axes),
-    # edges as pairs of node indices.
+    # Motif nodes in panel-normalized coordinates ([-1, 1] on both axes):
+    # a hub with four satellite nodes, edges as pairs of node indices.
     motif_nodes = tt.List(
         [
-            [-0.054, 0.091],
-            [-0.541, 0.545],
-            [-0.459, -0.455],
-            [0.432, 0.5],
-            [0.486, -0.545],
-            [-0.649, -0.045],
-            [0.649, -0.045],
+            [0.0, -0.176],
+            [-0.428, 0.094],
+            [-0.428, -0.447],
+            [0.428, 0.094],
+            [0.428, -0.447],
         ]
     ).tag(sync=True)
     motif_edges = tt.List(
@@ -95,18 +83,11 @@ class VkgSchematicWidget(anywidget.AnyWidget):
             [0, 2],
             [0, 3],
             [0, 4],
-            [1, 5],
-            [2, 5],
-            [3, 6],
-            [4, 6],
         ]
     ).tag(sync=True)
     # Geometry below is expressed in the internal design units of the figure
     # (1 unit = 1 cm at the original manuscript scale).
     node_radius = tt.Float(0.09).tag(sync=True)
-    stack_spacing = tt.Float(0.8).tag(sync=True)
-    column_gap = tt.Float(0.5).tag(sync=True)
-    query_gap = tt.Float(0.8).tag(sync=True)
     box_rounding = tt.Float(0.07).tag(sync=True)
     line_width = tt.Float(0.7).tag(sync=True)
     _css = """

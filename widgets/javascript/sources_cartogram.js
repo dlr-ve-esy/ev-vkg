@@ -11,6 +11,7 @@ function render({ model, el }) {
   const sizeSecondary = model.get("marker_size_secondary");
   const legendSize = model.get("legend_marker_size");
   const legendHeight = model.get("legend_height");
+  const sourceHatches = model.get("source_hatches");
 
   let continer = document.createElement("div");
   continer.classList.add("cartogram");
@@ -29,7 +30,8 @@ function render({ model, el }) {
     size,
     sizeSecondary,
     legendSize,
-    legendHeight
+    legendHeight,
+    sourceHatches
   );
 }
 
@@ -44,7 +46,8 @@ const renderFigure = (
   size = 18,
   sizeSecondary = 6,
   legendSize = 9,
-  legendHeight = 20
+  legendHeight = 20,
+  sourceHatches = {}
 ) => {
   const svg = element
     .append("svg")
@@ -52,24 +55,22 @@ const renderFigure = (
     .attr("width", width)
     .attr("height", height);
 
-  const color = d3
-    .scaleOrdinal()
-    .domain(Object.keys(colors))
-    .range(Object.values(colors));
+  // Pattern per source category so categories sharing a fill
+  // colour stay distinguishable.
+  const fillOf = addHatchDefs(svg, sourceHatches, colors);
 
-  const marginLeftRight = 0;
+  const marginLeftRight = size;
   const margin = {
-    top: 1,
-    right: marginLeftRight,
+    top: size - 3,
+    right: 0,
     bottom: 4,
     left: marginLeftRight,
   };
   const separator = width * 0.09;
-  const innerWidth = width * 0.69;
+  const innerWidth = width * 0.66;
   const innerHeight = innerWidth;
-  const widthSub = width * 0.22;
-
-  const midSeparator = (innerHeight - 3 * widthSub) / 2;
+  const midSeparator = width * 0.015;
+  const widthSub = (innerHeight - 2 * midSeparator) / 3;
 
   svg
     .append("defs")
@@ -95,12 +96,22 @@ const renderFigure = (
     legendArray,
     svg,
     width * 0.05,
-    innerHeight + 3,
+    innerHeight + margin.top,
     legendHeight,
     width - width * 0.1,
-    legendSize
+    legendSize,
+    fillOf
   );
-  renderMain(data, innerChart, size, innerHeight, innerWidth, color, grid);
+  renderMain(
+    data,
+    innerChart,
+    size,
+    innerHeight,
+    innerWidth,
+    grid,
+
+    fillOf
+  );
   renderSub(
     innerWidth + separator + margin.left,
     margin.top,
@@ -109,9 +120,10 @@ const renderFigure = (
     data,
     svg,
     sizeSecondary,
-    color,
     grid,
-    "Eco-Movement"
+
+    "Eco-Movement",
+    fillOf
   );
   renderSub(
     innerWidth + separator + margin.left,
@@ -121,9 +133,10 @@ const renderFigure = (
     data,
     svg,
     sizeSecondary,
-    color,
     grid,
-    "Tesla"
+
+    "Tesla",
+    fillOf
   );
   renderSub(
     innerWidth + separator + margin.left,
@@ -133,13 +146,75 @@ const renderFigure = (
     data,
     svg,
     sizeSecondary,
-    color,
     grid,
-    "Chargemap"
+
+    "Chargemap",
+    fillOf
   );
 };
 
-const renderLegend = (legend, svg, x, y, height, width, size) => {
+const addHatchDefs = (svg, hatches, colors) => {
+  // Returns a function mapping a source category to either its fill
+  // colour or a pattern URL, based on the source_hatches mapping
+  // (keyed by category, so categories can share a colour).
+  const patterns = {};
+  const defs = svg.append("defs");
+  Object.entries(hatches).forEach(([source, hatch], i) => {
+    if (hatch === "none" || hatch === undefined) {
+      return;
+    }
+    const colorValue = colors[source];
+    if (colorValue === undefined) {
+      return;
+    }
+    const id = `source-hatch-${i}`;
+    const pattern = defs
+      .append("pattern")
+      .attr("id", id)
+      .attr("width", 6)
+      .attr("height", 6)
+      .attr("patternUnits", "userSpaceOnUse");
+    pattern
+      .append("rect")
+      .attr("width", 6)
+      .attr("height", 6)
+      .attr("fill", colorValue);
+    const c = d3.color(colorValue);
+    const lum = (0.3 * c.r + 0.59 * c.g + 0.11 * c.b) / 255;
+    const line = lum > 0.55 ? "#4a4a4a" : "#ffffff";
+    pattern
+      .append("path")
+      .attr("d", hatchPath(hatch))
+      .attr("stroke", line)
+      .attr("stroke-width", 1.1)
+      .attr("fill", "none");
+    patterns[source] = `url(#${id})`;
+  });
+  return (source) => patterns[source] || colors[source] || "#b8b0ac";
+};
+
+const hatchPath = (hatch) => {
+  switch (hatch) {
+    case "diag":
+      return "M0,6 L6,0";
+    case "diag2":
+      return "M0,0 L6,6";
+    case "cross":
+      return "M0,6 L6,0 M0,0 L6,6";
+    case "grid":
+      return "M0,3 L6,3 M3,0 L3,6";
+    case "dot":
+      return "M3,3 m-1,0 a1,1 0 1,0 2,0 a1,1 0 1,0 -2,0";
+    case "hline":
+      return "M0,3 L6,3";
+    case "vline":
+      return "M3,0 L3,6";
+    default:
+      return "M0,6 L6,0";
+  }
+};
+
+const renderLegend = (legend, svg, x, y, height, width, size, fillOf) => {
   const band = d3
     .scaleBand()
     .domain(legend.map((d) => d.source))
@@ -174,7 +249,9 @@ const renderLegend = (legend, svg, x, y, height, width, size) => {
         .attr("width", size)
         .attr("rx", 2)
         .attr("height", size)
-        .attr("fill", (d) => d.color);
+        .attr("fill", (d) => fillOf(d.source))
+        .attr("stroke", "#4a4a4a")
+        .attr("stroke-width", 0.4);
 
       grp
         .append("text")
@@ -189,7 +266,7 @@ const renderLegend = (legend, svg, x, y, height, width, size) => {
     });
 };
 
-const renderMain = (data, chart, size, height, width, color, grid) => {
+const renderMain = (data, chart, size, height, width, grid, fillOf) => {
   const arc = d3
     .arc()
     .outerRadius(size * 2)
@@ -245,7 +322,7 @@ const renderMain = (data, chart, size, height, width, color, grid) => {
       pie
         .append("path")
         .attr("d", arc)
-        .style("fill", (d) => color(d.data[0]));
+        .style("fill", (d) => fillOf(d.data[0]));
       grp
         .append("text")
         .text((d) => d.country)
@@ -256,7 +333,11 @@ const renderMain = (data, chart, size, height, width, color, grid) => {
         .attr("x", size)
         .attr("y", size * 1.3)
         .attr("font-size", size)
-        .attr("fill", "white");
+        .attr("fill", "white")
+        .attr("stroke", "#262626")
+        .attr("stroke-width", size * 0.14)
+        .attr("stroke-linejoin", "round")
+        .attr("paint-order", "stroke");
     });
 };
 
@@ -268,9 +349,9 @@ const renderSub = (
   data,
   svg,
   size,
-  color,
   grid,
-  selection
+  selection,
+  fillOf
 ) => {
   const innerChart = svg.append("g").attr("transform", `translate(${x}, ${y})`);
 
@@ -312,7 +393,7 @@ const renderSub = (
         .attr("height", size * 2)
         .attr("fill", (d) =>
           d.sources.map((s) => s[0]).includes(selection)
-            ? color(selection)
+            ? fillOf(selection)
             : "#b8b0ac"
         );
     });

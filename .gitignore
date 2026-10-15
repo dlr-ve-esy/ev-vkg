@@ -27,3 +27,13 @@ temp/
 
 # macOS
 .DS_Store
+
+# Generated paper figures and notebook query inputs
+images/
+viz_data/query_results/
+
+# Static reference observations required by the figure pipeline
+!viz_data/02.07.2025-eafo-counts.csv
+!viz_data/17.06.2025-eafo-power-counts.csv
+!viz_data/17.06.2025-eafo-target-tracker.csv
+!viz_data/code_mappings.csv

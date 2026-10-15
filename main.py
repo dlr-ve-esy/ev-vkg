@@ -23,6 +23,9 @@ def _():
     from widgets.barchart import (
         BarChartWidget,
         DoubleStackedBarChartWidget,
+        FAIRBarChartsWidget,
+        FAIRDatasetScoresWidget,
+        GroupedBarChartWidget,
     )
     from widgets.heatmap import HeatMapWidget
     from widgets.grid_scatter import GridScatterWidget
@@ -43,6 +46,9 @@ def _():
     return (
         BarChartWidget,
         DoubleStackedBarChartWidget,
+        FAIRBarChartsWidget,
+        FAIRDatasetScoresWidget,
+        GroupedBarChartWidget,
         FAIRCartogramWidget,
         GT,
         GridScatterWidget,
@@ -432,7 +438,7 @@ def _(BarChartWidget, datetime, mo, pl, sources_per_country):
     {wg}
     <p style="text-align: center;">States with zero score were excluded.</p>"""
     )
-    return fair_scores_country, scores_df, sources_nap, total_data
+    return fair_scores, fair_scores_country, scores_df, sources_nap, total_data
 
 
 @app.cell
@@ -461,6 +467,32 @@ def _(
     {fair_widget}"""
     )
     return
+
+
+@app.cell
+def _(FAIRBarChartsWidget, FAIRDatasetScoresWidget, fair_scores, mo, spectrum_colors):
+    # Each source assessment uses the scores calculated above from metadata.
+    # Retain source IDs alongside compact plot labels. The numbering is
+    # local to this plot, not a persistent dataset identifier.
+    fair_scores_datasets = []
+    _country_counts = {}
+    for _source, _scores in sorted(fair_scores.items()):
+        _country = _source.split("-")[0].lower()
+        _country_counts[_country] = _country_counts.get(_country, 0) + 1
+        fair_scores_datasets.append({
+            "code": f"{_country}.{_country_counts[_country]}",
+            "source_id": _source,
+            **_scores,
+        })
+    mo.vstack([
+        mo.md("## FAIR scores per source assessment"),
+        mo.ui.anywidget(FAIRDatasetScoresWidget(input=fair_scores_datasets)),
+        mo.ui.anywidget(FAIRBarChartsWidget(
+            fair_scores={row["code"]: row for row in fair_scores_datasets},
+            source_colors=spectrum_colors,
+        )),
+    ])
+    return (fair_scores_datasets,)
 
 
 @app.cell
@@ -882,8 +914,11 @@ def _(
 
 
 @app.cell
-def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
-    results_plot = BarChartWidget(
+def _(GroupedBarChartWidget, df_to_dict, filtered_markers, mo, results):
+    # Grouped side-by-side bars (calculated vs EAFO reference) instead
+    # of the former overlapping front/shadow design; colour fills,
+    # hatched shadow series, AFIR target markers retained.
+    results_plot = GroupedBarChartWidget(
         input=df_to_dict(results, key_col="Code", value_col="total_accounted_power"),
         shadow=df_to_dict(results, key_col="Code", value_col="total_mw"),
         markers=filtered_markers,
@@ -894,19 +929,19 @@ def _(BarChartWidget, df_to_dict, filtered_markers, mo, results):
         width=539 * 2,  # 539   for elsevier size
         height=202 * 2,  # 202 for elsevier size
         y_max=10000,
-        # y_ticks=[2000, 4000, 6000, 8000],
-        # y_grid=[2000, 4000, 6000, 8000], # Uncomment for paper print
+        y_ticks=[2000, 4000, 6000, 8000],
+        y_grid=[2000, 4000, 6000, 8000],  # Uncomment for paper print
         y_label="Power (MW)",
         offset=25,
         font_size=1.0,
-        main_label="NAP Estimation",
-        shadow_label="EAFO Reported",
-        marker_label="AFIR Target",
+        main_label="Calculated",
+        shadow_label="EAFO reference",
+        marker_label="AFIR target",
         margin={
             "top": 17,
             "right": 0,
             "bottom": 39,
-            "left": 45,
+            "left": 33,  # 45,
         },  # left 33, right 0 for paper
     )
 
@@ -955,6 +990,8 @@ def _(TEST_GRAPH, m, pl, study_filter, total_evses_per_power):
 
 @app.cell
 def _(total_evses_per_power_df):
+    # Band palette with hatching so the bands stay distinguishable
+    # even in black-and-white print.
     cat_colors = {
         "0-7,4 kW": "#9dc291",
         "7,4-22 kW": "#73a861",
@@ -963,9 +1000,17 @@ def _(total_evses_per_power_df):
         "150-350 kW": "#e0ba2f",
         "350+ kW": "#aa8b1a",
     }
+    cat_hatches = {
+        "#9dc291": "none",
+        "#73a861": "diag",
+        "#527a44": "cross",
+        "#e9cf6f": "dot",
+        "#e0ba2f": "hline",
+        "#aa8b1a": "vline",
+    }
 
     chart_input = total_evses_per_power_df.to_dicts()
-    return cat_colors, chart_input
+    return cat_colors, cat_hatches, chart_input
 
 
 @app.cell
@@ -1012,17 +1057,18 @@ def _(country_codes, pl, study_filter):
 
 
 @app.cell
-def _(DoubleStackedBarChartWidget, cat_colors, chart_input, chart_input_2, mo):
+def _(DoubleStackedBarChartWidget, cat_colors, cat_hatches, chart_input, chart_input_2, mo):
     stacked_chart_3 = DoubleStackedBarChartWidget(
         input_a=chart_input_2,
         input_b=chart_input,
         x_key="code",
         bar_radius=4,
         cat_colors=cat_colors,
+        cat_hatches=cat_hatches,
         width=539,  # * 2,  # 539 for elsevier size
         height=202,  #  * 2,  # 202 for elsevier size
         y_label="Counts per capacity",
-        x1_label="European Alternative Fuels Observatory, Juny 2025",
+        x1_label="European Alternative Fuels Observatory, June 2025",
         x2_label="Estimation using available data from the National Access Points",
         offset=38,
         legend_item_width=6.5,
@@ -1402,6 +1448,51 @@ def _(GridScatterWidget, grid_info, mm, mo, nn):
     {general_widget}
     """
     )
+    return region_level, x_domain, y_domain
+
+
+@app.cell
+def _(
+    Path,
+    aggregated_power_df,
+    cat_colors,
+    chart_input,
+    chart_input_2,
+    filtered_markers,
+    fair_scores_country,
+    fair_scores_datasets,
+    grid_info,
+    json,
+    region_level,
+    relative_error,
+    results,
+    total_evses_per_power_df,
+    x_domain,
+    y_domain,
+):
+    dump_dir = Path("viz_data/query_results")
+    dump_dir.mkdir(parents=True, exist_ok=True)
+    dumps = {
+        "fair_scores": fair_scores_country,
+        "fair_scores_datasets": fair_scores_datasets,
+        "aggregated_power": aggregated_power_df,
+        "total_evses_per_power": total_evses_per_power_df,
+        "results": results,
+        "relative_error": relative_error,
+        "filtered_markers": filtered_markers,
+        "cat_colors": cat_colors,
+        "chart_input": chart_input,
+        "chart_input_2": chart_input_2,
+        "grid_info": grid_info,
+        "x_domain": x_domain,
+        "y_domain": y_domain,
+        "region_level": region_level,
+    }
+    for _name, _obj in dumps.items():
+        if hasattr(_obj, "to_dicts"):
+            _obj = _obj.to_dicts()
+        with open(dump_dir / f"{_name}.json", "w", encoding="utf-8") as _f:
+            json.dump(_obj, _f, ensure_ascii=False, indent=2)
     return
 
 

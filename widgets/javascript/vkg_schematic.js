@@ -1,126 +1,72 @@
 import * as d3 from "https://esm.sh/d3@7";
 
-// Box sizes in design units (1 unit = 1 cm at the original manuscript scale).
-const BOXES = {
-  source: { w: 2.3, h: 0.6 },
-  mapping: { w: 2.05, h: 0.6 },
-  ontology: { w: 1.8, h: 2.6 },
-  panel: { w: 3.7, h: 3.5 },
-  query: { w: 3.0, h: 0.85 },
-  quantities: { w: 2.3, h: 0.95 },
-  fidelity: { w: 2.55, h: 1.15 },
-};
+// Layout in design units (1 unit = 1 cm at the original manuscript scale).
+// The reviewed sources on the left feed two branches -- the FAIR
+// assessment of the sources and the harmonisation-and-querying pipeline
+// over the acquired datasets -- and both converge into the integrated
+// assessment on the right. The lanes funnel towards the assessment: the
+// boxes descend in cy from the source side to the assessment side, so
+// the space between the branches narrows towards the right instead of
+// forming an empty band across the middle of the figure.
+const VIEW = { x: -0.15, y: -3.2, w: 17.9, h: 5.85 };
+
+const SRC = { cx: 1.3, cy: 0.0, w: 2.4, h: 4.9 };
+// Pipeline branch (upper lane in design coordinates).
+const ACQUIRED = { cx: 4.5, cy: -1.85, w: 2.2, h: 1.3 };
+const PARSING = { cx: 7.5, cy: -1.6, w: 2.3, h: 1.3 };
+const PANEL = { cx: 10.6, cy: -1.3, w: 2.7, h: 1.7 };
+const INDICATORS = { cx: 13.55, cy: -0.95, w: 2.0, h: 1.3 };
+const COMPARISON = { cx: 16.15, cy: -0.75, w: 2.0, h: 1.3 };
+// FAIR branch (lower lane in design coordinates).
+const EVIDENCE = { cx: 4.5, cy: 1.75, w: 2.3, h: 1.3 };
+const FAIR = { cx: 7.7, cy: 1.5, w: 2.4, h: 1.3 };
+const SCORES = { cx: 11.0, cy: 1.1, w: 2.5, h: 1.3 };
+// Separate EAFO reference input below the fidelity comparison, and the
+// integrated assessment receiving both branches.
+const REFERENCE = { cx: 16.15, cy: -2.2, w: 2.0, h: 0.8 };
+const ASSESSMENT = { cx: 16.35, cy: 1.3, w: 2.5, h: 1.9 };
 
 // 1 PostScript point expressed in design units.
 const PT = 0.0353;
 
 async function render({ model, el }) {
-  const width = model.get("width");
-  const height = model.get("height");
-  const fontSize = model.get("font_size");
-  const sources = model.get("sources");
-  const labels = model.get("labels");
-  const colors = model.get("colors");
-  const motifNodes = model.get("motif_nodes");
-  const motifEdges = model.get("motif_edges");
-  const nodeRadius = model.get("node_radius");
-  const stackSpacing = model.get("stack_spacing");
-  const columnGap = model.get("column_gap");
-  const queryGap = model.get("query_gap");
-  const boxRounding = model.get("box_rounding");
-  const lineWidth = model.get("line_width");
+  const container = document.createElement("div");
+  container.classList.add("schematic");
+  el.appendChild(container);
 
-  let continer = document.createElement("div");
-  continer.classList.add("schematic");
+  renderSchematic(d3.select(container), {
+    width: model.get("width"),
+    height: model.get("height"),
+    fontSize: model.get("font_size"),
+    labels: model.get("labels"),
+    colors: model.get("colors"),
+    motifNodes: model.get("motif_nodes"),
+    motifEdges: model.get("motif_edges"),
+    nodeRadius: model.get("node_radius"),
+    boxRounding: model.get("box_rounding"),
+    lineWidth: model.get("line_width"),
+  });
+}
 
-  const body = d3.select(continer);
-
-  el.appendChild(continer);
-
-  renderSchematic(
-    body,
-    sources,
+function renderSchematic(container, cfg) {
+  const {
+    width,
+    height,
+    fontSize,
     labels,
     colors,
     motifNodes,
     motifEdges,
-    width,
-    height,
-    fontSize,
     nodeRadius,
-    stackSpacing,
-    columnGap,
-    queryGap,
     boxRounding,
-    lineWidth
-  );
-}
-
-function renderSchematic(
-  container,
-  sources,
-  labels,
-  colors,
-  motifNodes,
-  motifEdges,
-  width,
-  height,
-  fontSize,
-  nodeRadius,
-  stackSpacing,
-  columnGap,
-  queryGap,
-  boxRounding,
-  lineWidth
-) {
-  const n = sources.length;
-  const ys = d3.range(n).map((i) => (i - (n - 1) / 2) * stackSpacing);
-  const stackTop = ys[n - 1] + BOXES.source.h / 2;
-
-  // Column centers, placed left to right from the box widths and the gap.
-  let x = BOXES.source.w / 2;
-  const cx = { source: x };
-  x += BOXES.source.w / 2 + columnGap + BOXES.mapping.w / 2;
-  cx.mapping = x;
-  x += BOXES.mapping.w / 2 + columnGap + BOXES.ontology.w / 2;
-  cx.ontology = x;
-  x += BOXES.ontology.w / 2 + columnGap + BOXES.panel.w / 2;
-  cx.panel = x;
-  x += BOXES.panel.w / 2 + columnGap + BOXES.quantities.w / 2;
-  cx.quantities = x;
-  x += BOXES.quantities.w / 2 + columnGap + BOXES.fidelity.w / 2;
-  cx.fidelity = x;
-  const rightEdge = x + BOXES.fidelity.w / 2;
-
-  // Vertical anchors.
-  const titleY = stackTop + 0.45;
-  const panelTop = BOXES.panel.h / 2;
-  const panelBottom = -BOXES.panel.h / 2;
-  const panelTitleY = panelTop - 0.35;
-  const panelNoteY = panelBottom + 0.5;
-  const queryTop = panelBottom - queryGap;
-  const queryCy = queryTop - BOXES.query.h / 2;
-  const queryBottom = queryCy - BOXES.query.h / 2;
-
-  // Vertical band available to the motif, between title and note.
-  const bandTop = panelTitleY - 0.2;
-  const bandBottom = panelNoteY + 0.25;
-  const bandCy = (bandTop + bandBottom) / 2;
-  const bandHalf = (bandTop - bandBottom) / 2;
-
-  // Content bounds plus padding define the viewBox, so the drawing scales
-  // uniformly (and keeps its proportions) inside the width x height box.
-  const pad = 0.15;
-  const top = titleY + 0.35;
-  const bottom = queryBottom;
-  const vbWidth = rightEdge + 2 * pad;
-  const vbHeight = top - bottom + 2 * pad;
+    lineWidth,
+  } = cfg;
 
   const svg = container
     .append("svg")
     .attr("width", width)
     .attr("height", height)
-    .attr("viewBox", `${-pad} ${bottom - pad} ${vbWidth} ${vbHeight}`)
+    .attr("viewBox", `${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`)
     .attr("preserveAspectRatio", "xMidYMid meet");
 
   svg
@@ -138,18 +84,19 @@ function renderSchematic(
     .attr("d", "M 0 0 L 10 5 L 0 10 z")
     .attr("fill", colors.ink);
 
-  const box = (cxp, cyp, w, h, fill, rounding) =>
+  const box = (b, fill, { rounding = boxRounding, dashed = false } = {}) =>
     svg
       .append("rect")
-      .attr("x", cxp - w / 2)
-      .attr("y", cyp - h / 2)
-      .attr("width", w)
-      .attr("height", h)
+      .attr("x", b.cx - b.w / 2)
+      .attr("y", b.cy - b.h / 2)
+      .attr("width", b.w)
+      .attr("height", b.h)
       .attr("rx", rounding)
       .attr("ry", rounding)
       .attr("fill", fill)
       .attr("stroke", colors.ink)
-      .attr("stroke-width", lineWidth * PT);
+      .attr("stroke-width", lineWidth * PT)
+      .attr("stroke-dasharray", dashed ? "0.07 0.07" : null);
 
   const arrow = (x1, y1, x2, y2, dashed = false) =>
     svg
@@ -169,11 +116,10 @@ function renderSchematic(
     spec.size = spec.size || 7;
     spec.weight = spec.weight || "bold";
     spec.fill = spec.fill || colors.ink;
-    spec.anchor = spec.anchor || "middle";
     spec.style = spec.style || "normal";
     const t = svg
       .append("text")
-      .attr("text-anchor", spec.anchor)
+      .attr("text-anchor", "middle")
       .attr("dominant-baseline", "central")
       .attr("font-family", "Tinos, serif")
       .attr("font-weight", spec.weight)
@@ -212,77 +158,96 @@ function renderSchematic(
     };
   };
 
-  // -- column 1: heterogeneous data sources -------------------------------
-  ys.forEach((y, i) => {
-    box(cx.source, y, BOXES.source.w, BOXES.source.h, colors.source, boxRounding);
-    makeText({ x: cx.source, y: y, str: sources[i], fill: "white" }).fit(
-      BOXES.source.w,
-      BOXES.source.h
-    );
-  });
-  makeText({ x: cx.source, y: titleY, str: labels.sources_title });
+  // Two-line box label: bold title above a smaller note.
+  const label = (b, title, note, { fill = colors.ink } = {}) => {
+    makeText({
+      x: b.cx,
+      y: b.cy + 0.22,
+      str: title,
+      fill,
+    }).fit(b.w, 0.55);
+    makeText({
+      x: b.cx,
+      y: b.cy - 0.32,
+      str: note,
+      size: 5.5,
+      weight: "normal",
+      fill,
+    }).fit(b.w, 0.45);
+  };
 
-  // -- column 2: per-source mapping modules -------------------------------
-  const srcRight = cx.source + BOXES.source.w / 2;
-  const mapLeft = cx.mapping - BOXES.mapping.w / 2;
-  const mapRight = cx.mapping + BOXES.mapping.w / 2;
-  ys.forEach((y) => {
-    arrow(srcRight, y, mapLeft, y);
-    box(cx.mapping, y, BOXES.mapping.w, BOXES.mapping.h, colors.mapping, boxRounding);
-    makeText({ x: cx.mapping, y: y, str: labels.mapping, fill: "white" }).fit(
-      BOXES.mapping.w,
-      BOXES.mapping.h
-    );
-  });
-  makeText({ x: cx.mapping, y: titleY, str: labels.mapping_title });
-
-  // -- column 3: shared ontology -----------------------------------------
-  const ontoLeft = cx.ontology - BOXES.ontology.w / 2;
-  const ontoRight = cx.ontology + BOXES.ontology.w / 2;
-  const inset = 0.3;
-  const spread = BOXES.ontology.h - 2 * inset;
-  ys.forEach((y, i) => {
-    const target = n > 1 ? (i - (n - 1) / 2) * (spread / (n - 1)) : 0;
-    arrow(mapRight, y, ontoLeft, target);
-  });
-  box(cx.ontology, 0, BOXES.ontology.w, BOXES.ontology.h, colors.ontology, boxRounding);
+  // -- left: the reviewed sources (common starting point) -------------------
+  box(SRC, colors.source);
   makeText({
-    x: cx.ontology,
-    y: 0.5,
-    str: labels.ontology_abbr,
-    size: 8,
+    x: SRC.cx,
+    y: 1.2,
+    str: labels.sources_title,
     fill: "white",
-  }).fit(BOXES.ontology.w, 0.6);
+  }).fit(SRC.w - 0.3, 0.6);
   makeText({
-    x: cx.ontology,
-    y: 0.02,
-    str: labels.ontology_name,
+    x: SRC.cx,
+    y: 0.05,
+    str: labels.sources_note,
+    size: 6,
+    weight: "normal",
+    fill: "white",
+  }).fit(SRC.w - 0.3, 1.0);
+  makeText({
+    x: SRC.cx,
+    y: -1.15,
+    str: labels.sources_count,
     size: 5.5,
     weight: "normal",
     fill: "white",
-  }).fit(BOXES.ontology.w, 0.9);
-  makeText({
-    x: cx.ontology,
-    y: -0.52,
-    str: labels.ontology_note,
-    size: 5.5,
-    weight: "normal",
-    fill: "white",
-  }).fit(BOXES.ontology.w, 0.5);
+  }).fit(SRC.w - 0.3, 0.5);
 
-  // -- column 4: virtual knowledge graph panel ---------------------------
-  arrow(ontoRight, 0, cx.panel - BOXES.panel.w / 2, 0);
-  box(cx.panel, 0, BOXES.panel.w, BOXES.panel.h, "white", boxRounding * 1.4);
+  // -- pipeline branch: acquired datasets to fidelity comparison ------------
+  // Both branch arrows fan out from the middle of the sources box, so
+  // the wedge between the lanes reads as the branching point.
+  arrow(SRC.cx + SRC.w / 2, -0.5, ACQUIRED.cx - ACQUIRED.w / 2, ACQUIRED.cy);
+  box(ACQUIRED, colors.source);
+  label(ACQUIRED, labels.acquired_title, labels.acquired_note, {
+    fill: "white",
+  });
   makeText({
-    x: cx.panel,
-    y: panelTitleY,
+    x: ACQUIRED.cx,
+    y: -2.72,
+    str: labels.acquired_aside,
+    size: 5,
+    weight: "normal",
+    style: "italic",
+  });
+
+  arrow(
+    ACQUIRED.cx + ACQUIRED.w / 2,
+    ACQUIRED.cy,
+    PARSING.cx - PARSING.w / 2,
+    PARSING.cy
+  );
+  box(PARSING, colors.mapping);
+  label(PARSING, labels.parsing_title, labels.parsing_note, {
+    fill: "white",
+  });
+
+  arrow(
+    PARSING.cx + PARSING.w / 2,
+    PARSING.cy,
+    PANEL.cx - PANEL.w / 2,
+    PANEL.cy
+  );
+  box(PANEL, "white", { rounding: boxRounding * 1.4 });
+  makeText({
+    x: PANEL.cx,
+    y: PANEL.cy + 0.55,
     str: labels.panel_title,
-    size: 8,
-  }).fit(BOXES.panel.w - 0.4, 0.5);
+    size: 6.5,
+  }).fit(PANEL.w - 0.3, 0.5);
 
+  // Compact motif inside the VKG panel: a hub with satellite nodes, in
+  // panel-normalized coordinates ([-1, 1] on both axes).
   const nodes = motifNodes.map(([u, v]) => [
-    cx.panel + u * (BOXES.panel.w / 2),
-    bandCy + v * bandHalf,
+    PANEL.cx + u * (PANEL.w / 2),
+    PANEL.cy + v * (PANEL.h / 2),
   ]);
   motifEdges.forEach(([i, j]) => {
     svg
@@ -306,76 +271,106 @@ function renderSchematic(
       .attr("stroke-width", 0.5 * PT);
   });
   makeText({
-    x: cx.panel,
-    y: panelNoteY,
+    x: PANEL.cx,
+    y: PANEL.cy - 0.65,
     str: labels.panel_note,
-    size: 5.5,
+    size: 5,
     weight: "normal",
     style: "italic",
-  }).fit(BOXES.panel.w - 0.4, 0.7);
+  }).fit(PANEL.w - 0.3, 0.6);
 
-  // -- the query enters at query time (dashed) ---------------------------
-  box(cx.panel, queryCy, BOXES.query.w, BOXES.query.h, colors.query, boxRounding);
-  makeText({
-    x: cx.panel,
-    y: queryCy + BOXES.query.h * 0.33,
-    str: labels.query_title,
+  arrow(
+    PANEL.cx + PANEL.w / 2,
+    PANEL.cy,
+    INDICATORS.cx - INDICATORS.w / 2,
+    INDICATORS.cy
+  );
+  box(INDICATORS, "white");
+  label(INDICATORS, labels.indicators_title, labels.indicators_note);
+
+  arrow(
+    INDICATORS.cx + INDICATORS.w / 2,
+    INDICATORS.cy,
+    COMPARISON.cx - COMPARISON.w / 2,
+    COMPARISON.cy
+  );
+  box(COMPARISON, colors.ink);
+  label(COMPARISON, labels.comparison_title, labels.comparison_note, {
     fill: "white",
-  }).fit(BOXES.query.w, BOXES.query.h * 0.5);
-  makeText({
-    x: cx.panel,
-    y: queryCy - BOXES.query.h * 0.08,
-    str: labels.query_note,
-    size: 5.5,
-    weight: "normal",
-    fill: "white",
-  }).fit(BOXES.query.w, BOXES.query.h * 0.7);
-  arrow(cx.panel, queryTop, cx.panel, panelBottom, true);
-  makeText({
-    x: cx.panel + 0.15,
-    y: (panelBottom + queryTop) / 2,
-    str: labels.query_time,
-    size: 5.5,
-    weight: "normal",
-    style: "italic",
-    anchor: "start",
   });
 
-  // -- outputs -------------------------------------------------------------
-  const panelRight = cx.panel + BOXES.panel.w / 2;
-  const quantLeft = cx.quantities - BOXES.quantities.w / 2;
-  const quantRight = cx.quantities + BOXES.quantities.w / 2;
-  arrow(panelRight, 0, quantLeft, 0);
-  box(cx.quantities, 0, BOXES.quantities.w, BOXES.quantities.h, "white", boxRounding);
+  // -- FAIR branch: evidence to per-dataset scores ---------------------------
+  arrow(SRC.cx + SRC.w / 2, 0.5, EVIDENCE.cx - EVIDENCE.w / 2, EVIDENCE.cy);
+  box(EVIDENCE, "white");
   makeText({
-    x: cx.quantities,
-    y: BOXES.quantities.h * 0.11,
-    str: labels.quantities,
-  }).fit(BOXES.quantities.w, BOXES.quantities.h * 0.7);
-  makeText({
-    x: cx.quantities,
-    y: -BOXES.quantities.h * 0.32,
-    str: labels.quantities_note,
-    size: 5.5,
-    weight: "normal",
-  }).fit(BOXES.quantities.w, BOXES.quantities.h * 0.5);
+    x: EVIDENCE.cx,
+    y: EVIDENCE.cy,
+    str: labels.evidence,
+  }).fit(EVIDENCE.w, EVIDENCE.h);
 
-  arrow(quantRight, 0, cx.fidelity - BOXES.fidelity.w / 2, 0);
-  box(cx.fidelity, 0, BOXES.fidelity.w, BOXES.fidelity.h, colors.ink, boxRounding);
+  arrow(
+    EVIDENCE.cx + EVIDENCE.w / 2,
+    EVIDENCE.cy,
+    FAIR.cx - FAIR.w / 2,
+    FAIR.cy
+  );
+  box(FAIR, colors.ontology);
+  label(FAIR, labels.fair_title, labels.fair_note, { fill: "white" });
+
+  arrow(FAIR.cx + FAIR.w / 2, FAIR.cy, SCORES.cx - SCORES.w / 2, SCORES.cy);
+  box(SCORES, "white");
+  label(SCORES, labels.scores_title, labels.scores_note);
+
+  // -- separate EAFO reference input ----------------------------------------
+  box(REFERENCE, "white", { dashed: true });
   makeText({
-    x: cx.fidelity,
-    y: BOXES.fidelity.h * 0.13,
-    str: labels.fidelity,
+    x: REFERENCE.cx,
+    y: REFERENCE.cy + 0.14,
+    str: labels.reference_title,
+  }).fit(REFERENCE.w, 0.45);
+  makeText({
+    x: REFERENCE.cx,
+    y: REFERENCE.cy - 0.18,
+    str: labels.reference_note,
+    size: 5,
+    weight: "normal",
+  }).fit(REFERENCE.w, 0.4);
+  arrow(
+    REFERENCE.cx,
+    REFERENCE.cy + REFERENCE.h / 2,
+    COMPARISON.cx,
+    COMPARISON.cy - COMPARISON.h / 2,
+    true
+  );
+
+  // -- right: integrated assessment receives both branches ------------------
+  box(ASSESSMENT, colors.graph);
+  makeText({
+    x: ASSESSMENT.cx,
+    y: ASSESSMENT.cy + 0.35,
+    str: labels.assessment_title,
     fill: "white",
-  }).fit(BOXES.fidelity.w, BOXES.fidelity.h * 0.7);
+  }).fit(ASSESSMENT.w, 0.8);
   makeText({
-    x: cx.fidelity,
-    y: -BOXES.fidelity.h * 0.28,
-    str: labels.fidelity_note,
+    x: ASSESSMENT.cx,
+    y: ASSESSMENT.cy - 0.5,
+    str: labels.assessment_note,
     size: 5.5,
     weight: "normal",
     fill: "white",
-  }).fit(BOXES.fidelity.w, BOXES.fidelity.h * 0.5);
+  }).fit(ASSESSMENT.w, 0.5);
+  arrow(
+    SCORES.cx + SCORES.w / 2,
+    SCORES.cy,
+    ASSESSMENT.cx - ASSESSMENT.w / 2,
+    ASSESSMENT.cy + 0.35
+  );
+  arrow(
+    COMPARISON.cx,
+    COMPARISON.cy + COMPARISON.h / 2,
+    ASSESSMENT.cx,
+    ASSESSMENT.cy - ASSESSMENT.h / 2
+  );
 }
 
 export default { render };

@@ -1,0 +1,34 @@
+"Category","Slow AC recharging point, single-phase (P < 7.4kW)","Medium-speed AC recharging point, triple-phase (7.4kW ≤ P ≤ 22kW)","Fast AC recharging point, triple-phase (P > 22kW)","Slow DC recharging point (P < 50kW)","Fast DC recharging point (50kW ≤ P < 150kW)","Level 1 - Ultra-fast DC recharging point (150kW ≤ P < 350kW)","Level 2 - Ultra-fast DC recharging point (P ≥ 350kW)"
+"Austria",647,24974,156,547,2361,3797,651
+"Belgium",1742,75916,537,219,1352,3390,655
+"Bulgaria",250,1732,69,152,726,465,31
+"Croatia",13,1285,38,33,580,85,60
+"Cyprus",4,502,2,2,26,12,
+"Czech Republic",7,4097,82,124,1234,537,77
+"Denmark",65,33920,1973,69,1659,4120,762
+"Estonia",,653,12,116,232,215,26
+"Finland",105,12523,14,25,1198,2463,888
+"France",54189,80080,1619,4198,10974,9292,8959
+"Germany",1922,129452,1178,1776,7848,19644,9759
+"Greece",47,6822,99,114,664,331,19
+"Hungary",294,3443,14,234,429,459,32
+"Iceland",10,2100,,17,116,347,124
+"Ireland",210,2709,43,27,473,334,56
+"Italy",958,49540,750,423,7604,3757,435
+"Latvia",2,581,141,58,232,306,8
+"Liechtenstein",2,78,,,19,10,12
+"Lithuania",1,1664,133,201,549,662,28
+"Luxembourg",13,2376,3,1,40,222,76
+"Malta",,,112,,,4,
+"Netherlands",2606,179971,3071,282,897,3666,662
+"Norway",4252,15285,40,61,1644,7310,1399
+"Poland",73,7109,283,285,2782,712,128
+"Portugal",872,8106,530,190,2732,733,84
+"Romania",6,2531,57,277,1229,705,32
+"Slovakia",27,2457,26,100,634,440,69
+"Slovenia",18,1874,50,76,212,99,64
+"Spain",2194,28531,2032,560,6362,2659,526
+"Sweden",9074,41304,514,61,1263,5999,1629
+"Switzerland",263,14314,105,373,1626,1258,392
+"Turkey",1007,15261,488,456,5911,4514,461
+"United Kingdom",36103,37598,619,532,7740,7776,1183

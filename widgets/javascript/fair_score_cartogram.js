@@ -53,9 +53,10 @@ const renderFigure = (
       .range([colors.TOTAL[0], colors.TOTAL[2]]),
   };
 
-  const marginLeftRight = 0;
+  const size = 10;
+  const marginLeftRight = width * 0.02;
   const margin = {
-    top: 0,
+    top: size * 0.7,
     right: marginLeftRight,
     bottom: 0,
     left: marginLeftRight,
@@ -63,11 +64,10 @@ const renderFigure = (
   const separator = width * 0.04;
   const innerWidth = width * 0.365;
   const innerHeight = innerWidth;
-  const widthSub = width * 0.28;
+  const midSeparator = separator;
+  const widthSub = (width - 2 * marginLeftRight - innerWidth - 2 * separator) / 2;
 
-  const midSeparator = width * 0.6 - 2 * widthSub;
-  const mainSeparator = height - 2 * innerWidth;
-  const size = 10;
+  const mainSeparator = height - 2 * innerWidth - margin.top;
   const sizeSecondary = 7;
   const legendSize = 9;
 
@@ -75,7 +75,7 @@ const renderFigure = (
   const rxSub = 3;
   const textCorr = size * 0.4;
 
-  const legendWidth = width - (separator + innerWidth);
+  const legendWidth = width - (separator + innerWidth) - 2 * marginLeftRight;
   const legendHeight = height - (widthSub * 2 + midSeparator);
 
   svg
