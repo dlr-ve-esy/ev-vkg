@@ -361,10 +361,7 @@ def _(BarChartWidget, config, fs, mo, sources_per_country):
         if c in fair_scores_country:
             fair_scores_country[c] = scores
 
-    totals = {
-        c: scores["TOTAL"]
-        for c, scores in fair_scores_country.items()
-    }
+    totals = {c: scores["TOTAL"] for c, scores in fair_scores_country.items()}
     total_data = {
         k: v
         for k, v in sorted(totals.items(), key=lambda item: item[1], reverse=True)
@@ -427,7 +424,9 @@ def _(
 def _(scores_df):
     f_scores = {}
     f_scores_datasets = []
-    for _k, _v in scores_df.partition_by("dataset_id", include_key=True, as_dict=True).items():
+    for _k, _v in scores_df.partition_by(
+        "dataset_id", include_key=True, as_dict=True
+    ).items():
         _rs = _v.row(named=True)
         f_scores[_k[0]] = _rs
         _rs["code "] = _rs["dataset_id"]
@@ -527,12 +526,11 @@ def _(considered_sources, pl):
         "TEXTUAL": "Textually documented",
     }
     latex_output = considered_sources.select(
+        pl.col("dataset_id"),
         pl.col("country").alias("Country"),
         pl.col("source").alias("Source"),
         pl.col("provider").alias("Provider"),
-        pl.col("publication_date")
-        .dt.to_string("%d %b, %Y")
-        .alias("Publication Date"),
+        pl.col("publication_date").dt.to_string("%d %b, %Y").alias("Publication Date"),
         pl.when(pl.col("metadata_url").is_null())
         .then(pl.lit("No"))
         .otherwise(pl.lit("Yes"))
@@ -575,9 +573,7 @@ def _(considered_sources, pl):
 
     # Stable dataset IDs (at.1, de.1, de.2, ...) instead of
     # order-dependent per-country counters.
-    latex_output = latex_output.with_columns(
-        pl.col("dataset_id").alias("Identifier")
-    )
+    latex_output = latex_output.with_columns(pl.col("dataset_id").alias("Identifier"))
 
     general_information = latex_output.select(
         pl.col("Identifier"),
@@ -674,9 +670,7 @@ def _(Path, config, data_folder, mo, pl):
         if _entry.parsed_dir is None:
             continue
         if _entry.parsed_dir in parsed_dirs:
-            selected_sources.append(
-                (_entry.parsed_dir, parsed_dirs[_entry.parsed_dir])
-            )
+            selected_sources.append((_entry.parsed_dir, parsed_dirs[_entry.parsed_dir]))
         else:
             missing_parsed.append(_entry.dataset_id)
 
@@ -923,9 +917,7 @@ def _(
     # references and targets stay missing; nothing is filled with
     # zero, so a failed or unavailable calculation cannot appear as
     # measured zero capacity.
-    results = em.build_results_frame(
-        aggregated_power_df, target_tracker, country_codes
-    )
+    results = em.build_results_frame(aggregated_power_df, target_tracker, country_codes)
 
     # AFIR target markers only where a target exists.
     filtered_markers = {

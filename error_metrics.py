@@ -94,6 +94,7 @@ def band_of_power(watts: float) -> str:
         return BANDS[4]
     return BANDS[5]
 
+
 OVERALL = "Overall Fidelity"
 
 # Cell statuses of the error table.
@@ -173,9 +174,7 @@ def build_calculated_frame(
             [pl.col(b).cast(int) for b in BANDS] + [total]
         )
         .join(
-            results.select(
-                pl.col("code"), pl.col("total_accounted_power")
-            ),
+            results.select(pl.col("code"), pl.col("total_accounted_power")),
             on="code",
             how="left",
         )
@@ -192,7 +191,7 @@ def _long(frame: pl.DataFrame, value_name: str) -> pl.DataFrame:
         )
         for indicator in INDICATORS
     ]
-    return pl.concat(parts)
+    return pl.concat(parts, how="diagonal_relaxed")
 
 
 def compute_error_table(
@@ -234,23 +233,16 @@ def compute_error_table(
         )
         .with_columns(
             pl.when(pl.col("denominator") > 0)
-            .then(
-                (pl.col("difference").abs() / pl.col("denominator"))
-                .clip(0.0, 1.0)
-            )
+            .then((pl.col("difference").abs() / pl.col("denominator")).clip(0.0, 1.0))
             .otherwise(None)
             .alias("relative_error"),
         )
         .with_columns(
-            pl.when(
-                pl.col("reference").is_null() & pl.col("calculated_raw").is_null()
-            )
+            pl.when(pl.col("reference").is_null() & pl.col("calculated_raw").is_null())
             .then(pl.lit(STATUS_MISSING_BOTH))
             .when(pl.col("reference").is_null())
             .then(pl.lit(STATUS_NO_REFERENCE))
-            .when(
-                pl.col("calculated_raw").is_null() & (pl.col("indicator") == POWER)
-            )
+            .when(pl.col("calculated_raw").is_null() & (pl.col("indicator") == POWER))
             .then(pl.lit(STATUS_NO_CALCULATED))
             .when(pl.col("denominator") <= 0)
             .then(pl.lit(STATUS_ZERO_DENOMINATOR))
@@ -381,9 +373,7 @@ def fidelity_labels_for(
         for country in entry.country_coverage:
             dataset_of_country.setdefault(country, entry.dataset_id)
 
-    snapshot_of_dataset = {
-        d.dataset_id: d.snapshot_id for d in config.datasets
-    }
+    snapshot_of_dataset = {d.dataset_id: d.snapshot_id for d in config.datasets}
 
     substitution_notes = {
         "SE": (
@@ -412,9 +402,13 @@ def fidelity_labels_for(
         if country in compared:
             continue
         entry = config.entry(dataset_id)
-        reason = overrides.get(country) or entry.exclusion_reason or (
-            "Dataset included in the graph analysis but no calculated "
-            "values were produced for this country."
+        reason = (
+            overrides.get(country)
+            or entry.exclusion_reason
+            or (
+                "Dataset included in the graph analysis but no calculated "
+                "values were produced for this country."
+            )
         )
         na_entries.append(
             {
@@ -451,23 +445,18 @@ def heatmap_category_expr(col: str) -> pl.Expr:
     )
 
 
-def heatmap_frame(
-    error_table: pl.DataFrame, summary: pl.DataFrame
-) -> pl.DataFrame:
+def heatmap_frame(error_table: pl.DataFrame, summary: pl.DataFrame) -> pl.DataFrame:
     """Long frame consumed by HeatMapWidget: code, range, error, cat.
 
     Row order matches the published figure: countries sorted by code,
     indicators in INDICATORS order followed by the overall fidelity.
     """
     wide = error_table.pivot(index="code", on="indicator", values="relative_error")
-    wide = (
-        wide.join(
-            summary.select("code", pl.col("mean_capped_relative_error").alias(OVERALL)),
-            on="code",
-            how="inner",
-        )
-        .sort("code")
-    )
+    wide = wide.join(
+        summary.select("code", pl.col("mean_capped_relative_error").alias(OVERALL)),
+        on="code",
+        how="inner",
+    ).sort("code")
     return wide.unpivot(
         index="code", variable_name="range", value_name="error"
     ).with_columns(heatmap_category_expr("error"))
